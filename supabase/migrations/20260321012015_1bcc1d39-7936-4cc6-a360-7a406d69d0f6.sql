@@ -1,0 +1,1 @@
+ALTER TABLE public.instagram_app_config ADD COLUMN IF NOT EXISTS embedded_login_url TEXT;

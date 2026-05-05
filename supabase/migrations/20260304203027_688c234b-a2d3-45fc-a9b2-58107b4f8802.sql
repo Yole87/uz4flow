@@ -1,0 +1,1 @@
+ALTER TABLE public.meta_templates ADD COLUMN IF NOT EXISTS template_language text NOT NULL DEFAULT 'pt_BR';

@@ -1,0 +1,1 @@
+ALTER TABLE public.instances DROP CONSTRAINT IF EXISTS instances_openbot_instance_id_key;

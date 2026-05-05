@@ -1,0 +1,3 @@
+ALTER TABLE public.voice_campaigns
+  ADD COLUMN IF NOT EXISTS calling_mode TEXT NOT NULL DEFAULT 'sequential',
+  ADD COLUMN IF NOT EXISTS batch_size INTEGER NOT NULL DEFAULT 1;

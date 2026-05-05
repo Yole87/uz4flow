@@ -1,0 +1,1 @@
+ALTER TYPE whatsapp_provider ADD VALUE IF NOT EXISTS 'instagram_dm';

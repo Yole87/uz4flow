@@ -1,0 +1,637 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Quantum Sci-Fi UI - Design System */
+
+@layer base {
+  :root {
+    /* Deep Space Background */
+    --background: 240 67% 2%;
+    --foreground: 0 0% 96%;
+
+    /* Quantum Glass Cards */
+    --card: 240 14% 14%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 240 14% 10%;
+    --popover-foreground: 0 0% 96%;
+
+    /* Primary - Hyper Neon Pink */
+    --primary: 338 100% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Electric Purple */
+    --secondary: 272 100% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted */
+    --muted: 240 10% 12%;
+    --muted-foreground: 240 5% 55%;
+
+    /* Accent - Cyber Cyan */
+    --accent: 180 100% 50%;
+    --accent-foreground: 240 67% 2%;
+
+    /* Success */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders & Inputs - Subtle glow edges */
+    --border: 240 6% 20%;
+    --input: 240 6% 18%;
+    --ring: 338 100% 53%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar - Deep space */
+    --sidebar-background: 240 67% 2%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 338 100% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 14% 10%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 240 6% 15%;
+    --sidebar-ring: 338 100% 53%;
+
+    /* Neon Colors (raw HSL for use in shadows/glows) */
+    --neon-pink: 338 100% 53%;
+    --neon-cyan: 180 100% 50%;
+    --neon-purple: 272 100% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(338 100% 53%), hsl(272 100% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
+    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(0 84% 60%));
+    --gradient-holographic: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
+  }
+
+  /* Dark class kept for compatibility - identical to :root */
+  .dark {
+    --background: 240 67% 2%;
+    --foreground: 0 0% 96%;
+
+    --card: 240 14% 14%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 240 14% 10%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 338 100% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 272 100% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 240 10% 12%;
+    --muted-foreground: 240 5% 55%;
+
+    --accent: 180 100% 50%;
+    --accent-foreground: 240 67% 2%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 20%;
+    --input: 240 6% 18%;
+    --ring: 338 100% 53%;
+
+    --sidebar-background: 240 67% 2%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 338 100% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 14% 10%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 240 6% 15%;
+    --sidebar-ring: 338 100% 53%;
+
+    --neon-pink: 338 100% 53%;
+    --neon-cyan: 180 100% 50%;
+    --neon-purple: 272 100% 50%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(338 100% 53%), hsl(272 100% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
+    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(0 84% 60%));
+    --gradient-holographic: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  /* Global text wrapping to prevent horizontal overflow */
+  p, span, h1, h2, h3, h4, h5, h6, li, td, th, label, code, a {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  /* Prevent form/media elements from exceeding container width */
+  img, video, canvas, svg, iframe, input, textarea, select {
+    max-width: 100%;
+  }
+
+  /* Quantum Scrollbar — Global */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Sora', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+
+  /* Geometric grid overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: -1;
+    animation: grid-move 20s linear infinite;
+  }
+
+  /* Ensure content sits above grid without creating an unnecessary stacking context */
+  #root {
+    position: relative;
+  }
+}
+
+@layer utilities {
+  /* Gradient backgrounds */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .gradient-warm {
+    background: var(--gradient-warm);
+  }
+
+  .gradient-holographic {
+    background: var(--gradient-holographic);
+  }
+
+  /* Gradient text */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(338 100% 53%), hsl(272 100% 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-accent {
+    background: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-holographic {
+    background: linear-gradient(135deg, hsl(180 100% 50%), hsl(338 100% 53%), hsl(272 100% 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Quantum Glass - Advanced Glassmorphism */
+  .quantum-glass {
+    background: rgba(30, 30, 40, 0.5);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 0 15px rgba(0, 0, 0, 0.3),
+      inset 0 0 15px rgba(255, 255, 255, 0.02);
+  }
+
+  .quantum-glass-strong {
+    background: rgba(20, 20, 30, 0.7);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 0 20px rgba(0, 0, 0, 0.4),
+      inset 0 0 20px rgba(255, 255, 255, 0.03);
+  }
+
+  /* Neon Glows */
+  .neon-glow-pink {
+    box-shadow:
+      0 0 5px hsl(338 100% 53% / 0.3),
+      0 0 20px hsl(338 100% 53% / 0.15),
+      0 0 40px hsl(338 100% 53% / 0.05);
+  }
+
+  .neon-glow-cyan {
+    box-shadow:
+      0 0 5px hsl(180 100% 50% / 0.3),
+      0 0 20px hsl(180 100% 50% / 0.15),
+      0 0 40px hsl(180 100% 50% / 0.05);
+  }
+
+  .neon-glow-purple {
+    box-shadow:
+      0 0 5px hsl(272 100% 50% / 0.3),
+      0 0 20px hsl(272 100% 50% / 0.15),
+      0 0 40px hsl(272 100% 50% / 0.05);
+  }
+
+  /* Neon text glows */
+  .text-glow-pink {
+    text-shadow: 0 0 10px hsl(338 100% 53% / 0.5), 0 0 30px hsl(338 100% 53% / 0.2);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 10px hsl(180 100% 50% / 0.5), 0 0 30px hsl(180 100% 50% / 0.2);
+  }
+
+  .text-glow-purple {
+    text-shadow: 0 0 10px hsl(272 100% 50% / 0.5), 0 0 30px hsl(272 100% 50% / 0.2);
+  }
+
+  /* Holographic border */
+  .border-holographic {
+    border-image: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%)) 1;
+  }
+
+  /* Animations */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  /* Terminal font for data/labels */
+  .font-terminal {
+    font-family: 'Fira Code', monospace;
+    font-variant-ligatures: common-ligatures;
+  }
+
+  /* Laser-cut button clip-path (octagonal chamfer) */
+  .btn-laser-cut {
+    clip-path: polygon(
+      8px 0%, calc(100% - 8px) 0%,
+      100% 8px, 100% calc(100% - 8px),
+      calc(100% - 8px) 100%, 8px 100%,
+      0% calc(100% - 8px), 0% 8px
+    );
+  }
+
+  .btn-laser-cut-sm {
+    clip-path: polygon(
+      6px 0%, calc(100% - 6px) 0%,
+      100% 6px, 100% calc(100% - 6px),
+      calc(100% - 6px) 100%, 6px 100%,
+      0% calc(100% - 6px), 0% 6px
+    );
+  }
+
+  /* Header with quantum glass + holographic bottom border */
+  .header-quantum {
+    background: rgba(20, 20, 30, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 15px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Nav item with neon hover */
+  .nav-item-neon {
+    transition: all 0.2s ease;
+  }
+  .nav-item-neon:hover {
+    text-shadow: 0 0 8px hsl(338 100% 53% / 0.4);
+  }
+
+  /* Hide scrollbar utility */
+  .quantum-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .quantum-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .quantum-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .quantum-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .quantum-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
+  }
+  .quantum-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Scanline overlay for headings */
+  .text-scanline {
+    position: relative;
+  }
+  .text-scanline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.03) 2px,
+      rgba(255,255,255,0.03) 4px
+    );
+    pointer-events: none;
+  }
+}
+
+/* Dentro de modais, desativar clip-path para não cortar botões */
+[role="dialog"] .btn-laser-cut,
+[role="alertdialog"] .btn-laser-cut {
+  clip-path: none;
+}
+
+[role="dialog"] .btn-laser-cut-sm,
+[role="alertdialog"] .btn-laser-cut-sm {
+  clip-path: none;
+}
+
+/* Garante que toasts (Sonner) fiquem SEMPRE acima de modais/overlays.
+   Necessário porque Radix Dialog usa z-index 50, e overlays customizados
+   podem chegar a 9999. Usamos quase o int máximo para ganhar sempre. */
+[data-sonner-toaster],
+[data-sonner-toaster][data-theme],
+[data-sonner-toast] {
+  z-index: 2147483646 !important;
+}
+
+/* Keyframes */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes grid-move {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(60px, 60px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes particle-float {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+}
+
+/* LIA Avatar circuit animation - 10s cycle: 8s idle + 2 rapid pulses */
+@keyframes circuit-pulse {
+  0%, 80%, 100% { opacity: 0.3; }
+  85%, 95% { opacity: 1; }
+  88%, 98% { opacity: 0.3; }
+  90%, 92% { opacity: 1; }
+}
+
+.lia-circuits {
+  animation: circuit-pulse 10s ease-in-out infinite;
+}
+
+/* Tour highlight for guided overlay target elements */
+.lia-tour-highlight {
+  position: relative !important;
+  z-index: 10001 !important;
+  background: hsl(var(--sidebar-accent)) !important;
+  border-radius: 8px;
+  box-shadow: 0 0 20px hsl(338 100% 53% / 0.4), 0 0 0 2px hsl(var(--primary) / 0.5);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes grow {
+  from { width: 0; }
+}
+
+/* React Flow Quantum Theme */
+.flow-canvas-quantum .react-flow__node {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.flow-canvas-quantum svg {
+  max-width: none;
+}
+
+.flow-canvas-quantum .react-flow__edges svg,
+.flow-canvas-quantum .react-flow__edge,
+.flow-canvas-quantum .react-flow__edge path,
+.flow-canvas-quantum .react-flow__connectionline svg {
+  overflow: visible;
+}
+
+.flow-canvas-quantum .react-flow__edge-path {
+  stroke: hsl(338 100% 53%);
+  stroke-width: 2;
+}
+
+.flow-canvas-quantum .react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+.flow-canvas-quantum .react-flow__handle {
+  transition: all 0.15s ease;
+}
+
+.flow-canvas-quantum .react-flow__handle:hover {
+  box-shadow: 0 0 8px hsl(338 100% 53% / 0.5);
+  transform: scale(1.2);
+}
+
+.flow-canvas-quantum .react-flow__connection-line {
+  stroke: hsl(338 100% 53%);
+  stroke-width: 2;
+  stroke-dasharray: 5;
+}
+
+/* Controls styling */
+.flow-controls-quantum {
+  background: rgba(20, 20, 30, 0.8) !important;
+  border: 1px solid hsl(240 6% 20%) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.flow-controls-quantum button {
+  background: transparent !important;
+  border-bottom: 1px solid hsl(240 6% 20%) !important;
+  color: hsl(0 0% 96%) !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.flow-controls-quantum button:hover {
+  background: hsl(338 100% 53% / 0.15) !important;
+}
+
+.flow-controls-quantum button:last-child {
+  border-bottom: none !important;
+}
+
+.flow-controls-quantum button svg {
+  fill: hsl(0 0% 96%) !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+}
+
+/* Edge labels */
+.flow-canvas-quantum .react-flow__edge-textwrapper {
+  pointer-events: none;
+}
+
+/* Selectable / selected edges */
+.flow-canvas-quantum .react-flow__edge {
+  cursor: pointer;
+}
+
+.flow-canvas-quantum .react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3 !important;
+  stroke: hsl(0 90% 60%) !important;
+  filter: drop-shadow(0 0 8px hsl(0 90% 60% / 0.7));
+}
+
+/* Wider invisible hit area for edge clicking */
+.flow-canvas-quantum .react-flow__edge-interaction {
+  stroke-width: 20 !important;
+}
+
+/* Show reconnect handles on hover */
+.flow-canvas-quantum .react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px hsl(338 100% 53% / 0.5));
+}
+
+/* Reconnectable edge endpoint highlight */
+.flow-canvas-quantum .react-flow__edgeupdater {
+  cursor: grab;
+}
+
+.flow-canvas-quantum .react-flow__edgeupdater circle {
+  r: 8;
+  fill: hsl(338 100% 53% / 0.3);
+  stroke: hsl(338 100% 53%);
+  stroke-width: 1.5;
+}
+
+@keyframes dashdraw {
+  from { stroke-dashoffset: 10; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Flow test mode — active node highlight */
+.flow-node-active {
+  animation: flow-test-pulse 1s ease-in-out infinite;
+}
+
+@keyframes flow-test-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px hsl(338 100% 53% / 0.6)); }
+  50% { filter: drop-shadow(0 0 20px hsl(338 100% 53% / 0.9)); }
+}
+
+/* Prospection slider — Emerald Accent */
+.prospection-slider [data-orientation] > span:first-child {
+  background: hsl(var(--muted)) !important;
+  border: 1px solid hsl(var(--success) / 0.15) !important;
+}
+.prospection-slider [data-orientation] > span:first-child > span {
+  background: linear-gradient(90deg, hsl(var(--success)), hsl(142 72% 60%)) !important;
+}
+.prospection-slider [role="slider"] {
+  border-color: hsl(var(--success)) !important;
+  background: hsl(var(--background)) !important;
+  box-shadow: 0 0 10px hsl(var(--success) / 0.4);
+}

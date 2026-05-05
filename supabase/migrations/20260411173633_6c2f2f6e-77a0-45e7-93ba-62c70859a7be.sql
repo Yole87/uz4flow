@@ -1,0 +1,1 @@
+ALTER TABLE public.flow_steps ADD COLUMN block_contents jsonb DEFAULT NULL;

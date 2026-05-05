@@ -1,0 +1,1 @@
+ALTER TABLE public.lead_rotation_config ADD COLUMN is_random boolean NOT NULL DEFAULT false;

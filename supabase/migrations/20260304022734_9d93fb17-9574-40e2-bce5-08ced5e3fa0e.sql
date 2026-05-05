@@ -1,0 +1,1 @@
+ALTER TABLE public.instances ADD COLUMN IF NOT EXISTS meta_phone_number_id TEXT;
