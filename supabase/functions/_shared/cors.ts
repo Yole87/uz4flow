@@ -9,13 +9,22 @@ const ALLOWED_ORIGINS = [
   "https://openbot-connector.lovable.app",
   "https://openflow.studio",
   "https://www.openflow.studio",
+  "https://uz4flow.lovable.app",
 ];
 
 const ALLOWED_ORIGIN_PATTERNS = [
+  // Legacy project preview
   /^https:\/\/.*--dff2aabe-4f5d-4bfb-8ad0-dc92d710f5f9\.lovable\.app$/,
   /^https:\/\/id-preview--dff2aabe-4f5d-4bfb-8ad0-dc92d710f5f9\.lovable\.app$/,
   /^https:\/\/dff2aabe-4f5d-4bfb-8ad0-dc92d710f5f9\.lovableproject\.com$/,
+  // Current remixed project preview
+  /^https:\/\/.*--dbd892a4-184b-42d6-96f4-582bff75db13\.lovable\.app$/,
+  /^https:\/\/id-preview--dbd892a4-184b-42d6-96f4-582bff75db13\.lovable\.app$/,
+  /^https:\/\/dbd892a4-184b-42d6-96f4-582bff75db13\.lovableproject\.com$/,
+  // Generic Lovable preview/sandbox hosts
   /^https:\/\/.*\.lovableproject\.com$/,
+  /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/.*\.sandbox\.lovable\.dev$/,
   /^http:\/\/localhost(:\d+)?$/,
 ];
 
