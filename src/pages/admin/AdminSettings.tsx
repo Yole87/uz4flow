@@ -116,8 +116,11 @@ export default function AdminSettings() {
       const { data, error } = await supabase.functions.invoke("mercadopago-subscription", {
         body: { action: "get-access-token" },
       });
-      if (!error && data?.success && data.token) {
-        setAccessToken(data.token);
+      if (!error && data?.success) {
+        const realToken = (data.token || "").toString();
+        setAccessToken(realToken);
+        // Reconcile UI flag with reality
+        setMpSettings((prev) => ({ ...prev, access_token_configured: realToken.length > 0 }));
       }
     } catch (e) {
       console.warn("Could not load access token:", e);
