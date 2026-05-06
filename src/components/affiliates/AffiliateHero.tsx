@@ -66,7 +66,7 @@ export function AffiliateHero({ variant = "full", onCtaClick }: Props) {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-xs font-bold text-primary uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              Programa de afiliados OpenFlow
+              Programa de afiliados Uz4Flow
             </div>
 
             <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
@@ -75,7 +75,7 @@ export function AffiliateHero({ variant = "full", onCtaClick }: Props) {
             </h2>
 
             <p className="text-base text-muted-foreground max-w-2xl">
-              Indique a OpenFlow para sua rede e receba todo mês — sem teto, sem prazo de validade.
+              Indique a Uz4Flow para sua rede e receba todo mês — sem teto, sem prazo de validade.
               <span className="text-foreground/85"> Quanto mais clientes você levar, maior fica sua comissão.</span>
             </p>
 
@@ -141,7 +141,7 @@ export function AffiliateHero({ variant = "full", onCtaClick }: Props) {
                 size="lg"
                 variant="outline"
                 className="border-primary/40 hover:bg-primary/10"
-                onClick={() => window.open("https://openflow.studio", "_blank")}
+                onClick={() => window.open("https://uz4flow.lovable.app", "_blank")}
               >
                 Como funciona
               </Button>

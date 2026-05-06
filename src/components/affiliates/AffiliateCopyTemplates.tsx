@@ -15,7 +15,7 @@ export function AffiliateCopyTemplates({ link, pct }: Props) {
     toast.success(`${label} copiado!`);
   };
 
-  const whatsapp = `🚀 Conheci uma plataforma que tá mudando o jogo do atendimento via WhatsApp e Instagram: a *OpenFlow*.
+  const whatsapp = `🚀 Conheci uma plataforma que tá mudando o jogo do atendimento via WhatsApp e Instagram: a *Uz4Flow*.
 
 ✅ CRM completo com IA
 ✅ Automação de mensagens e follow-up
@@ -27,7 +27,7 @@ Tá com condição especial. Dá uma olhada com meu link de indicação:
 
 Qualquer dúvida me chama!`;
 
-  const instagram = `Pra quem trabalha com vendas no WhatsApp/Instagram e quer parar de perder lead — recomendo MUITO a @openflow.studio 🔥
+  const instagram = `Pra quem trabalha com vendas no WhatsApp/Instagram e quer parar de perder lead — recomendo MUITO a @uz4flow.lovable.app 🔥
 
 CRM + IA + automação tudo num lugar só.
 
@@ -40,7 +40,7 @@ ${link}
 
 Olá!
 
-Quero te apresentar uma plataforma que tem feito muita diferença pra quem vende pelo WhatsApp e Instagram: a OpenFlow.
+Quero te apresentar uma plataforma que tem feito muita diferença pra quem vende pelo WhatsApp e Instagram: a Uz4Flow.
 
 Em poucas palavras, ela junta CRM, automação de mensagens, IA e funis de venda — tudo num único painel. O resultado é: zero lead perdido, follow-up no automático, e equipe focada em fechar negócios.
 
@@ -60,7 +60,7 @@ Abraço!`;
 "Eu também perdia. Cliente mandava mensagem, ficava sem resposta, esquecia o follow-up… era um caos."
 
 [12-22s] SOLUÇÃO
-"Aí descobri a OpenFlow: CRM, IA e automação tudo junto. Hoje todo lead é respondido, qualificado e movido no funil sem eu precisar lembrar."
+"Aí descobri a Uz4Flow: CRM, IA e automação tudo junto. Hoje todo lead é respondido, qualificado e movido no funil sem eu precisar lembrar."
 
 [22-30s] CTA
 "Tá com condição especial pra quem entra com meu link. Tá na descrição. Vai lá!"
@@ -74,7 +74,7 @@ Abraço!`;
   ];
 
   const tips = [
-    "Use seu próprio caso: conte como a OpenFlow resolveu UM problema específico seu",
+    "Use seu próprio caso: conte como a Uz4Flow resolveu UM problema específico seu",
     "Stories funcionam muito bem — faça enquetes (ex: 'Quem aqui perde lead no WhatsApp?')",
     "Indique pra quem JÁ tem volume de mensagem (lojistas, infoprodutores, prestadores)",
     "Acompanhe pelo painel quem clicou e ainda não converteu — aqueça com mensagem direta",

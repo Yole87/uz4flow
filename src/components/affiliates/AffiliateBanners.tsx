@@ -18,7 +18,7 @@ const BANNERS: BannerSpec[] = [
   { label: "Banner Horizontal", width: 1200, height: 630, description: "Facebook, OG image, e-mail" },
 ];
 
-const FALLBACK_LINK = "https://openflow.studio";
+const FALLBACK_LINK = "https://uz4flow.lovable.app";
 
 // Escape XML/SVG special chars to neutralize injection via interpolated user input.
 function escapeXml(unsafe: string): string {
@@ -77,7 +77,7 @@ function bannerSvg(spec: BannerSpec, link: string, code: string, pct: number, fo
   <rect width="${spec.width}" height="${spec.height}" fill="url(#bg-${spec.width}x${spec.height})"/>
   <rect width="${spec.width}" height="${spec.height}" fill="url(#glow-${spec.width}x${spec.height})"/>
   <g font-family="system-ui, -apple-system, sans-serif" fill="white">
-    <text x="${padding}" y="${padding + 60}" font-size="${ctaSize}" font-weight="700" fill="#ec4899" letter-spacing="4">OPENFLOW · AFILIADOS</text>
+    <text x="${padding}" y="${padding + 60}" font-size="${ctaSize}" font-weight="700" fill="#ec4899" letter-spacing="4">UZ4FLOW · AFILIADOS</text>
     <text x="${padding}" y="${spec.height / 2 - titleSize / 2}" font-size="${titleSize}" font-weight="900">Ganhe até</text>
     <text x="${padding}" y="${spec.height / 2 + titleSize / 2 + 10}" font-size="${titleSize * 1.4}" font-weight="900" fill="url(#accent-${spec.width}x${spec.height})">${safePct}%</text>
     <text x="${padding}" y="${spec.height / 2 + titleSize * 1.4 + 50}" font-size="${subSize}" font-weight="600" opacity="0.95">comissão recorrente</text>
@@ -93,7 +93,7 @@ function downloadSvg(spec: BannerSpec, link: string, code: string, pct: number) 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `openflow-afiliado-${spec.width}x${spec.height}.svg`;
+  a.download = `uz4flow-afiliado-${spec.width}x${spec.height}.svg`;
   a.click();
   URL.revokeObjectURL(url);
   toast.success("SVG baixado!");
@@ -129,7 +129,7 @@ async function downloadPng(spec: BannerSpec, link: string, code: string, pct: nu
       const pngUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = pngUrl;
-      a.download = `openflow-afiliado-${spec.width}x${spec.height}.png`;
+      a.download = `uz4flow-afiliado-${spec.width}x${spec.height}.png`;
       a.click();
       URL.revokeObjectURL(pngUrl);
       toast.success("PNG baixado!");

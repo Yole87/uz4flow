@@ -150,7 +150,7 @@ export function AppSidebar() {
             <Zap className="h-5 w-5 text-white" />
           </div>
            <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">OpenFlow</h1>
+            <h1 className="text-lg font-bold text-sidebar-foreground">Uz4Flow</h1>
           </div>
         </Link>
       </SidebarHeader>

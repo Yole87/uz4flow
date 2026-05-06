@@ -26,7 +26,7 @@ export function WelcomeDialog({ open, onOpenChange, onStart, onSkip }: WelcomeDi
             <Rocket className="h-7 w-7 text-white" />
           </div>
           <DialogTitle className="text-center text-xl sm:text-2xl">
-            Bem-vindo ao OpenFlow{firstName ? `, ${firstName}` : ""}! 🎉
+            Bem-vindo ao Uz4Flow{firstName ? `, ${firstName}` : ""}! 🎉
           </DialogTitle>
           <DialogDescription className="text-center text-sm">
             Vamos configurar seu CRM em <strong className="text-foreground">5 passos</strong> — leva

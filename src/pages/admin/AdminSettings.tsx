@@ -867,7 +867,7 @@ export default function AdminSettings() {
                 </CardTitle>
                 <CardDescription>
                   Edite o prompt de sistema que define o comportamento e conhecimento da LIA. 
-                  Se vazio, será usado o prompt padrão com toda a documentação do OpenFlow.
+                  Se vazio, será usado o prompt padrão com toda a documentação do Uz4Flow.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

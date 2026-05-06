@@ -500,7 +500,7 @@ export default function Dashboard() {
   const totalActiveCampaigns = stats.scheduledCampaigns + stats.runningCampaigns + stats.voiceCalls;
 
   return (
-    <AppLayout title="Dashboard" description="Visão geral do OpenFlow">
+    <AppLayout title="Dashboard" description="Visão geral do Uz4Flow">
       <div className="space-y-5 sm:space-y-6 animate-fade-in">
         <LimitAlert feature="analytics" className="mb-4" />
 
@@ -516,7 +516,7 @@ export default function Dashboard() {
                   <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-base sm:text-lg">Bem-vindo ao OpenFlow! 🎉</h3>
+                  <h3 className="font-semibold text-base sm:text-lg">Bem-vindo ao Uz4Flow! 🎉</h3>
                   <p className="text-sm text-muted-foreground hidden sm:block">Configure sua integração com o Sistema de WhatsApp AI para começar.</p>
                 </div>
               </div>

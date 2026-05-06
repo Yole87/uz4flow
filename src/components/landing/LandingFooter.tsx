@@ -11,7 +11,7 @@ interface LandingFooterProps {
 
 export function LandingFooter({ 
   appName, 
-  supportEmail = "suporte@openflow.studio",
+  supportEmail = "suporte@uz4flow.lovable.app",
   termsUrl = "/termos",
   privacyUrl = "/privacidade"
 }: LandingFooterProps) {

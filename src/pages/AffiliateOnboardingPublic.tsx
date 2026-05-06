@@ -97,7 +97,7 @@ export default function AffiliateOnboardingPublic() {
               <Handshake className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle>Seja afiliado OpenFlow</CardTitle>
+              <CardTitle>Seja afiliado Uz4Flow</CardTitle>
               <CardDescription>Crie sua conta para indicar e ganhar</CardDescription>
             </div>
           </div>

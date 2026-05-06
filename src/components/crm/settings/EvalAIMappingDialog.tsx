@@ -178,7 +178,7 @@ export function EvalAIMappingDialog({ variables, onApplyTemplate }: Props) {
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground">
                 Cole abaixo um exemplo do payload JSON que o sistema de destino espera receber.
-                A IA vai analisar e mapear automaticamente as variáveis do OpenFlow para os campos do destino.
+                A IA vai analisar e mapear automaticamente as variáveis do Uz4Flow para os campos do destino.
               </p>
             </div>
 
@@ -251,7 +251,7 @@ export function EvalAIMappingDialog({ variables, onApplyTemplate }: Props) {
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
                       <th className="px-3 py-2 text-left text-xs text-muted-foreground font-medium">
-                        Origem (OpenFlow)
+                        Origem (Uz4Flow)
                       </th>
                       <th className="px-1 py-2 w-8"></th>
                       <th className="px-3 py-2 text-left text-xs text-muted-foreground font-medium">

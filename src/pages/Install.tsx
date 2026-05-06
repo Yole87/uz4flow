@@ -33,13 +33,13 @@ export default function Install() {
   };
 
   return (
-    <AppLayout title="Instalar App" description="Instale o OpenFlow no seu dispositivo">
+    <AppLayout title="Instalar App" description="Instale o Uz4Flow no seu dispositivo">
       <div className="max-w-2xl mx-auto space-y-6 animate-fade-in flex-1 flex flex-col justify-start">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <img src="/pwa-icon-192.png" alt="OpenFlow" className="h-16 w-16 rounded-2xl" />
+            <img src="/pwa-icon-192.png" alt="Uz4Flow" className="h-16 w-16 rounded-2xl" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Instale o OpenFlow</h1>
+          <h1 className="text-2xl font-bold text-foreground">Instale o Uz4Flow</h1>
           <p className="text-muted-foreground">
             Acesse todas as funcionalidades direto da tela inicial do seu celular ou computador
           </p>
@@ -75,9 +75,9 @@ export default function Install() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <ol className="list-decimal list-inside space-y-1.5">
-              <li>Abra o OpenFlow no <strong className="text-foreground">Chrome</strong> ou <strong className="text-foreground">Edge</strong></li>
+              <li>Abra o Uz4Flow no <strong className="text-foreground">Chrome</strong> ou <strong className="text-foreground">Edge</strong></li>
               <li>Clique no ícone de <strong className="text-foreground">instalar</strong> (⊕) na barra de endereço</li>
-              <li>Ou acesse o menu <strong className="text-foreground">⋮ → "Instalar OpenFlow"</strong></li>
+              <li>Ou acesse o menu <strong className="text-foreground">⋮ → "Instalar Uz4Flow"</strong></li>
               <li>Confirme clicando em <strong className="text-foreground">"Instalar"</strong></li>
             </ol>
             <p className="text-xs text-muted-foreground/70 mt-2">
@@ -96,7 +96,7 @@ export default function Install() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <ol className="list-decimal list-inside space-y-1.5">
-              <li>Abra o OpenFlow no Chrome</li>
+              <li>Abra o Uz4Flow no Chrome</li>
               <li>Toque no menu <strong className="text-foreground">⋮</strong> (3 pontos)</li>
               <li>Selecione <strong className="text-foreground">"Adicionar à tela inicial"</strong></li>
               <li>Confirme tocando em <strong className="text-foreground">"Adicionar"</strong></li>
@@ -114,7 +114,7 @@ export default function Install() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <ol className="list-decimal list-inside space-y-1.5">
-              <li>Abra o OpenFlow no <strong className="text-foreground">Safari</strong></li>
+              <li>Abra o Uz4Flow no <strong className="text-foreground">Safari</strong></li>
               <li>Toque no botão <Share className="h-3.5 w-3.5 inline" /> (compartilhar)</li>
               <li>Role para baixo e selecione <strong className="text-foreground">"Adicionar à Tela de Início"</strong></li>
               <li>Toque em <strong className="text-foreground">"Adicionar"</strong></li>

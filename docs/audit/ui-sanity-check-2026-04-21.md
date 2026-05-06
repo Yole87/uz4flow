@@ -1,4 +1,4 @@
-# Sanity Check UI OpenFlow — 2026-04-21
+# Sanity Check UI Uz4Flow — 2026-04-21
 
 Verificação pós-Ondas A–E. Esta auditoria **não corrige** nada — apenas reporta o estado atual de `src/` após 5 ondas de polimento de UI.
 

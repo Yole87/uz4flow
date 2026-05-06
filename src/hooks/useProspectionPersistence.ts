@@ -10,8 +10,8 @@ import { useUserOrganization } from "./useUserOrganization";
  * via `markAsSaved()` (após enviar leads ao CRM, exportar, etc.).
  */
 
-const STORAGE_KEY_PREFIX = "openflow:prospection:last:";
-const HISTORY_KEY_PREFIX = "openflow:prospection:history:";
+const STORAGE_KEY_PREFIX = "uz4flow:prospection:last:";
+const HISTORY_KEY_PREFIX = "uz4flow:prospection:history:";
 const MAX_HISTORY = 3;
 
 export interface PersistedProspection {

@@ -1,4 +1,4 @@
-# OpenFlow
+# Uz4Flow
 
 Plataforma de automação e CRM para WhatsApp com inteligência artificial.
 

@@ -11,7 +11,7 @@ export default function McpGateway() {
         <div className="mb-6 space-y-1">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">MCP Gateway</h1>
           <p className="text-sm text-muted-foreground">
-            Configure endpoints MCP para expor dados e ações do seu OpenFlow a agentes externos.
+            Configure endpoints MCP para expor dados e ações do seu Uz4Flow a agentes externos.
           </p>
         </div>
         <LimitAlert feature="mcp_gateway" className="mb-6" />

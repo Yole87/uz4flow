@@ -79,7 +79,7 @@ export function OnboardingChecklist() {
               <Rocket className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-base sm:text-lg">Configure seu OpenFlow</h3>
+              <h3 className="font-semibold text-base sm:text-lg">Configure seu Uz4Flow</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
                 {completedCount === totalSteps
                   ? "Tudo pronto! 🎉"

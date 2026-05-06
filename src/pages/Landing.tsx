@@ -114,7 +114,7 @@ export default function Landing() {
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center neon-glow-pink animate-pulse" />
           <span className="text-2xl font-bold text-foreground">
-            {generalSettings?.app_name || "OpenFlow"}
+            {generalSettings?.app_name || "Uz4Flow"}
           </span>
         </div>
         <div className="w-full max-w-2xl space-y-4">
@@ -130,7 +130,7 @@ export default function Landing() {
     );
   }
 
-  const appName = generalSettings?.app_name || "OpenFlow";
+  const appName = generalSettings?.app_name || "Uz4Flow";
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">

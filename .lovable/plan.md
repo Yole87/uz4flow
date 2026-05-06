@@ -1,104 +1,107 @@
-## Diagnóstico
+## Objetivo
 
-Os erros permanecem porque há dois problemas separados no fluxo atual:
+Renomear toda a marca **OpenFlow** para **Uz4Flow** em todo o projeto (frontend, backend/edge functions, landing pages, manifestos PWA, documentos legais e arquivos de auditoria).
 
-1. **CORS da função está bloqueando a URL deste projeto remixado.**
-   - A função responde com `Access-Control-Allow-Origin: https://openbot-connector.lovable.app`, enquanto a UI está em `https://id-preview--dbd892a4-184b-42d6-96f4-582bff75db13.lovable.app`.
-   - Por isso o navegador mostra `Failed to fetch` e a interface não consegue salvar/testar o token.
+Foram encontradas **111 ocorrências** distribuídas em **44 arquivos**.
 
-2. **A função ainda prioriza `MERCADOPAGO_ACCESS_TOKEN` do ambiente.**
-   - Isso conflita com o requisito: as keys devem ser configuradas pela interface do usuário.
-   - O banco mostra `mercadopago.access_token_configured = true`, mas não existe `mercadopago_access_token_encrypted`, então o status visual ficou positivo sem token realmente salvo.
+## Regras de substituição
 
-## Feature 1 — Liberar CORS para projetos remixados
+Aplicar substituição case-sensitive preservando a capitalização original:
 
-Atualizar `supabase/functions/_shared/cors.ts` para aceitar:
+- `OpenFlow` → `Uz4Flow`
+- `OPENFLOW` → `UZ4FLOW`
+- `openflow` → `uz4flow` (apenas em strings de UI/copy, identificadores em chaves de storage como `openflow:prospection:...` serão migrados para `uz4flow:prospection:...`)
+- `OpenFlowCRM` → `Uz4FlowCRM` (vendor string em webm-to-ogg)
 
-- URL publicada atual do projeto.
-- Preview atual do remix.
-- Qualquer preview Lovable deste projeto.
-- Origens Lovable seguras usadas em preview/desenvolvimento.
+## Domínios e e-mails
 
-Resultado esperado:
+- `openflow.studio` → `uz4flow.lovable.app` (já é a URL publicada do projeto, conforme project URLs)
+- `suporte@openflow.studio` → `suporte@uz4flow.com` (placeholder — confirme em pergunta)
+- `@openflow.studio` (handle Instagram em copy de afiliado) → `@uz4flow`
+- CORS allow-list em `supabase/functions/_shared/cors.ts`: trocar `https://openflow.studio` e `https://www.openflow.studio` por `https://uz4flow.lovable.app`
+- Fallbacks `FRONTEND_URL` em edge functions (`gdrive-oauth-callback`, `instagram-oauth`): trocar para `https://uz4flow.lovable.app`
 
-- `save-access-token`, `get-access-token` e `test-connection` deixam de falhar com `Failed to fetch`.
-- A UI passa a receber respostas reais da função.
+## Arquivos a editar (agrupados)
 
-## Feature 2 — Mercado Pago 100% gerenciado pela interface
+**Configuração / Meta**
+- `index.html` (title, description, author, OG, Twitter)
+- `vite.config.ts` (manifest PWA name/short_name)
+- `README.md`
+- `supabase/functions/pwa-manifest/index.ts` (default `appName`)
 
-Refatorar `supabase/functions/mercadopago-subscription/index.ts` para:
+**Landing & páginas públicas**
+- `src/pages/Landing.tsx` (fallback `app_name`)
+- `src/pages/PrivacyPolicy.tsx`
+- `src/pages/TermsOfService.tsx`
+- `src/pages/Auth.tsx`
+- `src/pages/Install.tsx`
+- `src/components/landing/LandingFAQ.tsx`
+- `src/components/landing/LandingFooter.tsx`
+- `src/components/landing/LandingPricing.tsx`
+- `src/components/landing/LandingTestimonials.tsx`
 
-- Remover a prioridade de `Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")` no fluxo principal.
-- Resolver o Access Token exclusivamente de `saas_settings.key = 'mercadopago_access_token_encrypted'`.
-- Manter criptografia AES-256-GCM via helper existente.
-- Preservar checagem de `admin_master` para salvar/revelar token.
-- Retornar erro amigável quando não houver token salvo pela UI.
+**App (sidebar, dashboard, onboarding, LIA, planos)**
+- `src/components/layout/AppSidebar.tsx`
+- `src/components/layout/MyPlanCard.tsx`
+- `src/components/lia/LiaChatPanel.tsx`
+- `src/components/onboarding/OnboardingChecklist.tsx`
+- `src/components/onboarding/WelcomeDialog.tsx`
+- `src/components/SubscriptionGuard.tsx`
+- `src/pages/Dashboard.tsx`
+- `src/pages/McpGateway.tsx`
 
-Resultado esperado:
-
-- O token digitado na tela de Admin Settings vira a fonte oficial.
-- Secrets do Lovable deixam de interferir no Mercado Pago.
-
-## Feature 3 — Corrigir estado inconsistente da UI
-
-Ajustar `src/pages/admin/AdminSettings.tsx` para:
-
-- Não marcar “Access Token configurado” apenas porque o JSON `mercadopago.access_token_configured` está `true`.
-- Validar o status real chamando `get-access-token`.
-- Só exibir “Access Token configurado” se houver token criptografado recuperável no backend.
-- Ao salvar token, atualizar o estado local somente depois de resposta positiva da função.
-- Alterar o texto “secret do projeto” para “armazenado criptografado nas configurações do sistema”.
-- Melhorar a mensagem quando CORS/rede falhar, apontando para erro de comunicação com a função, não credencial inválida.
-
-Resultado esperado:
-
-- A tela não mostra falso positivo.
-- O admin sabe se o token realmente foi salvo.
-
-## Feature 4 — Webhook usando o mesmo token da interface
-
-Atualizar `supabase/functions/mercadopago-webhook/index.ts` para:
-
-- Buscar o Access Token criptografado em `saas_settings` como fonte principal.
-- Não depender de `MERCADOPAGO_ACCESS_TOKEN` para consultar detalhes de pagamento/assinatura.
-- Manter `MERCADOPAGO_WEBHOOK_SECRET` apenas se já for usado para validação de assinatura, pois ele é um segredo técnico do webhook, não a credencial principal do gateway.
-
-Resultado esperado:
-
-- Pagamentos e notificações IPN usam a mesma credencial configurada na interface.
-
-## Feature 5 — Limpeza de configuração inválida
-
-Criar uma correção de dados idempotente para:
-
-- Ajustar `mercadopago.access_token_configured` para `false` se não existir token criptografado em `mercadopago_access_token_encrypted`.
-- Preservar `public_key` já configurada.
-
-Resultado esperado:
-
-- O badge verde só aparece quando há credencial real salva.
-
-## Feature 6 — Validação pós-correção
-
-Depois de implementar:
-
-- Testar a função diretamente com `test-connection` antes de salvar token, esperando erro amigável “token não configurado”.
-- Testar CORS simulando origem do preview atual.
-- Confirmar no banco que o status não fica positivo sem token criptografado.
-- Conferir logs da função para garantir que não há erro interno.
-
-## Arquivos envolvidos
-
-- `supabase/functions/_shared/cors.ts`
-- `supabase/functions/mercadopago-subscription/index.ts`
-- `supabase/functions/mercadopago-webhook/index.ts`
+**Settings / Integrações / CRM**
+- `src/components/settings/CRMCredentialsTab.tsx`
+- `src/components/settings/FlowsCredentialsTab.tsx`
+- `src/components/settings/IntegrationHelpAside.tsx`
+- `src/components/crm/settings/EvalAIMappingDialog.tsx`
+- `src/components/docs/DocsContent.tsx`
 - `src/pages/admin/AdminSettings.tsx`
-- Correção idempotente em `saas_settings`
 
-## Critério de aceite
+**Afiliados**
+- `src/components/affiliates/AffiliateBanners.tsx` (texto SVG, nomes de download, link fallback)
+- `src/components/affiliates/AffiliateCopyTemplates.tsx` (copy WhatsApp/Instagram/email)
+- `src/components/affiliates/AffiliateHero.tsx`
+- `src/components/affiliates/AffiliateOnboardingForm.tsx`
+- `src/pages/AffiliateOnboardingPublic.tsx`
+- `src/pages/admin/AdminAffiliates.tsx`
 
-- Salvar Access Token pela UI não retorna mais `Failed to send a request to the Edge Function`.
-- Testar conexão usa o token salvo pela UI.
-- A UI não depende de secrets do Lovable para Mercado Pago.
-- “Access Token configurado” só aparece quando existe token criptografado salvo.
-- Webhook/IPN usa a credencial salva pela UI.
+**Hooks / chaves de storage**
+- `src/hooks/useProspectionPersistence.ts` (prefixos `openflow:prospection:*` → `uz4flow:prospection:*`)
+
+**Edge functions (backend)**
+- `supabase/functions/_shared/cors.ts`
+- `supabase/functions/_shared/webm-to-ogg.ts` (`OpenFlowCRM` → `Uz4FlowCRM`)
+- `supabase/functions/crm-test-openbot/index.ts`
+- `supabase/functions/gdrive-oauth-callback/index.ts`
+- `supabase/functions/instagram-oauth/index.ts`
+- `supabase/functions/lia-chat/index.ts` (system prompt da LIA)
+- `supabase/functions/manage-integration/index.ts`
+- `supabase/functions/webhook-eval-ai-mapping/index.ts`
+
+**Documentação interna**
+- `docs/audit/ui-audit-2026-04-21.md`
+- `docs/audit/ui-sanity-check-2026-04-21.md`
+
+## Configuração dinâmica em banco
+
+A tabela `saas_settings` (key `general`) contém um campo `app_name` que pode estar setado como `"OpenFlow"`. Vou rodar uma migration para atualizar:
+
+```sql
+UPDATE public.saas_settings
+SET value = jsonb_set(value, '{app_name}', '"Uz4Flow"')
+WHERE key = 'general' AND value->>'app_name' = 'OpenFlow';
+```
+
+## Itens fora de escopo (não serão alterados)
+
+- Memórias do projeto (`mem://`) — atualizadas separadamente se necessário.
+- O ID do projeto Supabase, refs de integração, nomes de tabelas e funções já existentes no banco (somente o conteúdo `app_name` é atualizado).
+- O nome do diretório `crm-test-openbot` (mantém — refere-se ao produto de terceiro "OpenBot", não a "OpenFlow").
+- Arquivos `.lovable/plan.md` (artefato interno de planejamento).
+
+## Perguntas para confirmar antes de executar
+
+1. **Domínio do site / e-mail de suporte**: usar `https://uz4flow.lovable.app` e `suporte@uz4flow.com`? Ou você tem outro domínio próprio?
+2. **Razão social** em Termos e Privacidade: hoje aparece **"Open Bot AI" (CNPJ 63.185.666/0001-81)** — devo manter essa razão social ou trocar também?
+3. **Handle Instagram dos afiliados** (`@openflow.studio`): trocar para `@uz4flow`?

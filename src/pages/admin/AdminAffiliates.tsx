@@ -600,8 +600,8 @@ function SettingsTab() {
           </div>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <Label className="block">Permitir tráfego pago na marca "OpenFlow"</Label>
-              <p className="text-xs text-muted-foreground">Permite usar o termo "OpenFlow" em campanhas pagas (Google/Meta Ads).</p>
+              <Label className="block">Permitir tráfego pago na marca "Uz4Flow"</Label>
+              <p className="text-xs text-muted-foreground">Permite usar o termo "Uz4Flow" em campanhas pagas (Google/Meta Ads).</p>
             </div>
             <Switch checked={form.allow_paid_traffic_on_brand}
               onCheckedChange={(v) => setField("allow_paid_traffic_on_brand", v)} />

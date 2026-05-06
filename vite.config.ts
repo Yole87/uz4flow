@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => ({
       devOptions: { enabled: false },
       includeAssets: ["pwa-icon-192.png", "pwa-icon-512.png", "favicon.ico"],
       manifest: {
-        name: "OpenFlow",
-        short_name: "OpenFlow",
+        name: "Uz4Flow",
+        short_name: "Uz4Flow",
         description: "Automação WhatsApp Business",
         theme_color: "#000000",
         background_color: "#000000",

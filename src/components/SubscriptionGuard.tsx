@@ -106,7 +106,7 @@ export function SubscriptionGuard({
       <BlockedScreen
         icon={<CreditCard className="h-12 w-12 text-primary" />}
         title="Escolha um Plano"
-        description="Para começar a usar o OpenFlow, você precisa escolher um plano de assinatura."
+        description="Para começar a usar o Uz4Flow, você precisa escolher um plano de assinatura."
         actionLabel="Ver Planos"
         actionUrl="/conheca"
       />
@@ -121,7 +121,7 @@ export function SubscriptionGuard({
         title="Acesso Bloqueado"
         description={organization.block_reason || "Sua organização está temporariamente bloqueada. Entre em contato com o suporte para mais informações."}
         actionLabel="Entrar em Contato"
-        actionUrl="mailto:suporte@openflow.studio"
+        actionUrl="mailto:suporte@uz4flow.lovable.app"
       />
     );
   }
