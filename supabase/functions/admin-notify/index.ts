@@ -106,6 +106,7 @@ Deno.serve(async (req) => {
     // Send execution guard: trusted internal callers only.
     //  1) x-cron-secret header == CRON_SECRET (DB triggers via notify_admin_async)
     //  2) Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY> (server-to-server)
+    //  3) admin_master JWT (UI test/manual send)
     {
       const cronHeader = req.headers.get("x-cron-secret") || "";
       const cronSecret = Deno.env.get("CRON_SECRET") || "";
@@ -116,7 +117,25 @@ Deno.serve(async (req) => {
       const cronOk = !!cronSecret && cronHeader === cronSecret;
       const serviceOk = !!serviceRoleKey && bearer === serviceRoleKey;
 
-      if (!cronOk && !serviceOk) {
+      let adminOk = false;
+      if (!cronOk && !serviceOk && authHeader.startsWith("Bearer ")) {
+        try {
+          const userClient = createClient(
+            Deno.env.get("SUPABASE_URL")!,
+            Deno.env.get("SUPABASE_ANON_KEY")!,
+            { global: { headers: { Authorization: authHeader } } },
+          );
+          const { data: userData } = await userClient.auth.getUser();
+          if (userData?.user) {
+            const { data: isAdmin } = await userClient.rpc("is_admin_master");
+            adminOk = !!isAdmin;
+          }
+        } catch (e) {
+          console.error("admin-notify send-guard auth check failed:", (e as any)?.message);
+        }
+      }
+
+      if (!cronOk && !serviceOk && !adminOk) {
         return new Response(JSON.stringify({ error: "unauthorized" }), {
           status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
