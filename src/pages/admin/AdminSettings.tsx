@@ -241,12 +241,12 @@ export default function AdminSettings() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Test connection error:", error);
       setConnectionStatus("error");
       toast({
         title: "Erro ao testar conexão",
-        description: "Verifique se o Access Token está configurado corretamente",
+        description: error?.message || "Não foi possível contatar o serviço. Tente novamente.",
         variant: "destructive",
       });
     } finally {
