@@ -332,15 +332,41 @@ Deno.serve(async (req) => {
 
     // Handle test connection - requires access token
     if (body.action === "test-connection") {
-      const token = await requireAccessToken(serviceClient);
+      let token: string;
+      try {
+        token = await requireAccessToken(serviceClient);
+      } catch {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Access Token não configurado. Cole o token na seção Credenciais e clique em Salvar antes de testar.",
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const response = await callMercadoPago("/users/me", "GET", token);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("MP connection test failed:", errorText);
+        console.error("MP connection test failed:", response.status, errorText);
+        let mpMessage = "";
+        try {
+          const parsed = JSON.parse(errorText);
+          mpMessage = parsed?.message || parsed?.error || "";
+        } catch { /* not JSON */ }
+
+        let friendly = `Token rejeitado pela Mercado Pago (HTTP ${response.status}).`;
+        if (response.status === 401) {
+          friendly = "Token rejeitado pela Mercado Pago (401). Verifique se copiou o Access Token correto da sua conta (produção ou teste) em Painel MP → Suas integrações → Credenciais.";
+        } else if (response.status === 403) {
+          friendly = "Token sem permissão (403). Confirme se o Access Token tem escopo de pagamentos/assinaturas.";
+        }
+        if (mpMessage) friendly += ` Detalhe: ${mpMessage}`;
+
         return new Response(
-          JSON.stringify({ success: false, error: "Failed to connect to Mercado Pago" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ success: false, error: friendly }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
