@@ -636,7 +636,7 @@ export default function AdminSettings() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Token de acesso para integração backend. Será armazenado de forma segura como secret do projeto.
+                    Token de acesso para integração backend. Será armazenado criptografado nas configurações do sistema (não depende de secrets externos).
                   </p>
                   {mpSettings.access_token_configured ? (
                     <div className="flex items-center gap-2 p-2 border border-green-500/30 rounded-lg bg-green-500/5">
