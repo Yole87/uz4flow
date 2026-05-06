@@ -212,26 +212,33 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub as string;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ── Rate limiting: 3 req/min per user ──
-    const windowStart = new Date(Date.now() - 60 * 1000).toISOString();
-    const { count: rlCount } = await serviceClient
-      .from("rate_limits")
-      .select("*", { count: "exact", head: true })
-      .eq("identifier", userId)
-      .eq("endpoint", "mercadopago-subscription")
-      .gte("window_start", windowStart);
-
-    if ((rlCount || 0) >= 3) {
-      return new Response(
-        JSON.stringify({ error: "Muitas tentativas. Aguarde um minuto." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    await serviceClient.from("rate_limits").insert({
-      identifier: userId,
-      endpoint: "mercadopago-subscription",
-      window_start: new Date().toISOString(),
+    // ── Rate limiting: skip for admin_master, 30 req/min for others ──
+    const { data: isAdminMaster } = await serviceClient.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin_master",
     });
+
+    if (!isAdminMaster) {
+      const windowStart = new Date(Date.now() - 60 * 1000).toISOString();
+      const { count: rlCount } = await serviceClient
+        .from("rate_limits")
+        .select("*", { count: "exact", head: true })
+        .eq("identifier", userId)
+        .eq("endpoint", "mercadopago-subscription")
+        .gte("window_start", windowStart);
+
+      if ((rlCount || 0) >= 30) {
+        return new Response(
+          JSON.stringify({ error: "Muitas tentativas. Aguarde um minuto." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      await serviceClient.from("rate_limits").insert({
+        identifier: userId,
+        endpoint: "mercadopago-subscription",
+        window_start: new Date().toISOString(),
+      });
+    }
 
     const body: RequestBody = await req.json();
 
