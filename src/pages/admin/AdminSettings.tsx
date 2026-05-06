@@ -247,9 +247,12 @@ export default function AdminSettings() {
     } catch (error: any) {
       console.error("Test connection error:", error);
       setConnectionStatus("error");
+      const isNetwork = /Failed to (send|fetch)/i.test(error?.message || "");
       toast({
         title: "Erro ao testar conexão",
-        description: error?.message || "Não foi possível contatar o serviço. Tente novamente.",
+        description: isNetwork
+          ? "Não foi possível contatar o serviço (CORS/rede). Recarregue a página e tente novamente."
+          : error?.message || "Não foi possível contatar o serviço. Tente novamente.",
         variant: "destructive",
       });
     } finally {
