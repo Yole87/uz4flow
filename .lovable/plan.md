@@ -1,50 +1,104 @@
+## Diagnóstico
 
-# Plano de Correção
+Os erros permanecem porque há dois problemas separados no fluxo atual:
 
-Após o remix, dois problemas foram identificados:
+1. **CORS da função está bloqueando a URL deste projeto remixado.**
+   - A função responde com `Access-Control-Allow-Origin: https://openbot-connector.lovable.app`, enquanto a UI está em `https://id-preview--dbd892a4-184b-42d6-96f4-582bff75db13.lovable.app`.
+   - Por isso o navegador mostra `Failed to fetch` e a interface não consegue salvar/testar o token.
 
-1. As abas **Eventos** e **Templates** de Notificações estão vazias — as tabelas `admin_notification_rules` e `admin_notification_templates` existem mas nunca foram populadas (a migração original cria a estrutura mas não tem seed).
-2. O botão **Testar Conexão** do Mercado Pago retorna "Verifique se o Access Token está configurado corretamente", mesmo com o secret `MERCADOPAGO_ACCESS_TOKEN` recém-atualizado.
+2. **A função ainda prioriza `MERCADOPAGO_ACCESS_TOKEN` do ambiente.**
+   - Isso conflita com o requisito: as keys devem ser configuradas pela interface do usuário.
+   - O banco mostra `mercadopago.access_token_configured = true`, mas não existe `mercadopago_access_token_encrypted`, então o status visual ficou positivo sem token realmente salvo.
 
-Divido a correção em duas features independentes.
+## Feature 1 — Liberar CORS para projetos remixados
 
----
+Atualizar `supabase/functions/_shared/cors.ts` para aceitar:
 
-## Feature 1 — Seed das Notificações Administrativas
+- URL publicada atual do projeto.
+- Preview atual do remix.
+- Qualquer preview Lovable deste projeto.
+- Origens Lovable seguras usadas em preview/desenvolvimento.
 
-**Objetivo:** popular as 10 regras de evento e os 10 templates padrão exibidos na captura de tela (Novo cadastro grátis, Plano grátis vencendo, Upgrade grátis → pago, Mudança de plano, Pagamento recebido, Cancelamento por reembolso, Cancelamento por inadimplência, Pedido de afiliação, Novo indicado por afiliado, Pedido de saque de afiliado).
+Resultado esperado:
 
-**Ações:**
-- Criar migration que faz `INSERT ... ON CONFLICT DO NOTHING` em:
-  - `admin_notification_templates` — uma linha por `event_type` do enum `admin_notif_event`, com `name`, `body` (texto com placeholders `{user_name}`, `{user_email}`, `{plan_name}`, `{amount}`, `{date}`, `{affiliate_name}`, `{affiliate_code}`, `{status}`, `{reason}`, `{days}`, `{net_amount}`, `{pix_key}`) e `variables[]` correspondentes.
-  - `admin_notification_rules` — uma linha por `event_type` com `enabled = true` e `template_id` referenciando o template recém-criado.
-- Conteúdo dos textos seguindo exatamente o que aparece na captura "TEMPLATES" enviada.
-- Seed idempotente, seguro para rodar em qualquer ambiente.
+- `save-access-token`, `get-access-token` e `test-connection` deixam de falhar com `Failed to fetch`.
+- A UI passa a receber respostas reais da função.
 
-**Resultado:** ao abrir `/admin/notifications`, ambas as abas Eventos e Templates aparecem populadas.
+## Feature 2 — Mercado Pago 100% gerenciado pela interface
 
----
+Refatorar `supabase/functions/mercadopago-subscription/index.ts` para:
 
-## Feature 2 — Diagnóstico e Correção do "Testar Conexão" do Mercado Pago
+- Remover a prioridade de `Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")` no fluxo principal.
+- Resolver o Access Token exclusivamente de `saas_settings.key = 'mercadopago_access_token_encrypted'`.
+- Manter criptografia AES-256-GCM via helper existente.
+- Preservar checagem de `admin_master` para salvar/revelar token.
+- Retornar erro amigável quando não houver token salvo pela UI.
 
-**Causa provável:** a edge function `mercadopago-subscription` lê o token primeiro de `Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")` e cai no fallback do `saas_settings.mercadopago_access_token_encrypted`. Como esse registro não existe no banco do projeto remixado, a conexão depende exclusivamente do secret de ambiente. Se o token enviado for inválido (ex.: copiado errado, expirado, ou de outra conta), a Meta API retorna 401 e o frontend mostra a mensagem genérica "Verifique se o Access Token está configurado corretamente".
+Resultado esperado:
 
-**Ações:**
-1. **Melhorar o erro retornado** pela edge function `mercadopago-subscription` no branch `test-connection`:
-   - Em vez de "Failed to connect to Mercado Pago", retornar o status HTTP e mensagem da Mercado Pago (ex.: `invalid_access_token`, `token expired`) — mantendo a sanitização para não vazar segredos.
-   - Distinguir explicitamente entre "token não configurado" e "token rejeitado pela MP".
-2. **Atualizar o frontend** (`src/pages/admin/AdminSettings.tsx`) para exibir o `data.error` real no toast em vez do texto genérico, ajudando o usuário a entender se precisa salvar de novo o token ou gerar um novo no painel da Mercado Pago.
-3. **Salvar o token também via UI no banco (criptografado)** usando o fluxo já existente `save-access-token`, para que o app não dependa apenas do secret de ambiente. O campo `Access Token` na tela já existe — basta orientar o usuário a colar o token e clicar em Salvar antes de Testar.
-4. **Documentar no toast** que após salvar o token via UI, o teste passa a usar o valor do banco (criptografado AES-256-GCM), independente do secret.
+- O token digitado na tela de Admin Settings vira a fonte oficial.
+- Secrets do Lovable deixam de interferir no Mercado Pago.
 
-**Resultado:** ao clicar "Testar Conexão", o usuário recebe uma mensagem clara (ex.: "Token rejeitado pela Mercado Pago — verifique se copiou o Access Token correto da sua conta de produção") e tem caminho claro para corrigir.
+## Feature 3 — Corrigir estado inconsistente da UI
 
----
+Ajustar `src/pages/admin/AdminSettings.tsx` para:
 
-## Detalhes técnicos
+- Não marcar “Access Token configurado” apenas porque o JSON `mercadopago.access_token_configured` está `true`.
+- Validar o status real chamando `get-access-token`.
+- Só exibir “Access Token configurado” se houver token criptografado recuperável no backend.
+- Ao salvar token, atualizar o estado local somente depois de resposta positiva da função.
+- Alterar o texto “secret do projeto” para “armazenado criptografado nas configurações do sistema”.
+- Melhorar a mensagem quando CORS/rede falhar, apontando para erro de comunicação com a função, não credencial inválida.
 
-- **Migrations:** apenas `INSERT` em tabelas `public.admin_notification_*`. Sem alteração de schema, sem afetar RLS existente.
-- **Edge function:** apenas o branch `test-connection` (linhas 334–360 de `supabase/functions/mercadopago-subscription/index.ts`) precisa ser ajustado. Sem mudança em outros endpoints.
-- **Frontend:** ajuste localizado em `AdminSettings.tsx` (função `testConnection`, linhas 203–255).
-- **Segurança:** mensagens de erro continuam sanitizadas (sem expor token nem stack trace), apenas o `error_message` da MP é repassado.
-- **Observação importante sobre a Feature 2:** se após melhorar o erro a MP responder "invalid_access_token", a correção definitiva é o usuário fornecer um token válido — é uma questão de credencial, não de código. O plano garante que o sistema diga isso com clareza.
+Resultado esperado:
+
+- A tela não mostra falso positivo.
+- O admin sabe se o token realmente foi salvo.
+
+## Feature 4 — Webhook usando o mesmo token da interface
+
+Atualizar `supabase/functions/mercadopago-webhook/index.ts` para:
+
+- Buscar o Access Token criptografado em `saas_settings` como fonte principal.
+- Não depender de `MERCADOPAGO_ACCESS_TOKEN` para consultar detalhes de pagamento/assinatura.
+- Manter `MERCADOPAGO_WEBHOOK_SECRET` apenas se já for usado para validação de assinatura, pois ele é um segredo técnico do webhook, não a credencial principal do gateway.
+
+Resultado esperado:
+
+- Pagamentos e notificações IPN usam a mesma credencial configurada na interface.
+
+## Feature 5 — Limpeza de configuração inválida
+
+Criar uma correção de dados idempotente para:
+
+- Ajustar `mercadopago.access_token_configured` para `false` se não existir token criptografado em `mercadopago_access_token_encrypted`.
+- Preservar `public_key` já configurada.
+
+Resultado esperado:
+
+- O badge verde só aparece quando há credencial real salva.
+
+## Feature 6 — Validação pós-correção
+
+Depois de implementar:
+
+- Testar a função diretamente com `test-connection` antes de salvar token, esperando erro amigável “token não configurado”.
+- Testar CORS simulando origem do preview atual.
+- Confirmar no banco que o status não fica positivo sem token criptografado.
+- Conferir logs da função para garantir que não há erro interno.
+
+## Arquivos envolvidos
+
+- `supabase/functions/_shared/cors.ts`
+- `supabase/functions/mercadopago-subscription/index.ts`
+- `supabase/functions/mercadopago-webhook/index.ts`
+- `src/pages/admin/AdminSettings.tsx`
+- Correção idempotente em `saas_settings`
+
+## Critério de aceite
+
+- Salvar Access Token pela UI não retorna mais `Failed to send a request to the Edge Function`.
+- Testar conexão usa o token salvo pela UI.
+- A UI não depende de secrets do Lovable para Mercado Pago.
+- “Access Token configurado” só aparece quando existe token criptografado salvo.
+- Webhook/IPN usa a credencial salva pela UI.

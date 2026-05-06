@@ -116,8 +116,11 @@ export default function AdminSettings() {
       const { data, error } = await supabase.functions.invoke("mercadopago-subscription", {
         body: { action: "get-access-token" },
       });
-      if (!error && data?.success && data.token) {
-        setAccessToken(data.token);
+      if (!error && data?.success) {
+        const realToken = (data.token || "").toString();
+        setAccessToken(realToken);
+        // Reconcile UI flag with reality
+        setMpSettings((prev) => ({ ...prev, access_token_configured: realToken.length > 0 }));
       }
     } catch (e) {
       console.warn("Could not load access token:", e);
@@ -244,9 +247,12 @@ export default function AdminSettings() {
     } catch (error: any) {
       console.error("Test connection error:", error);
       setConnectionStatus("error");
+      const isNetwork = /Failed to (send|fetch)/i.test(error?.message || "");
       toast({
         title: "Erro ao testar conexão",
-        description: error?.message || "Não foi possível contatar o serviço. Tente novamente.",
+        description: isNetwork
+          ? "Não foi possível contatar o serviço (CORS/rede). Recarregue a página e tente novamente."
+          : error?.message || "Não foi possível contatar o serviço. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -630,7 +636,7 @@ export default function AdminSettings() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Token de acesso para integração backend. Será armazenado de forma segura como secret do projeto.
+                    Token de acesso para integração backend. Será armazenado criptografado nas configurações do sistema (não depende de secrets externos).
                   </p>
                   {mpSettings.access_token_configured ? (
                     <div className="flex items-center gap-2 p-2 border border-green-500/30 rounded-lg bg-green-500/5">
