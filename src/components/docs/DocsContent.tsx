@@ -46,12 +46,12 @@ export function DocsContent() {
         id="intro"
         title="Introdução"
         icon={Sparkles}
-        description="Bem-vindo ao OpenFlow — veja o que você pode fazer"
+        description="Bem-vindo ao Uz4Flow — veja o que você pode fazer"
         defaultOpen
       >
         <div className="prose prose-sm prose-invert max-w-none">
           <p className="text-muted-foreground leading-relaxed">
-            O <strong className="text-foreground">OpenFlow</strong> é a sua plataforma completa para 
+            O <strong className="text-foreground">Uz4Flow</strong> é a sua plataforma completa para 
             atender, vender e se relacionar com clientes pelo WhatsApp e Instagram — tudo em um só lugar. 
             Com ele, você conecta suas plataformas de vendas (como Kiwify, Hotmart e Eduzz), envia mensagens 
             automáticas, acompanha seu funil de vendas e ainda conta com inteligência artificial para te ajudar.
@@ -59,7 +59,7 @@ export function DocsContent() {
         </div>
 
         <DocCard
-          title="O que você pode fazer com o OpenFlow"
+          title="O que você pode fazer com o Uz4Flow"
           icon={Zap}
           description="Veja as principais funcionalidades disponíveis"
         >
@@ -136,7 +136,7 @@ export function DocsContent() {
           <div className="space-y-3 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
               <span className="font-semibold text-foreground min-w-[120px] shrink-0">Instância</span>
-              <span>É a conexão entre o OpenFlow e um número de WhatsApp. Cada número precisa de uma instância.</span>
+              <span>É a conexão entre o Uz4Flow e um número de WhatsApp. Cada número precisa de uma instância.</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="font-semibold text-foreground min-w-[120px] shrink-0">Webhook</span>
@@ -156,7 +156,7 @@ export function DocsContent() {
             </div>
             <div className="flex items-start gap-2">
               <span className="font-semibold text-foreground min-w-[120px] shrink-0">Conector</span>
-              <span>Ponte entre uma plataforma de vendas (Kiwify, Hotmart, etc.) e o OpenFlow.</span>
+              <span>Ponte entre uma plataforma de vendas (Kiwify, Hotmart, etc.) e o Uz4Flow.</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="font-semibold text-foreground min-w-[120px] shrink-0">Rotação de leads</span>
@@ -312,7 +312,7 @@ export function DocsContent() {
 
         <DocCallout type="info">
           O Sistema de WhatsApp AI é o serviço responsável pela conexão direta com o WhatsApp. 
-          O OpenFlow se conecta a ele para enviar e receber mensagens. Você configura as credenciais 
+          O Uz4Flow se conecta a ele para enviar e receber mensagens. Você configura as credenciais 
           em <strong>Configurações → aba WhatsApp AI</strong>.
         </DocCallout>
 
@@ -773,7 +773,7 @@ export function DocsContent() {
         <div className="prose prose-sm prose-invert max-w-none">
           <p className="text-muted-foreground leading-relaxed">
             Conectores são a ponte entre suas plataformas de vendas (Kiwify, Hotmart, 
-            Eduzz, etc.) e o OpenFlow. Quando uma venda acontece, a plataforma envia um aviso 
+            Eduzz, etc.) e o Uz4Flow. Quando uma venda acontece, a plataforma envia um aviso 
             automático (webhook) para o conector, que dispara as ações configuradas.
           </p>
         </div>
@@ -787,7 +787,7 @@ export function DocsContent() {
             <li className="flex gap-2"><span className="text-primary font-medium">2.</span> O sistema gera um endereço exclusivo (URL de webhook)</li>
             <li className="flex gap-2"><span className="text-primary font-medium">3.</span> Você copia esse endereço e cola na plataforma de vendas</li>
             <li className="flex gap-2"><span className="text-primary font-medium">4.</span> Quando uma venda acontece, a plataforma envia os dados automaticamente</li>
-            <li className="flex gap-2"><span className="text-primary font-medium">5.</span> O OpenFlow recebe, processa e executa o fluxo de mensagens vinculado</li>
+            <li className="flex gap-2"><span className="text-primary font-medium">5.</span> O Uz4Flow recebe, processa e executa o fluxo de mensagens vinculado</li>
           </ol>
         </DocCard>
 

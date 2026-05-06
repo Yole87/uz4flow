@@ -125,7 +125,7 @@ export default function Auth() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center btn-laser-cut gradient-primary shadow-lg animate-float neon-glow-pink">
             <Zap className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold">OpenFlow</CardTitle>
+          <CardTitle className="text-2xl font-bold">Uz4Flow</CardTitle>
           <CardDescription className="text-base">
             Orquestre seus fluxos do Sistema de WhatsApp AI com facilidade
           </CardDescription>

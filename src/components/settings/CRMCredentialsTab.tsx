@@ -26,11 +26,11 @@ const crmSteps = [
   'Na página inicial, confirme que a opção "Fluxo" está ativada.',
   'No menu lateral esquerdo, acesse a seção "Fluxo".',
   'Clique em "Adicionar Fluxo".',
-  'Clique no fluxo recém-criado e nomeie-o, por exemplo: "OpenFlow: CRM".',
+  'Clique no fluxo recém-criado e nomeie-o, por exemplo: "Uz4Flow: CRM".',
   "Atenção: não preencha nenhuma palavra-chave. Caso preencha, o CRM não funcionará corretamente.",
   'Copie a URL exibida no campo "URL do Webhook" acima e cole no campo "URL do Webhook" do Sistema de WhatsApp AI.',
   'Marque a opção "Sempre enviar todos os eventos de saída" para garantir que o CRM receba todas as mensagens.',
-  'Clique em "Salvar Configurações" no Sistema de WhatsApp AI e, em seguida, em "Salvar Credenciais" no OpenFlow.',
+  'Clique em "Salvar Configurações" no Sistema de WhatsApp AI e, em seguida, em "Salvar Credenciais" no Uz4Flow.',
 ];
 
 const metaSteps = [

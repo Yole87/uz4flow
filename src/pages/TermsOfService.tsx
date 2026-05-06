@@ -51,7 +51,7 @@ export default function TermsOfService() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingHeader appName="OpenFlow" />
+      <LandingHeader appName="Uz4Flow" />
 
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
@@ -105,7 +105,7 @@ export default function TermsOfService() {
               <section id="aceitacao">
                 <h2>1. Aceitação dos Termos</h2>
                 <p>
-                  Ao acessar ou utilizar a plataforma OpenFlow, operada pela <strong>Open Bot AI</strong> (CNPJ 63.185.666/0001-81), 
+                  Ao acessar ou utilizar a plataforma Uz4Flow, operada pela <strong>Open Bot AI</strong> (CNPJ 63.185.666/0001-81), 
                   você declara que leu, compreendeu e concorda em estar vinculado a estes Termos de Serviço ("Termos"). 
                   Se você não concorda com qualquer parte destes Termos, não utilize nossos serviços.
                 </p>
@@ -117,7 +117,7 @@ export default function TermsOfService() {
 
               <section id="descricao">
                 <h2>2. Descrição do Serviço</h2>
-                <p>A OpenFlow é uma plataforma SaaS de automação e gestão de comunicação empresarial que oferece:</p>
+                <p>A Uz4Flow é uma plataforma SaaS de automação e gestão de comunicação empresarial que oferece:</p>
                 <ul>
                   <li><strong>Automação WhatsApp</strong>: Integração com WhatsApp Business API para envio e recebimento automatizado de mensagens, fluxos conversacionais e regras de roteamento.</li>
                   <li><strong>CRM (Customer Relationship Management)</strong>: Gestão de contatos, conversas, funil kanban de vendas, etiquetas e campos personalizados.</li>
@@ -132,7 +132,7 @@ export default function TermsOfService() {
 
               <section id="elegibilidade">
                 <h2>3. Elegibilidade</h2>
-                <p>Para utilizar a OpenFlow, você deve:</p>
+                <p>Para utilizar a Uz4Flow, você deve:</p>
                 <ul>
                   <li>Ter no mínimo 18 (dezoito) anos de idade</li>
                   <li>Possuir capacidade civil plena para celebrar contratos</li>
@@ -210,7 +210,7 @@ export default function TermsOfService() {
                   <li>Deletar dados quando solicitado pelo usuário ou quando o acesso for revogado</li>
                 </ul>
                 <p>
-                  A OpenFlow não se responsabiliza por restrições, suspensões ou banimentos aplicados pela Meta ou WhatsApp 
+                  A Uz4Flow não se responsabiliza por restrições, suspensões ou banimentos aplicados pela Meta ou WhatsApp 
                   à conta do usuário em decorrência de uso indevido.
                 </p>
               </section>
@@ -219,7 +219,7 @@ export default function TermsOfService() {
                 <h2>7. Planos, Pagamentos e Cancelamento</h2>
                 <h3>7.1 Planos</h3>
                 <p>
-                  A OpenFlow oferece diferentes planos de assinatura com variações de recursos e limites. 
+                  A Uz4Flow oferece diferentes planos de assinatura com variações de recursos e limites. 
                   Os detalhes, preços e funcionalidades de cada plano estão disponíveis na página de preços da plataforma.
                 </p>
                 <h3>7.2 Pagamentos</h3>
@@ -241,10 +241,10 @@ export default function TermsOfService() {
               <section id="propriedade">
                 <h2>8. Propriedade Intelectual</h2>
                 <ul>
-                  <li>A plataforma OpenFlow, incluindo código-fonte, design, marcas, logotipos e documentação, é propriedade exclusiva da Open Bot AI</li>
+                  <li>A plataforma Uz4Flow, incluindo código-fonte, design, marcas, logotipos e documentação, é propriedade exclusiva da Open Bot AI</li>
                   <li>O usuário não adquire nenhum direito de propriedade intelectual sobre a plataforma ao utilizar o serviço</li>
                   <li>Os dados e conteúdos inseridos pelo usuário na plataforma permanecem de propriedade do usuário</li>
-                  <li>O usuário concede à OpenFlow uma licença limitada para processar seus dados conforme necessário para a prestação dos serviços</li>
+                  <li>O usuário concede à Uz4Flow uma licença limitada para processar seus dados conforme necessário para a prestação dos serviços</li>
                 </ul>
               </section>
 
@@ -256,7 +256,7 @@ export default function TermsOfService() {
                   descritas na Política de Privacidade.
                 </p>
                 <p>
-                  A OpenFlow atua como <strong>operadora</strong> de dados pessoais em nome do usuário (controlador) 
+                  A Uz4Flow atua como <strong>operadora</strong> de dados pessoais em nome do usuário (controlador) 
                   para o processamento de mensagens e dados de contatos. O usuário é responsável por garantir que possui 
                   base legal adequada (LGPD) para o tratamento dos dados de seus clientes.
                 </p>
@@ -265,7 +265,7 @@ export default function TermsOfService() {
               <section id="limitacao">
                 <h2>10. Limitação de Responsabilidade</h2>
                 <ul>
-                  <li>A OpenFlow é fornecida "como está" (<em>as is</em>), sem garantias de qualquer tipo, expressas ou implícitas</li>
+                  <li>A Uz4Flow é fornecida "como está" (<em>as is</em>), sem garantias de qualquer tipo, expressas ou implícitas</li>
                   <li>Não garantimos que o serviço será ininterrupto, livre de erros ou completamente seguro</li>
                   <li>Não nos responsabilizamos por danos indiretos, consequenciais, lucros cessantes ou perda de dados</li>
                   <li>Nossa responsabilidade total é limitada ao valor pago pelo usuário nos últimos 12 meses</li>
@@ -336,7 +336,7 @@ export default function TermsOfService() {
         </div>
       </div>
 
-      <LandingFooter appName="OpenFlow" supportEmail="suporte@openbotai.com.br" />
+      <LandingFooter appName="Uz4Flow" supportEmail="suporte@openbotai.com.br" />
     </div>
   );
 }

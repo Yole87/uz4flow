@@ -16,7 +16,7 @@ const corsHeaders = {
 };
 
 function parseState(state: string): { organizationId: string; provider: string; redirectUrl: string; traceId: string } {
-  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://openflow.studio";
+  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://uz4flow.lovable.app";
   let organizationId = "";
   let provider = "google_drive";
   let redirectUrl = `${frontendUrl}/mcp-gateway`;
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
-  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://openflow.studio";
+  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://uz4flow.lovable.app";
 
   // Log all incoming params for diagnostics
   console.log(`[GDrive-OAuth] step=callback_received code=${!!code} state_len=${state?.length} error=${error || "none"} all_params=${url.search}`);

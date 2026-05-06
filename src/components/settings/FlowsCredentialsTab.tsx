@@ -20,11 +20,11 @@ const flowsSteps = [
   'Na página inicial, confirme que a opção "Fluxo" está ativada.',
   'No menu lateral esquerdo, acesse a seção "Fluxo".',
   'Clique em "Adicionar Fluxo".',
-  'Clique no fluxo recém-criado e nomeie-o, por exemplo: "OpenFlow: Fluxos".',
+  'Clique no fluxo recém-criado e nomeie-o, por exemplo: "Uz4Flow: Fluxos".',
   "Se necessário, preencha uma palavra-chave. Caso não saiba para que serve, consulte o tutorial de Fluxos e Conectores.",
   'Copie a URL exibida no campo "URL do Webhook" acima e cole no campo "URL do Webhook" do Sistema de WhatsApp AI.',
   'Marque a opção "Sempre enviar todos os eventos de saída" para garantir que os fluxos recebam todas as mensagens.',
-  'Clique em "Salvar Configurações" no Sistema de WhatsApp AI e, em seguida, em "Salvar Credenciais" no OpenFlow.',
+  'Clique em "Salvar Configurações" no Sistema de WhatsApp AI e, em seguida, em "Salvar Credenciais" no Uz4Flow.',
 ];
 
 interface Props {

@@ -7,9 +7,8 @@
 
 const ALLOWED_ORIGINS = [
   "https://openbot-connector.lovable.app",
-  "https://openflow.studio",
-  "https://www.openflow.studio",
   "https://uz4flow.lovable.app",
+  "https://www.uz4flow.lovable.app",
 ];
 
 const ALLOWED_ORIGIN_PATTERNS = [

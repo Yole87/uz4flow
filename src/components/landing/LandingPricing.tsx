@@ -474,7 +474,7 @@ export function LandingPricing() {
             Precisa de mais? Fale com a gente.
           </p>
           <Button asChild variant="outline" size="lg" className="btn-laser-cut">
-            <a href="mailto:suporte@openflow.studio">Fale com a gente</a>
+            <a href="mailto:suporte@uz4flow.lovable.app">Fale com a gente</a>
           </Button>
         </div>
       </div>

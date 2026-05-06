@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       .select("key, value")
       .in("key", ["branding", "general"]);
 
-    let appName = "OpenFlow";
+    let appName = "Uz4Flow";
     let themeColor = "#0a0a0a";
     let icon192 = "/pwa-192x192.png";
     let icon512 = "/pwa-512x512.png";

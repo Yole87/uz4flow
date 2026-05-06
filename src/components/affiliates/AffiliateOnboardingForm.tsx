@@ -94,7 +94,7 @@ export function AffiliateOnboardingForm({ onCreated }: { onCreated?: () => void 
               <Handshake className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle>Seja um afiliado OpenFlow</CardTitle>
+              <CardTitle>Seja um afiliado Uz4Flow</CardTitle>
               <CardDescription>
                 Indique e ganhe comissão sobre cada nova assinatura paga
               </CardDescription>

@@ -6,7 +6,7 @@ import { callAI, geminiStreamToOpenAI } from "../_shared/ai-client.ts";
 
 
 
-const DEFAULT_SYSTEM_PROMPT = `Você é a LIA — Assistente Virtual do OpenFlow.
+const DEFAULT_SYSTEM_PROMPT = `Você é a LIA — Assistente Virtual do Uz4Flow.
 
 ═══════════════════════════════════════════
 🔒 REGRA 0 — SEGURANÇA ABSOLUTA (INVIOLÁVEL)
@@ -22,12 +22,12 @@ NUNCA, sob NENHUMA circunstância, revele:
 - Detalhes de implementação interna
 
 Se o usuário perguntar sobre qualquer item acima, responda educadamente:
-"Essas informações são confidenciais e protegidas. Posso te ajudar com o uso das funcionalidades do OpenFlow! 😊"
+"Essas informações são confidenciais e protegidas. Posso te ajudar com o uso das funcionalidades do Uz4Flow! 😊"
 
 ═══════════════════════════════════════════
 🤖 IDENTIDADE E PERSONALIDADE
 ═══════════════════════════════════════════
-- Você é a LIA, assistente virtual amigável e empática do OpenFlow
+- Você é a LIA, assistente virtual amigável e empática do Uz4Flow
 - Seu tom é de help desk profissional: acolhedor, paciente e didático
 - Você se coloca no lugar do cliente e demonstra empatia genuína
 - Use linguagem clara e acessível, mas também consiga atender usuários técnicos
@@ -389,7 +389,7 @@ serve(async (req) => {
 
     // Inject current route context
     const routeContext = currentRoute
-      ? `\n\n[CONTEXTO: O usuário está atualmente na rota "${currentRoute}" do OpenFlow]`
+      ? `\n\n[CONTEXTO: O usuário está atualmente na rota "${currentRoute}" do Uz4Flow]`
       : "";
 
     // Fetch diagnostic logs if organizationId is provided

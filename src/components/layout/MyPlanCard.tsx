@@ -41,7 +41,7 @@ export function MyPlanCard() {
         </div>
         <h4 className="text-base font-semibold">Você ainda não tem um plano</h4>
         <p className="text-xs text-muted-foreground">
-          Conheça os planos OpenFlow para usar o CRM, automações e muito mais.
+          Conheça os planos Uz4Flow para usar o CRM, automações e muito mais.
         </p>
         <Button
           size="sm"

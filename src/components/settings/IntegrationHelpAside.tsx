@@ -5,9 +5,9 @@ const registrationSteps = [
   "Acesse seu Sistema de WhatsApp AI.",
   'Na página inicial, ative a opção "Fluxo".',
   'No menu lateral esquerdo, acesse a seção "Fluxo".',
-  'Clique em "Gerar Token" (ou em "Copiar", caso já possua um token). Cole o valor no campo "Token" do OpenFlow.',
-  'Logo abaixo do token, copie a URL da API e cole no campo "URL da API" do OpenFlow.',
-  'Clique em "Salvar Configurações" no Sistema de WhatsApp AI e, em seguida, em "Cadastrar Instância" no OpenFlow.',
+  'Clique em "Gerar Token" (ou em "Copiar", caso já possua um token). Cole o valor no campo "Token" do Uz4Flow.',
+  'Logo abaixo do token, copie a URL da API e cole no campo "URL da API" do Uz4Flow.',
+  'Clique em "Salvar Configurações" no Sistema de WhatsApp AI e, em seguida, em "Cadastrar Instância" no Uz4Flow.',
 ];
 
 const TUTORIAL_VIDEO_ID = "HTyPIqa-vPQ";

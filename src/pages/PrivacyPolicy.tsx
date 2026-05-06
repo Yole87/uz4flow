@@ -51,7 +51,7 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingHeader appName="OpenFlow" />
+      <LandingHeader appName="Uz4Flow" />
 
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
@@ -106,11 +106,11 @@ export default function PrivacyPolicy() {
                 <h2>1. Identificação do Controlador</h2>
                 <p>
                   Esta Política de Privacidade descreve como a <strong>Open Bot AI</strong>, pessoa jurídica inscrita no CNPJ/MF sob o nº <strong>63.185.666/0001-81</strong>, 
-                  doravante denominada "Controladora", "nós" ou "OpenFlow", coleta, utiliza, armazena, compartilha e protege os dados pessoais 
-                  dos usuários que acessam e utilizam a plataforma OpenFlow e seus serviços associados.
+                  doravante denominada "Controladora", "nós" ou "Uz4Flow", coleta, utiliza, armazena, compartilha e protege os dados pessoais 
+                  dos usuários que acessam e utilizam a plataforma Uz4Flow e seus serviços associados.
                 </p>
                 <p>
-                  A OpenFlow é uma plataforma de automação de comunicação empresarial que integra WhatsApp Business API, Instagram, 
+                  A Uz4Flow é uma plataforma de automação de comunicação empresarial que integra WhatsApp Business API, Instagram, 
                   ferramentas de CRM, prospecção de clientes, Voice AI e fluxos automatizados de mensagens.
                 </p>
               </section>
@@ -187,7 +187,7 @@ export default function PrivacyPolicy() {
                 <h2>4. Finalidade do Uso dos Dados</h2>
                 <p>Utilizamos os dados pessoais coletados para:</p>
                 <ul>
-                  <li>Prover e manter a plataforma OpenFlow e seus serviços</li>
+                  <li>Prover e manter a plataforma Uz4Flow e seus serviços</li>
                   <li>Processar e entregar mensagens via WhatsApp Business API e Instagram Messaging API</li>
                   <li>Gerenciar contatos, conversas e pipeline de vendas (CRM)</li>
                   <li>Executar fluxos automatizados de mensagens e regras de roteamento</li>
@@ -205,7 +205,7 @@ export default function PrivacyPolicy() {
               <section id="meta-platform">
                 <h2>5. Dados Obtidos via Plataforma Meta</h2>
                 <p>
-                  A OpenFlow utiliza a <strong>WhatsApp Business API</strong> e a <strong>Meta Graph API (Instagram)</strong> para fornecer 
+                  A Uz4Flow utiliza a <strong>WhatsApp Business API</strong> e a <strong>Meta Graph API (Instagram)</strong> para fornecer 
                   funcionalidades de automação de comunicação. Esta seção detalha como tratamos os dados obtidos através dessas APIs, 
                   em conformidade com os <strong>Termos da Plataforma Meta</strong> e a <strong>Política de Dados da Meta</strong>.
                 </p>
@@ -238,7 +238,7 @@ export default function PrivacyPolicy() {
 
               <section id="google-apis">
                 <h2>6. Uso de Google APIs</h2>
-                <p>A OpenFlow integra-se com os seguintes serviços do Google:</p>
+                <p>A Uz4Flow integra-se com os seguintes serviços do Google:</p>
 
                 <h3>6.1 Google Places API</h3>
                 <ul>
@@ -256,7 +256,7 @@ export default function PrivacyPolicy() {
 
                 <h3>6.3 Conformidade com Google API Services User Data Policy</h3>
                 <p>
-                  O uso de dados do Google pela OpenFlow está em conformidade com a 
+                  O uso de dados do Google pela Uz4Flow está em conformidade com a 
                   <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">
                     Google API Services User Data Policy
                   </a>, incluindo os requisitos de Limited Use. Não transferimos dados do Google para terceiros, 
@@ -331,7 +331,7 @@ export default function PrivacyPolicy() {
 
               <section id="cookies">
                 <h2>11. Cookies e Tecnologias de Rastreamento</h2>
-                <p>A OpenFlow utiliza:</p>
+                <p>A Uz4Flow utiliza:</p>
                 <ul>
                   <li><strong>Cookies essenciais</strong>: Necessários para autenticação, manutenção de sessão e segurança</li>
                   <li><strong>Armazenamento local (localStorage)</strong>: Para preferências de interface e configurações do usuário</li>
@@ -346,7 +346,7 @@ export default function PrivacyPolicy() {
               <section id="menores">
                 <h2>12. Menores de Idade</h2>
                 <p>
-                  A OpenFlow é destinada exclusivamente a usuários maiores de 18 anos. Não coletamos intencionalmente 
+                  A Uz4Flow é destinada exclusivamente a usuários maiores de 18 anos. Não coletamos intencionalmente 
                   dados pessoais de menores de 18 anos. Caso tome conhecimento de que um menor está utilizando nossos serviços, 
                   entre em contato conosco para que possamos tomar as providências necessárias para a exclusão dos dados.
                 </p>
@@ -390,7 +390,7 @@ export default function PrivacyPolicy() {
         </div>
       </div>
 
-      <LandingFooter appName="OpenFlow" supportEmail="suporte@openbotai.com.br" />
+      <LandingFooter appName="Uz4Flow" supportEmail="suporte@openbotai.com.br" />
     </div>
   );
 }

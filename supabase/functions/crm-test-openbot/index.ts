@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     const testPayload: Record<string, unknown> = {
       apiKey: finalApiKey,
       phone: "5500000000000", // Invalid test number
-      message: "🧪 Teste de conexão - CRM OpenFlow",
+      message: "🧪 Teste de conexão - CRM Uz4Flow",
       desativarFluxo: true,
     };
 

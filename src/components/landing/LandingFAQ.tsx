@@ -53,7 +53,7 @@ const defaultFAQ: FAQItem[] = [
   }
 ];
 
-export function LandingFAQ({ items, supportEmail = "suporte@openflow.studio" }: LandingFAQProps) {
+export function LandingFAQ({ items, supportEmail = "suporte@uz4flow.lovable.app" }: LandingFAQProps) {
   const displayItems = items.length > 0 ? items : defaultFAQ;
 
   return (

@@ -64,7 +64,7 @@ serve(async (req) => {
 
     const systemPrompt = `Você é um especialista em integração de sistemas via webhook/API.
 
-Sua tarefa: dado um payload JSON de exemplo que um sistema de destino espera receber, mapear as variáveis de origem (do sistema OpenFlow) para os campos do sistema destino.
+Sua tarefa: dado um payload JSON de exemplo que um sistema de destino espera receber, mapear as variáveis de origem (do sistema Uz4Flow) para os campos do sistema destino.
 
 VARIÁVEIS DE ORIGEM DISPONÍVEIS:
 ${sourceList}
@@ -112,7 +112,7 @@ Mapeie os campos e gere o payload convertido.`;
                       },
                       source_variable: {
                         type: "string",
-                        description: "Nome da variável de origem do OpenFlow (ex: 'contactName') ou 'não_mapeado'",
+                        description: "Nome da variável de origem do Uz4Flow (ex: 'contactName') ou 'não_mapeado'",
                       },
                       confidence: {
                         type: "string",

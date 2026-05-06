@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
   const action = url.searchParams.get("action") || (hasCode ? "callback" : null);
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://openflow.studio";
+  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://uz4flow.lovable.app";
 
   // Read org-specific credentials from DB, with fallback to env vars
   let appId = Deno.env.get("INSTAGRAM_APP_ID") || "";

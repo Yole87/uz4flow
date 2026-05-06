@@ -6,7 +6,7 @@ import { useLia } from "./LiaProvider";
 import { useLiaChat } from "@/hooks/useLiaChat";
 import ReactMarkdown from "react-markdown";
 
-const WELCOME_MESSAGE = "Olá! 👋 Eu sou a **LIA**, sua assistente virtual do OpenFlow!\n\nEstou aqui para te ajudar com qualquer dúvida sobre a plataforma. Pode me perguntar sobre:\n\n- Como usar o **CRM** e enviar mensagens\n- Configurar o **Funil Kanban** de vendas\n- Criar **campanhas de Follow-up**\n- **Prospectar** novos clientes\n- E muito mais!\n\nComo posso te ajudar? 😊";
+const WELCOME_MESSAGE = "Olá! 👋 Eu sou a **LIA**, sua assistente virtual do Uz4Flow!\n\nEstou aqui para te ajudar com qualquer dúvida sobre a plataforma. Pode me perguntar sobre:\n\n- Como usar o **CRM** e enviar mensagens\n- Configurar o **Funil Kanban** de vendas\n- Criar **campanhas de Follow-up**\n- **Prospectar** novos clientes\n- E muito mais!\n\nComo posso te ajudar? 😊";
 
 export function LiaChatPanel() {
   const { isOpen, setIsOpen, messages, setMessages } = useLia();
@@ -59,7 +59,7 @@ export function LiaChatPanel() {
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-foreground">LIA</h3>
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-terminal">
-            Assistente OpenFlow
+            Assistente Uz4Flow
           </p>
         </div>
         <div className="flex items-center gap-1">

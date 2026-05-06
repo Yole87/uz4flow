@@ -111,7 +111,7 @@ async function sendToOpenBot(
         body: JSON.stringify({
           apiKey: apiKey,
           phone: "5500000000000",
-          message: "🧪 Teste de conexão do OpenFlow",
+          message: "🧪 Teste de conexão do Uz4Flow",
           desativarFluxo: true,
         }),
       });

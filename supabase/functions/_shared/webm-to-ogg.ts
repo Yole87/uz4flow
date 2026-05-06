@@ -252,7 +252,7 @@ export function convertWebmToOgg(webmBytes: Uint8Array): Uint8Array {
   const preSkip = (opusHead[11] << 8) | opusHead[10]; // little-endian uint16 at offset 10
 
   // ── OpusTags header (RFC 7845 §5.2) ──
-  const vendorStr = "OpenFlowCRM";
+  const vendorStr = "Uz4FlowCRM";
   const opusTags = new Uint8Array(8 + 4 + vendorStr.length + 4);
   const tv = new DataView(opusTags.buffer);
   // "OpusTags"

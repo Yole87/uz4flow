@@ -34,7 +34,7 @@ export function LandingTestimonials() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-scanline">
             Por que
-            <span className="text-gradient-primary text-glow-pink"> OpenFlow</span>
+            <span className="text-gradient-primary text-glow-pink"> Uz4Flow</span>
           </h2>
           <p className="text-sm uppercase tracking-widest text-muted-foreground max-w-2xl mx-auto font-terminal">
             Diferenciais técnicos que entregam resultado.
