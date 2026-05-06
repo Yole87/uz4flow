@@ -392,28 +392,26 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    let accessToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN") || "";
+    let accessToken = "";
     const webhookSecret = Deno.env.get("MERCADOPAGO_WEBHOOK_SECRET");
 
-    if (!accessToken) {
-      try {
-        const svcClient = createClient(supabaseUrl, supabaseServiceKey);
-        const { data } = await svcClient
-          .from("saas_settings")
-          .select("value")
-          .eq("key", "mercadopago_access_token_encrypted")
-          .single();
-        if (data?.value) {
-          const { decrypt } = await import("../_shared/encryption.ts");
-          accessToken = await decrypt(data.value as string);
-        }
-      } catch (e) {
-        console.warn("Failed to read access token from DB:", e);
+    try {
+      const svcClient = createClient(supabaseUrl, supabaseServiceKey);
+      const { data } = await svcClient
+        .from("saas_settings")
+        .select("value")
+        .eq("key", "mercadopago_access_token_encrypted")
+        .maybeSingle();
+      if (data?.value) {
+        const { decrypt } = await import("../_shared/encryption.ts");
+        accessToken = await decrypt(data.value as string);
       }
+    } catch (e) {
+      console.warn("Failed to read access token from DB:", e);
     }
 
     if (!accessToken) {
-      console.error("MERCADOPAGO_ACCESS_TOKEN not configured");
+      console.error("Mercado Pago Access Token não configurado na interface");
       return new Response(
         JSON.stringify({ error: "Payment provider not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
