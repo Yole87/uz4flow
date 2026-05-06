@@ -156,18 +156,17 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    let accessToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN") || "";
+    let accessToken = "";
 
-    // Helper: resolve access token from env or DB
+    // Helper: resolve access token from DB (UI-managed). Env vars are intentionally ignored.
     const resolveAccessToken = async (svcClient: ReturnType<typeof createClient>) => {
       if (accessToken) return accessToken;
-      // Fallback: read encrypted token from saas_settings
       try {
         const { data } = await svcClient
           .from("saas_settings")
           .select("value")
           .eq("key", "mercadopago_access_token_encrypted")
-          .single();
+          .maybeSingle();
         if (data?.value) {
           const { decrypt } = await import("../_shared/encryption.ts");
           accessToken = await decrypt(data.value as string);
@@ -179,11 +178,10 @@ Deno.serve(async (req) => {
       return "";
     };
 
-    // Helper function to require access token (only for paid plan operations)
     const requireAccessToken = async (svcClient: ReturnType<typeof createClient>) => {
       const token = await resolveAccessToken(svcClient);
       if (!token) {
-        throw new Error("MERCADOPAGO_ACCESS_TOKEN not configured");
+        throw new Error("Access Token do Mercado Pago não configurado na interface");
       }
       return token;
     };
