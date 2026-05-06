@@ -39,10 +39,10 @@ Deno.serve(async (req) => {
           Deno.env.get("SUPABASE_ANON_KEY")!,
           { global: { headers: { Authorization: authHeader } } },
         );
-        const token = authHeader.replace("Bearer ", "");
-        const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
-        if (claimsErr || !claimsData?.claims) {
-          return new Response(JSON.stringify({ error: "unauthorized" }), {
+        const { data: userData, error: userErr } = await userClient.auth.getUser();
+        if (userErr || !userData?.user) {
+          console.error("admin-notify auth failed:", userErr?.message);
+          return new Response(JSON.stringify({ error: "unauthorized", detail: userErr?.message }), {
             status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
