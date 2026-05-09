@@ -26,9 +26,7 @@ export function LandingFooter({
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/conheca" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
+              <img src="/favicon.png" alt={appName} className="w-8 h-8 object-contain" />
               <span className="text-xl font-bold">{appName}</span>
             </Link>
             <p className="text-sidebar-foreground/70 text-sm mb-4 font-terminal">

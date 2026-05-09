@@ -512,8 +512,8 @@ export default function Dashboard() {
           <Card className="quantum-glass neon-glow-pink">
             <CardContent className="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 py-4 sm:py-6">
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl gradient-primary">
-                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl overflow-hidden">
+                  <img src="/favicon.png" alt="Logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-base sm:text-lg">Bem-vindo ao Uz4Flow! 🎉</h3>
