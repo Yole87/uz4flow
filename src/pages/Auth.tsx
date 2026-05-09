@@ -122,8 +122,8 @@ export default function Auth() {
 
       <Card className="w-full max-w-md relative animate-fade-in neon-glow-pink">
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center btn-laser-cut gradient-primary shadow-lg animate-float neon-glow-pink">
-            <Zap className="h-8 w-8 text-white" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center animate-float">
+            <img src="/favicon.png" alt="Uz4Flow" className="h-16 w-16 object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold">Uz4Flow</CardTitle>
           <CardDescription className="text-base">
