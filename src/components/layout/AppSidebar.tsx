@@ -145,13 +145,8 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
-        <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center btn-laser-cut gradient-primary neon-glow-pink">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
-           <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">Uz4Flow</h1>
-          </div>
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <img src="/favicon.png" alt="Uz4Flow" className="h-10 w-auto object-contain" />
         </Link>
       </SidebarHeader>
       
