@@ -21,26 +21,34 @@ export function useCRMRealtime(
 ) {
   const queryClient = useQueryClient();
   const { data: organization } = useUserOrganization();
+  const { playNotification } = useNotificationSound();
 
   const handleNewMessage = useCallback(
-    (payload: { new: { conversation_id: string } }) => {
+    (payload: { new: { conversation_id: string; direction?: string; from_me?: boolean } }) => {
       console.log("[CRM Realtime] New message received:", payload);
-      
+
       // Invalidate ALL crm-messages queries (contactId may be stale/null)
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["crm-messages"],
-        exact: false 
+        exact: false
       });
-      
+
       // Invalidate conversations list for preview update
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["crm-conversations"],
-        exact: false 
+        exact: false
       });
+
+      // Play notification only for inbound (received) messages
+      const isInbound =
+        payload?.new?.direction === "inbound" || payload?.new?.from_me === false;
+      if (isInbound) {
+        playNotification();
+      }
 
       options?.onNewMessage?.(payload);
     },
-    [queryClient, contactId, options]
+    [queryClient, contactId, options, playNotification]
   );
 
   const handleConversationUpdate = useCallback(
