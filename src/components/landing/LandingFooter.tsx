@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Zap, Mail, MessageCircle, Linkedin, Heart, Instagram, Youtube } from "lucide-react";
+import { Mail, MessageCircle, Linkedin, Heart, Instagram, Youtube } from "lucide-react";
 import { useBranding } from "@/hooks/useBranding";
+import { BrandLogo } from "@/components/branding/BrandLogo";
 
 interface LandingFooterProps {
   appName: string;
@@ -26,7 +27,7 @@ export function LandingFooter({
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/conheca" className="flex items-center gap-2 mb-4">
-              <img src="/favicon.png" alt={appName} className="w-8 h-8 object-contain" />
+              <BrandLogo alt={appName} className="w-8 h-8 object-contain" />
               <span className="text-xl font-bold">{appName}</span>
             </Link>
             <p className="text-sidebar-foreground/70 text-sm mb-4 font-terminal">

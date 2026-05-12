@@ -100,7 +100,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           {sidebarOpen && (
             <Link to="/admin" className="flex items-center gap-2">
-              <img src="/favicon.png" alt="Admin" className="w-8 h-8 object-contain" />
+              <BrandLogo alt="Admin" className="w-8 h-8 object-contain" />
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-sidebar-foreground leading-tight">Admin</span>
                 <span className={`text-xs font-mono leading-none ${window.location.hostname.includes('id-preview--') || window.location.hostname.includes('localhost') ? 'text-warning' : 'text-success'}`}>
@@ -185,7 +185,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border z-50 flex items-center justify-between px-4">
         <Link to="/admin" className="flex items-center gap-2">
-          <img src="/favicon.png" alt="Admin" className="w-8 h-8 object-contain" />
+          <BrandLogo alt="Admin" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
             <span className="text-lg font-bold text-sidebar-foreground leading-tight">Admin</span>
             <span className={`text-xs font-mono leading-none ${window.location.hostname.includes('id-preview--') || window.location.hostname.includes('localhost') ? 'text-warning' : 'text-success'}`}>

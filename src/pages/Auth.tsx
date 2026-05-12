@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Zap, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/branding/BrandLogo";
 import { z } from "zod";
 import { User } from "lucide-react";
 import { useEffect } from "react";
@@ -123,7 +124,7 @@ export default function Auth() {
       <Card className="w-full max-w-md relative animate-fade-in neon-glow-pink">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center animate-float">
-            <img src="/favicon.png" alt="Uz4Flow" className="h-16 w-16 object-contain" />
+            <BrandLogo alt="Uz4Flow" className="h-16 w-16 object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold">Uz4Flow</CardTitle>
           <CardDescription className="text-base">
