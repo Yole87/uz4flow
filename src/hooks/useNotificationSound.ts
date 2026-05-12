@@ -103,5 +103,16 @@ export function useNotificationSound() {
     }
   }, []);
 
-  return { enabled, setEnabled, playNotification };
+  const testSound = useCallback(() => {
+    try {
+      const audio = ensureAudio();
+      audio.currentTime = 0;
+      const p = audio.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  return { enabled, setEnabled, playNotification, testSound };
 }

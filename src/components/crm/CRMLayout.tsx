@@ -18,7 +18,7 @@ import { ContactsListPane } from "./ContactsListPane";
 import { StorageHeaderBar } from "./StorageHeaderBar";
 import { DataRetentionNotice } from "./DataRetentionNotice";
 import { LiaFab } from "@/components/lia/LiaFab";
-import { MessageSquare, Menu, Users, Bell, BellOff } from "lucide-react";
+import { MessageSquare, Menu, Users, Bell, BellOff, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -40,25 +40,41 @@ export function CRMLayout() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const { enabled: soundEnabled, setEnabled: setSoundEnabled } = useNotificationSound();
+  const { enabled: soundEnabled, setEnabled: setSoundEnabled, testSound } = useNotificationSound();
 
   const SoundToggle = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
-          aria-label={soundEnabled ? "Desativar som de notificação" : "Ativar som de notificação"}
-        >
-          {soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4 opacity-60" />}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        {soundEnabled ? "Som de notificação ligado" : "Som de notificação desligado"}
-      </TooltipContent>
-    </Tooltip>
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+            aria-label={soundEnabled ? "Desativar som de notificação" : "Ativar som de notificação"}
+          >
+            {soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4 opacity-60" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {soundEnabled ? "Som de notificação ligado" : "Som de notificação desligado"}
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => testSound()}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Testar som de notificação"
+          >
+            <Volume2 className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Testar som de notificação</TooltipContent>
+      </Tooltip>
+    </>
   );
 
   // Handle OAuth callback status (Google Calendar)
