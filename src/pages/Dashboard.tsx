@@ -26,6 +26,7 @@ import { LimitAlert } from "@/components/LimitAlert";
 import { TeamFilter } from "@/components/dashboard/TeamFilter";
 import { PipelineFilter } from "@/components/dashboard/PipelineFilter";
 import { ChannelFilterSelect, type ChannelFilter } from "@/components/dashboard/ChannelFilter";
+import { BrandLogo } from "@/components/branding/BrandLogo";
 
 // ... keep existing code (PeriodStats interface and emptyStats)
 interface PeriodStats {
@@ -513,7 +514,7 @@ export default function Dashboard() {
             <CardContent className="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 py-4 sm:py-6">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl overflow-hidden">
-                  <img src="/favicon.png" alt="Logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
+                  <BrandLogo alt="Logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-base sm:text-lg">Bem-vindo ao Uz4Flow! 🎉</h3>
