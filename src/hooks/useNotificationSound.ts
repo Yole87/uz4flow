@@ -19,7 +19,7 @@ function ensureAudio(): HTMLAudioElement {
   if (!audioSingleton) {
     audioSingleton = new Audio(SOUND_URL);
     audioSingleton.preload = "auto";
-    audioSingleton.volume = 0.5;
+    audioSingleton.volume = 1.0;
   }
   return audioSingleton;
 }
