@@ -135,3 +135,14 @@ export function useBrandingLogo(): string {
   const b = useBranding();
   return b?.logo_url || b?.favicon_url || b?.pwa_icon_192_url || FALLBACK_LOGO;
 }
+
+export function useBrandingAppName(): string {
+  const { data } = useQuery({
+    queryKey: ["branding"],
+    queryFn: fetchBranding,
+    staleTime: 1000 * 30,
+    refetchOnMount: true,
+  });
+
+  return data?.general?.app_name || "Uz4Flow";
+}

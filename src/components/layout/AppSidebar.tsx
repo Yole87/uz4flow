@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   LayoutDashboard, 
@@ -53,6 +54,7 @@ import {
  import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { UserProfileDialog } from "./UserProfileDialog";
 import { BrandLogo } from "@/components/branding/BrandLogo";
+import { useBrandingAppName } from "@/hooks/useBranding";
 import { useAffiliateSettings } from "@/hooks/useAffiliate";
 import { useIsAffiliateOnly } from "@/hooks/useIsAffiliateOnly";
 
@@ -91,6 +93,7 @@ export function AppSidebar() {
   const { data: affSettings } = useAffiliateSettings();
   const affiliateProgramEnabled = affSettings?.program_enabled !== false;
   const { isAffiliateOnly } = useIsAffiliateOnly();
+  const appName = useBrandingAppName();
 
   // Helper: dono ou enquanto carrega → mostra tudo (evita flash de menus ocultos)
   // Mas se for afiliado puro (sem organização), oculta tudo do app.
@@ -146,8 +149,11 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <BrandLogo alt="Uz4Flow" className="h-10 w-auto object-contain" />
+        <Link to="/dashboard" className="flex min-w-0 items-center gap-3">
+          <BrandLogo alt={appName} className="h-10 w-10 shrink-0 object-contain" />
+          <span className="truncate text-lg font-bold text-sidebar-foreground">
+            {appName}
+          </span>
         </Link>
       </SidebarHeader>
       
@@ -418,7 +424,19 @@ export function AppSidebar() {
   );
 }
 
-function UserProfileDialogWrapper({ user, userProfile, signOut }: { user: any; userProfile: any; signOut: () => void }) {
+interface UserProfileSidebar {
+  full_name: string | null;
+}
+
+function UserProfileDialogWrapper({
+  user,
+  userProfile,
+  signOut,
+}: {
+  user: User | null;
+  userProfile?: UserProfileSidebar | null;
+  signOut: () => void;
+}) {
   const [profileOpen, setProfileOpen] = useState(false);
 
   return (
