@@ -2,6 +2,7 @@ import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserOrganization } from "./useUserOrganization";
+import { useNotificationSound } from "./useNotificationSound";
 
 /**
  * Optimized Realtime subscription for CRM
