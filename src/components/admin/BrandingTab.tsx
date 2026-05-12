@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +55,7 @@ export function BrandingTab({ initialData, onSave, saving }: BrandingTabProps) {
   });
   const [uploading, setUploading] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const uploadFile = async (file: File, path: string, field: keyof BrandingSettings) => {
     setUploading(field);
@@ -86,6 +88,7 @@ export function BrandingTab({ initialData, onSave, saving }: BrandingTabProps) {
 
   const handleSave = async () => {
     await onSave("branding", branding);
+    queryClient.invalidateQueries({ queryKey: ["branding"] });
   };
 
   return (

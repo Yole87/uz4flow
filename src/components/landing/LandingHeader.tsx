@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Zap, LayoutDashboard, LogOut, User, Menu, X, Handshake } from "lucide-react";
+import { LayoutDashboard, LogOut, User, Menu, X, Handshake } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { BrandLogo } from "@/components/branding/BrandLogo";
 
 interface LandingHeaderProps {
   appName: string;
@@ -50,7 +51,7 @@ export function LandingHeader({ appName }: LandingHeaderProps) {
     <header className="fixed top-0 left-0 right-0 z-50 header-quantum">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/conheca" className="flex items-center gap-2">
-          <img src="/favicon.png" alt={appName} className="w-8 h-8 object-contain" />
+          <BrandLogo alt={appName} className="w-8 h-8 object-contain" />
           <span className="text-xl font-bold text-foreground">{appName}</span>
         </Link>
 

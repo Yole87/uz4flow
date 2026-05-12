@@ -52,6 +52,7 @@ import {
  import { Button } from "@/components/ui/button";
  import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { UserProfileDialog } from "./UserProfileDialog";
+import { BrandLogo } from "@/components/branding/BrandLogo";
 import { useAffiliateSettings } from "@/hooks/useAffiliate";
 import { useIsAffiliateOnly } from "@/hooks/useIsAffiliateOnly";
 
@@ -146,7 +147,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <img src="/favicon.png" alt="Uz4Flow" className="h-10 w-auto object-contain" />
+          <BrandLogo alt="Uz4Flow" className="h-10 w-auto object-contain" />
         </Link>
       </SidebarHeader>
       
