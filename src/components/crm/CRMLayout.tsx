@@ -40,6 +40,26 @@ export function CRMLayout() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const { enabled: soundEnabled, setEnabled: setSoundEnabled } = useNotificationSound();
+
+  const SoundToggle = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+          aria-label={soundEnabled ? "Desativar som de notificação" : "Ativar som de notificação"}
+        >
+          {soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4 opacity-60" />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        {soundEnabled ? "Som de notificação ligado" : "Som de notificação desligado"}
+      </TooltipContent>
+    </Tooltip>
+  );
 
   // Handle OAuth callback status (Google Calendar)
   useEffect(() => {
