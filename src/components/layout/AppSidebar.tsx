@@ -151,7 +151,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <Link to="/dashboard" className="flex min-w-0 items-center gap-3">
           <BrandLogo alt={appName} className="h-10 w-10 shrink-0 object-contain" />
-          <span className="truncate text-lg font-bold text-sidebar-foreground">
+          <span className="truncate text-lg font-bold text-white group-data-[collapsible=icon]:hidden">
             {appName}
           </span>
         </Link>
