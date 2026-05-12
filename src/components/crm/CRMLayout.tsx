@@ -302,6 +302,7 @@ export function CRMLayout() {
       </div>
 
       <div className="ml-auto flex items-center gap-2 shrink-0 min-w-0">
+        {SoundToggle}
         {hasInstances && (
           <InstanceSelector 
             selectedInstanceId={selectedInstanceId}
