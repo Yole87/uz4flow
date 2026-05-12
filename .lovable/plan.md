@@ -1,41 +1,21 @@
-## Som de notificação no chat (CRM)
+## Botão "Testar som" no toggle de notificação
 
-Hoje **não temos** nenhum som tocando quando chega mensagem nova no CRM — só atualização visual via realtime. Vou adicionar um "ding" suave quando entrar uma mensagem **inbound** (recebida do cliente), com controle do usuário.
+Adicionar um botão dedicado ao lado do toggle 🔔/🔕 no header do CRM que toca o "ding" imediatamente, ignorando o throttle e o estado ligado/desligado — útil para validar que o áudio funciona no navegador.
 
 ### Comportamento
 
-- Toca um som curto (~0.4s) ao chegar mensagem nova com `direction = 'inbound'`.
-- **Não toca** para mensagens enviadas pelo próprio operador (outbound).
-- **Não toca** se a aba estiver em foco E a conversa do contato já estiver aberta (evita poluição sonora durante atendimento ativo).
-- **Throttle** de 2s entre sons (evita rajada quando chegam várias mensagens juntas).
-- Pisca o `document.title` ("🔔 Nova mensagem • Uz4Flow") quando a aba está em background, voltando ao normal no foco.
-- Respeita preferência do navegador: se o user nunca interagiu com a página, o navegador bloqueia áudio — nesse caso, falha silenciosamente (sem erro).
+- Novo botão ícone (Volume2) ao lado do toggle 🔔, visível tanto no header desktop quanto no mobile.
+- Ao clicar: toca o som imediatamente, mesmo que o toggle esteja desligado e mesmo dentro da janela de throttle de 2s.
+- Tooltip: "Testar som de notificação".
+- Se o navegador bloquear o autoplay, falha silenciosamente (sem erro visível) — mas como é um clique do usuário, isso também desbloqueia o autoplay para os próximos toques automáticos.
 
-### Controle do usuário
+### Arquivos editados
 
-Toggle "🔔 Som de notificação" no **header do CRM** (ao lado dos filtros existentes), persistido em `localStorage` por usuário (`crm_notification_sound = "1" | "0"`, default `"1"` ligado). Sem necessidade de tabela ou backend.
-
-### Arquivos
-
-**Novos:**
-- `public/sounds/notification.mp3` — som curto de notificação (gero um "ding" leve, ~10KB).
-- `src/hooks/useNotificationSound.ts` — hook que expõe `playNotification()`, lê toggle do localStorage, controla throttle, gerencia `Audio` reutilizável e título da aba.
-
-**Editados:**
-- `src/hooks/useCRMRealtime.ts` — no `handleNewMessage`, ler `payload.new.direction` e `payload.new.from_me`; se for inbound, chamar `playNotification()` do hook (passado via `options` ou consumido direto).
-- `src/pages/CRM.tsx` — adicionar botão toggle 🔔/🔕 no header (próximo aos filtros existentes) usando `Button` ghost size icon, com tooltip "Som de notificação ligado/desligado".
-
-### Detalhes técnicos
-
-- `Audio` instanciado uma única vez via `useRef`, com `.preload = "auto"` e `volume = 0.5`.
-- Throttle implementado com `useRef<number>` guardando timestamp do último play.
-- Detecção de aba em foco: `document.visibilityState === "visible"` + `document.hasFocus()`.
-- Título: salvar título original ao montar, restaurar no `visibilitychange` quando voltar ao foco.
-- Filtro inbound: `payload.new.direction === 'inbound'` (já é o campo padrão da tabela `messages`).
+- `src/hooks/useNotificationSound.ts` — expor uma nova função `testSound()` que sempre toca o áudio (ignora `enabled` e ignora `lastPlayAt`), sem mexer em throttle/estado de toggle.
+- `src/components/crm/CRMLayout.tsx` — desestruturar `testSound` do hook e adicionar um `<Button>` ícone com `Volume2` (lucide-react) ao lado do `SoundToggle`, com tooltip "Testar som de notificação". Reutilizar o mesmo botão no `MobileHeader` e `DesktopHeader`.
 
 ### Fora do escopo
 
-- Notificações nativas do navegador (Web Notifications API) — pode ser uma evolução futura com permission prompt.
-- Sons diferenciados por tipo de mensagem (áudio/imagem/texto).
-- Configuração de som customizado pelo usuário.
-- Mudanças no Instagram/voice — apenas CRM de chat.
+- Mudar o ícone ou tamanho do toggle existente.
+- Configurar volume customizável.
+- Persistir histórico de testes.
