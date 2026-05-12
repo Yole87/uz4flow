@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   LayoutDashboard, 
@@ -423,7 +424,19 @@ export function AppSidebar() {
   );
 }
 
-function UserProfileDialogWrapper({ user, userProfile, signOut }: { user: any; userProfile: any; signOut: () => void }) {
+interface UserProfileSidebar {
+  full_name: string | null;
+}
+
+function UserProfileDialogWrapper({
+  user,
+  userProfile,
+  signOut,
+}: {
+  user: User | null;
+  userProfile?: UserProfileSidebar | null;
+  signOut: () => void;
+}) {
   const [profileOpen, setProfileOpen] = useState(false);
 
   return (
