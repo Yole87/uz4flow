@@ -18,7 +18,7 @@ import { ContactsListPane } from "./ContactsListPane";
 import { StorageHeaderBar } from "./StorageHeaderBar";
 import { DataRetentionNotice } from "./DataRetentionNotice";
 import { LiaFab } from "@/components/lia/LiaFab";
-import { MessageSquare, Menu, Users, Bell, BellOff } from "lucide-react";
+import { MessageSquare, Menu, Users, Bell, BellOff, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
