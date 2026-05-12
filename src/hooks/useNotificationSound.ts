@@ -59,6 +59,18 @@ export function useNotificationSound() {
   const setEnabled = useCallback((v: boolean) => {
     localStorage.setItem(STORAGE_KEY, v ? "1" : "0");
     setEnabledState(v);
+    // Toca uma prévia ao ativar — também desbloqueia autoplay no navegador (gesto do usuário)
+    if (v) {
+      try {
+        const audio = ensureAudio();
+        audio.currentTime = 0;
+        lastPlayAt = Date.now();
+        const p = audio.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      } catch {
+        // ignore
+      }
+    }
   }, []);
 
   const playNotification = useCallback(() => {
