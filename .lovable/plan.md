@@ -1,33 +1,41 @@
-## Plano
+## Som de notificação no chat (CRM)
 
-Vou corrigir o Branding para que as imagens enviadas em **Admin > Configurações > Branding** apareçam automaticamente no frontend, sem depender dos arquivos fixos `/favicon.png` ou `/pwa-icon-192.png`.
+Hoje **não temos** nenhum som tocando quando chega mensagem nova no CRM — só atualização visual via realtime. Vou adicionar um "ding" suave quando entrar uma mensagem **inbound** (recebida do cliente), com controle do usuário.
 
-### O que será ajustado
+### Comportamento
 
-1. **Criar uma fonte única para o logo dinâmico**
-   - Fazer o hook `useBranding` expor os dados salvos em Branding para os componentes.
-   - Garantir fallback seguro para `/favicon.png` quando não houver logo/favicon cadastrado.
+- Toca um som curto (~0.4s) ao chegar mensagem nova com `direction = 'inbound'`.
+- **Não toca** para mensagens enviadas pelo próprio operador (outbound).
+- **Não toca** se a aba estiver em foco E a conversa do contato já estiver aberta (evita poluição sonora durante atendimento ativo).
+- **Throttle** de 2s entre sons (evita rajada quando chegam várias mensagens juntas).
+- Pisca o `document.title` ("🔔 Nova mensagem • Uz4Flow") quando a aba está em background, voltando ao normal no foco.
+- Respeita preferência do navegador: se o user nunca interagiu com a página, o navegador bloqueia áudio — nesse caso, falha silenciosamente (sem erro).
 
-2. **Aplicar o logo salvo no Branding nas telas principais**
-   - Login/Auth.
-   - Sidebar do app.
-   - Navbar da landing page.
-   - Rodapé da landing page.
-   - Layout admin desktop e mobile.
-   - Banner do dashboard onde hoje ainda usa `/favicon.png` fixo.
+### Controle do usuário
 
-3. **Corrigir atualização após salvar**
-   - Invalidar/atualizar o cache do branding no frontend após salvar as configurações.
-   - Fazer o hook buscar novamente quando houver alteração, evitando precisar editar código ou depender de hard refresh.
+Toggle "🔔 Som de notificação" no **header do CRM** (ao lado dos filtros existentes), persistido em `localStorage` por usuário (`crm_notification_sound = "1" | "0"`, default `"1"` ligado). Sem necessidade de tabela ou backend.
 
-4. **Corrigir favicon/PWA dinâmico**
-   - Ajustar `index.html` para apontar para `/favicon.png` como fallback coerente.
-   - Manter o hook atualizando `<link rel="icon">`, Apple touch icon, meta tags e manifest via dados do Branding.
+### Arquivos
 
-5. **Revisar ícones Zap restantes**
-   - Trocar apenas os que representam marca/logo.
-   - Manter os `Zap` funcionais de automação, gatilho, módulos, botões e indicadores, para não quebrar o significado visual da interface.
+**Novos:**
+- `public/sounds/notification.mp3` — som curto de notificação (gero um "ding" leve, ~10KB).
+- `src/hooks/useNotificationSound.ts` — hook que expõe `playNotification()`, lê toggle do localStorage, controla throttle, gerencia `Audio` reutilizável e título da aba.
 
-### Resultado esperado
+**Editados:**
+- `src/hooks/useCRMRealtime.ts` — no `handleNewMessage`, ler `payload.new.direction` e `payload.new.from_me`; se for inbound, chamar `playNotification()` do hook (passado via `options` ou consumido direto).
+- `src/pages/CRM.tsx` — adicionar botão toggle 🔔/🔕 no header (próximo aos filtros existentes) usando `Button` ghost size icon, com tooltip "Som de notificação ligado/desligado".
 
-Quando você trocar a **Logo do App**, **Favicon** ou ícones PWA no Branding e salvar, o frontend passa a refletir isso nos pontos de marca do app, navbar, login, admin e landing page.
+### Detalhes técnicos
+
+- `Audio` instanciado uma única vez via `useRef`, com `.preload = "auto"` e `volume = 0.5`.
+- Throttle implementado com `useRef<number>` guardando timestamp do último play.
+- Detecção de aba em foco: `document.visibilityState === "visible"` + `document.hasFocus()`.
+- Título: salvar título original ao montar, restaurar no `visibilitychange` quando voltar ao foco.
+- Filtro inbound: `payload.new.direction === 'inbound'` (já é o campo padrão da tabela `messages`).
+
+### Fora do escopo
+
+- Notificações nativas do navegador (Web Notifications API) — pode ser uma evolução futura com permission prompt.
+- Sons diferenciados por tipo de mensagem (áudio/imagem/texto).
+- Configuração de som customizado pelo usuário.
+- Mudanças no Instagram/voice — apenas CRM de chat.
