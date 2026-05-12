@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AdminNotificationBell } from "./AdminNotificationBell";
 import { AdminProfileDialog } from "./AdminProfileDialog";
+import { BrandLogo } from "@/components/branding/BrandLogo";
 
 interface AdminLayoutProps {
   children: ReactNode;
