@@ -24,10 +24,9 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const {
-      data: { user },
-      error: userError,
-    } = await anonClient.auth.getUser(authHeader.replace("Bearer ", ""));
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: userError } = await anonClient.auth.getClaims(token);
+    const user = claimsData?.claims ? { id: claimsData.claims.sub as string } : null;
 
     if (userError || !user) {
       console.error("[admin-list-leads] Auth error:", userError?.message);
