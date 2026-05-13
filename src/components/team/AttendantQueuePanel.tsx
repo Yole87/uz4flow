@@ -51,7 +51,7 @@ export function AttendantQueuePanel({ row }: Props) {
     row.user_email ||
     "Sem departamento";
 
-  const { data: realConversations, isLoading: isLoadingReal } = useQuery({
+  const { data: conversations, isLoading } = useQuery({
     queryKey: ["queue-panel-conversations", row.member_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -79,46 +79,9 @@ export function AttendantQueuePanel({ row }: Props) {
         );
       return flat;
     },
-    enabled: !row.member_id.startsWith("mock-"),
+    enabled: !!row.member_id,
     staleTime: 30 * 1000,
   });
-
-  // 🧪 MOCK TEMPORÁRIO — gera conversas fictícias para member_id mock-*
-  const mockNames = [
-    "João Pereira", "Maria Santos", "Lucas Oliveira", "Beatriz Lima",
-    "Gabriel Souza", "Larissa Cardoso", "Rafael Martins", "Juliana Rocha",
-    "Pedro Henrique", "Camila Nogueira", "Thiago Ribeiro", "Fernanda Dias",
-  ];
-  const mockPreviews = [
-    "Oi, queria saber sobre o plano Pro",
-    "Já posso fazer o pagamento?",
-    "Bom dia! Tudo certo com meu pedido?",
-    "Recebi a fatura, mas tenho uma dúvida…",
-    "Obrigado pelo atendimento!",
-    "Pode me ajudar com a integração?",
-    "Quanto custa o upgrade?",
-    "Estou esperando há 10 minutos",
-    "Aguardando retorno do suporte",
-    "Quando vai chegar o produto?",
-    "Posso parcelar em 3x?",
-    "Acabei de fazer a compra",
-  ];
-  const isLoading = !row.member_id.startsWith("mock-") && isLoadingReal;
-  const mockConversations = row.member_id.startsWith("mock-")
-    ? Array.from({ length: row.active_conversations }).map((_, i) => ({
-        id: `mock-conv-${row.member_id}-${i}`,
-        contactId: `mock-contact-${row.member_id}-${i}`,
-        contactName: mockNames[i % mockNames.length],
-        last_message_at: new Date(
-          Date.now() - (i + 1) * (3 + Math.floor(Math.random() * 20)) * 60 * 1000,
-        ).toISOString(),
-        last_message_preview: mockPreviews[i % mockPreviews.length],
-        last_sender_type: i < row.pending_response ? "customer" : "agent",
-        status: "active",
-      }))
-    : null;
-
-  const conversations = mockConversations ?? realConversations;
 
   const list = conversations ?? [];
   const showing = list.slice(0, visible);
