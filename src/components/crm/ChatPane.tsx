@@ -45,7 +45,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
-import { StorageUsageBadge } from "@/components/StorageUsageBadge";
 import { QuickReplyPopover } from "./QuickReplyPopover";
 import { QuickReplyManager } from "./QuickReplyManager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -648,9 +647,8 @@ export function ChatPane({
                     <Phone className="h-2.5 w-2.5 mr-1" />
                     Em Ligação
                   </Badge>
-          )}
-          <StorageUsageBadge />
-        </div>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 {contact?.instance ? (
                   <>

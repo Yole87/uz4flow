@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 const STORAGE_KEY = "crm_notification_sound";
 const SOUND_URL = "/sounds/notification.mp3";
@@ -106,11 +107,18 @@ export function useNotificationSound() {
   const testSound = useCallback(() => {
     try {
       const audio = ensureAudio();
+      audio.load();
       audio.currentTime = 0;
       const p = audio.play();
-      if (p && typeof p.catch === "function") p.catch(() => {});
-    } catch {
-      // ignore
+      if (p && typeof p.catch === "function") {
+        p.catch((err: any) => {
+          toast.error(`Não foi possível tocar o som: ${err?.message || err}`);
+        });
+      } else {
+        toast.success("Som de notificação tocado");
+      }
+    } catch (err: any) {
+      toast.error(`Erro ao tocar som: ${err?.message || err}`);
     }
   }, []);
 
