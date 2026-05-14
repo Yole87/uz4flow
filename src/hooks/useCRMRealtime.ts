@@ -39,12 +39,8 @@ export function useCRMRealtime(
         exact: false
       });
 
-      // Play notification only for inbound (received) messages
-      const isInbound =
-        payload?.new?.direction === "inbound" || payload?.new?.from_me === false;
-      if (isInbound) {
-        playNotification();
-      }
+      // Play notification for any incoming message
+      playNotification();
 
       options?.onNewMessage?.(payload);
     },
