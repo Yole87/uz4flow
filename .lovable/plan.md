@@ -1,26 +1,39 @@
-## Objetivo
+## Diagnóstico
 
-Limpar os dados hardcoded ("Ana Carolina Silva", "Bruno Henrique Costa", etc.) que aparecem na página **Fila de Atendimento** (`/queue`) e mostrar apenas atendentes reais cadastrados em **Equipe → Membros**.
+Encontrei a causa. O domínio `uz4flow.com.br` foi conectado e o site abre, **mas as chamadas de backend (mensagens do CRM, conversas, etc.) estão sendo bloqueadas por CORS**.
 
-## Mudanças
+O arquivo `supabase/functions/_shared/cors.ts` mantém uma lista de origens permitidas e só inclui:
 
-### 1. `src/components/team/QueueTabsView.tsx`
-- Remover bloco `MOCK_ENABLED` e o array `mockRows` (linhas ~84–161).
-- Trocar `const rows = MOCK_ENABLED ? mockRows : realRows;` por `const rows = realRows;`.
-- Sem mock, quando a organização não tem nenhum membro cadastrado, o `EmptyState` "Fila zerada — Nenhum atendente cadastrado ainda" já existente cobre o estado vazio (vou ajustar o texto do CTA para indicar "Cadastre membros em Equipe → Membros").
+- `https://uz4flow.lovable.app`
+- `https://www.uz4flow.lovable.app`
+- domínios `*.lovable.app` / `*.lovableproject.com`
 
-### 2. `src/components/team/AttendantQueuePanel.tsx`
-- Remover arrays `mockNames` / `mockPreviews` e a geração de `mockConversations` (linhas ~86–119).
-- Simplificar para usar apenas `realConversations` da query no Supabase.
-- Remover a condição `enabled: !row.member_id.startsWith("mock-")` — query passa a rodar sempre que houver `row.member_id`.
-- Ajustar `isLoading` para usar diretamente `isLoadingReal`.
+O novo domínio **`https://uz4flow.com.br`** e **`https://www.uz4flow.com.br`** não estão na lista. Resultado: o navegador bloqueia as respostas das Edge Functions (`crm-conversations`, `crm-send-message`, etc.) → as mensagens "param de chegar" no front, embora o backend continue recebendo tudo normalmente.
 
-### 3. Sem mudanças em backend
-A view `attendance_queue_view` já lê de `team_members` filtrando por `organization_id`, então só os membros adicionados no menu **Equipe** vão aparecer automaticamente. Nenhuma migração necessária.
+> Os webhooks de entrada do OpenBot/Meta continuam funcionando (são server-to-server, sem CORS) — o problema é só na exibição no navegador a partir do domínio próprio.
 
-## Resultado esperado
+---
 
-- Página `/queue` mostra apenas atendentes reais da organização do usuário.
-- Se nenhum membro foi cadastrado em **Equipe → Membros**, aparece o EmptyState "Fila zerada".
-- Cada atendente lista somente conversas reais atribuídas a ele (`contacts.assigned_to_member_id`).
-- Os 4 cards de topo (Atendentes online, Conversas ativas, Aguardando, Espera média) passam a refletir números reais (zero quando não houver dados).
+## Plano (1 alteração pequena)
+
+**Arquivo:** `supabase/functions/_shared/cors.ts`
+
+Adicionar à constante `ALLOWED_ORIGINS`:
+
+```ts
+"https://uz4flow.com.br",
+"https://www.uz4flow.com.br",
+```
+
+Nada mais precisa mudar:
+- `getCorsHeaders` já reflete o `Origin` da requisição quando ele estiver na lista.
+- Edge Functions são redeployadas automaticamente após o save.
+
+---
+
+## Verificação após aplicar
+
+1. Abrir `https://uz4flow.com.br`, fazer login e abrir o CRM — as conversas e mensagens devem voltar a aparecer em segundos.
+2. Se ainda houver erro, abrir o Console do navegador (F12) e procurar por `CORS` ou `blocked by CORS policy` para confirmar que sumiu.
+
+Posso aplicar essa correção agora?
