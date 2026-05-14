@@ -6,6 +6,29 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
 import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+function useIsAdminMaster() {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .rpc("has_role", { _user_id: user.id, _role: "admin_master" })
+      .then(({ data }) => {
+        if (!cancelled) setIsAdmin(!!data);
+      });
+    return () => { cancelled = true; };
+  }, [user]);
+
+  return isAdmin;
+}
 
 // Pages
 import Auth from "./pages/Auth";
@@ -91,15 +114,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const isAdminMaster = useIsAdminMaster();
   const { data: organization, isLoading: orgLoading } = useUserOrganization();
   const { isActive } = useOrganizationSubscription();
 
-  if (loading || (user && orgLoading)) {
+  if (loading || (user && (isAdminMaster === null || orgLoading))) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // admin_master always lands on /admin
+  if (user && isAdminMaster) {
+    return <Navigate to="/admin" replace />;
   }
 
   // Only redirect to dashboard if user has an organization with active subscription
