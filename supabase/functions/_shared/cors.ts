@@ -9,6 +9,8 @@ const ALLOWED_ORIGINS = [
   "https://openbot-connector.lovable.app",
   "https://uz4flow.lovable.app",
   "https://www.uz4flow.lovable.app",
+  "https://uz4flow.com.br",
+  "https://www.uz4flow.com.br",
 ];
 
 const ALLOWED_ORIGIN_PATTERNS = [
