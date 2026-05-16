@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
 import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 function useIsAdminMaster() {
