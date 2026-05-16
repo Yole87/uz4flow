@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
 import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 function useIsAdminMaster() {
@@ -30,56 +30,57 @@ function useIsAdminMaster() {
   return isAdmin;
 }
 
-// Pages
+// Pages — eager: rotas de entrada
 import Auth from "./pages/Auth";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import Flows from "./pages/Flows";
-import FlowEditor from "./pages/FlowEditor";
-import FlowResults from "./pages/FlowResults";
-import Connectors from "./pages/Connectors";
-import ConnectorWizard from "./pages/ConnectorWizard";
-import ConnectorHistory from "./pages/ConnectorHistory";
-import Rules from "./pages/Rules";
-import MessageTemplates from "./pages/MessageTemplates";
-import History from "./pages/History";
-import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import Checkout from "./pages/Checkout";
-import CRM from "./pages/CRM";
-import Kanban from "./pages/Kanban";
-import Team from "./pages/Team";
-import Queue from "./pages/Queue";
-import Prospection from "./pages/Prospection";
-import Docs from "./pages/Docs";
-import VoiceAI from "./pages/VoiceAI";
-import McpGateway from "./pages/McpGateway";
-import Tutorials from "./pages/Tutorials";
-import Install from "./pages/Install";
-import SubscriptionCallback from "./pages/SubscriptionCallback";
-import Instagram from "./pages/Instagram";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import Reports from "./pages/Reports";
+
+// Pages — lazy (code-split por rota)
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Flows = lazy(() => import("./pages/Flows"));
+const FlowEditor = lazy(() => import("./pages/FlowEditor"));
+const FlowResults = lazy(() => import("./pages/FlowResults"));
+const Connectors = lazy(() => import("./pages/Connectors"));
+const ConnectorWizard = lazy(() => import("./pages/ConnectorWizard"));
+const ConnectorHistory = lazy(() => import("./pages/ConnectorHistory"));
+const Rules = lazy(() => import("./pages/Rules"));
+const MessageTemplates = lazy(() => import("./pages/MessageTemplates"));
+const History = lazy(() => import("./pages/History"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const CRM = lazy(() => import("./pages/CRM"));
+const Kanban = lazy(() => import("./pages/Kanban"));
+const Team = lazy(() => import("./pages/Team"));
+const Queue = lazy(() => import("./pages/Queue"));
+const Prospection = lazy(() => import("./pages/Prospection"));
+const Docs = lazy(() => import("./pages/Docs"));
+const VoiceAI = lazy(() => import("./pages/VoiceAI"));
+const McpGateway = lazy(() => import("./pages/McpGateway"));
+const Tutorials = lazy(() => import("./pages/Tutorials"));
+const Install = lazy(() => import("./pages/Install"));
+const SubscriptionCallback = lazy(() => import("./pages/SubscriptionCallback"));
+const Instagram = lazy(() => import("./pages/Instagram"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const Reports = lazy(() => import("./pages/Reports"));
 
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
-// Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminOrganizations from "./pages/admin/AdminOrganizations";
-import AdminPlans from "./pages/admin/AdminPlans";
-
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminCoupons from "./pages/admin/AdminCoupons";
-import AdminTutorials from "./pages/admin/AdminTutorials";
-import AdminBilling from "./pages/admin/AdminBilling";
-import AdminAffiliates from "./pages/admin/AdminAffiliates";
-import AdminNotifications from "./pages/admin/AdminNotifications";
-import Affiliates from "./pages/Affiliates";
-import AffiliateOnboardingPublic from "./pages/AffiliateOnboardingPublic";
+// Admin Pages (lazy)
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminOrganizations = lazy(() => import("./pages/admin/AdminOrganizations"));
+const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"));
+const AdminTutorials = lazy(() => import("./pages/admin/AdminTutorials"));
+const AdminBilling = lazy(() => import("./pages/admin/AdminBilling"));
+const AdminAffiliates = lazy(() => import("./pages/admin/AdminAffiliates"));
+const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
+const Affiliates = lazy(() => import("./pages/Affiliates"));
+const AffiliateOnboardingPublic = lazy(() => import("./pages/AffiliateOnboardingPublic"));
 
 
 const queryClient = new QueryClient({
@@ -225,7 +226,15 @@ const App = () => (
             {/* Global support-mode banner — visible on every authenticated route,
                 including pages (CRM, Kanban, …) that don't use AppLayout. */}
             <ImpersonationBanner />
-            <AppRoutes />
+            <Suspense
+              fallback={
+                <div className="flex min-h-screen items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              }
+            >
+              <AppRoutes />
+            </Suspense>
             <InstallPrompt />
           </LiaProvider>
         </BrowserRouter>
