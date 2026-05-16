@@ -226,7 +226,15 @@ const App = () => (
             {/* Global support-mode banner — visible on every authenticated route,
                 including pages (CRM, Kanban, …) that don't use AppLayout. */}
             <ImpersonationBanner />
-            <AppRoutes />
+            <Suspense
+              fallback={
+                <div className="flex min-h-screen items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              }
+            >
+              <AppRoutes />
+            </Suspense>
             <InstallPrompt />
           </LiaProvider>
         </BrowserRouter>
