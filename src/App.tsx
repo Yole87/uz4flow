@@ -30,12 +30,12 @@ function useIsAdminMaster() {
   return isAdmin;
 }
 
-// Pages — eager: rotas de entrada
+// Pages — eager: rota de entrada e fallback crítico
 import Auth from "./pages/Auth";
-import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 // Pages — lazy (code-split por rota)
+const Landing = lazy(() => import("./pages/Landing"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -215,6 +215,24 @@ function BrandingInjector() {
   return null;
 }
 
+function RouteChunkPreloader() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const id = window.setTimeout(() => {
+      void import("./pages/Dashboard");
+      void import("./pages/CRM");
+      void import("./pages/Kanban");
+    }, 2000);
+
+    return () => window.clearTimeout(id);
+  }, [user]);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -223,6 +241,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <LiaProvider>
+            <RouteChunkPreloader />
             {/* Global support-mode banner — visible on every authenticated route,
                 including pages (CRM, Kanban, …) that don't use AppLayout. */}
             <ImpersonationBanner />
