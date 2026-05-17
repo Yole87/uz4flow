@@ -1,6 +1,5 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { 
@@ -44,49 +43,14 @@ const menuItems = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      checkAdminAccess();
-    }
-  }, [user]);
-
-  const checkAdminAccess = async () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    const { data, error } = await supabase.rpc("has_role", {
-      _user_id: user.id,
-      _role: "admin_master",
-    });
-
-    if (error || !data) {
-      console.error("Access denied or error:", error);
-      navigate("/");
-      return;
-    }
-
-    setIsAdmin(true);
-  };
-
   const handleSignOut = async () => {
     await signOut();
   };
-
-  if (isAdmin === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex">
