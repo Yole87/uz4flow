@@ -30,12 +30,10 @@ function useIsAdminMaster() {
   return isAdmin;
 }
 
-// Pages — eager: rotas de entrada
-import Auth from "./pages/Auth";
-import Landing from "./pages/Landing";
-import NotFound from "./pages/NotFound";
-
 // Pages — lazy (code-split por rota)
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Landing = lazy(() => import("./pages/Landing"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -116,10 +114,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const isAdminMaster = useIsAdminMaster();
-  const { data: organization, isLoading: orgLoading } = useUserOrganization();
+  const shouldCheckOrganization = !!user && isAdminMaster === false;
+  const { data: organization, isLoading: orgLoading } = useUserOrganization({ enabled: shouldCheckOrganization });
   const { isActive } = useOrganizationSubscription();
 
-  if (loading || (user && (isAdminMaster === null || orgLoading))) {
+  if (loading || (user && (isAdminMaster === null || (shouldCheckOrganization && orgLoading)))) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -215,6 +214,25 @@ function BrandingInjector() {
   return null;
 }
 
+function RouteChunkPreloader() {
+  const { user } = useAuth();
+  const isAdminMaster = useIsAdminMaster();
+
+  useEffect(() => {
+    if (!user || isAdminMaster !== false) return;
+
+    const id = window.setTimeout(() => {
+      void import("./pages/Dashboard");
+      void import("./pages/CRM");
+      void import("./pages/Kanban");
+    }, 2000);
+
+    return () => window.clearTimeout(id);
+  }, [user, isAdminMaster]);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -223,6 +241,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <LiaProvider>
+            <RouteChunkPreloader />
             {/* Global support-mode banner — visible on every authenticated route,
                 including pages (CRM, Kanban, …) that don't use AppLayout. */}
             <ImpersonationBanner />

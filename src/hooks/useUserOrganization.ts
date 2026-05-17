@@ -14,8 +14,9 @@ function getImpersonationSnapshot() {
     : null;
 }
 
-export function useUserOrganization() {
+export function useUserOrganization(options?: { enabled?: boolean }) {
   const { user } = useAuth();
+  const enabled = options?.enabled ?? true;
   const impersonatedOrgId = useSyncExternalStore(
     subscribeImpersonationChanges,
     getImpersonationSnapshot,
@@ -63,7 +64,7 @@ export function useUserOrganization() {
 
       return null;
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
     staleTime: 1000 * 60 * 5,
   });
 }
