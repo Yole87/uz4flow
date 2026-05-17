@@ -30,11 +30,9 @@ function useIsAdminMaster() {
   return isAdmin;
 }
 
-// Pages — eager: rota de entrada e fallback crítico
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-
 // Pages — lazy (code-split por rota)
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const Landing = lazy(() => import("./pages/Landing"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
