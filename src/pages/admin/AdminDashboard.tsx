@@ -1,22 +1,36 @@
-import { useMemo, useState, useEffect } from "react";
+import { Suspense, lazy, useMemo, useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DashboardFilters, buildRange, buildCompareRange } from "@/components/admin/dashboard/DashboardFilters";
 import { useAdminDashboardData, type DashboardFiltersState } from "@/hooks/admin/useAdminDashboardData";
-import { RevenueSection } from "@/components/admin/dashboard/sections/RevenueSection";
-import { AcquisitionSection } from "@/components/admin/dashboard/sections/AcquisitionSection";
-import { RetentionSection } from "@/components/admin/dashboard/sections/RetentionSection";
-import { EngagementSection } from "@/components/admin/dashboard/sections/EngagementSection";
-import { AISection } from "@/components/admin/dashboard/sections/AISection";
-import { VoiceSection } from "@/components/admin/dashboard/sections/VoiceSection";
-import { ProspectionSection } from "@/components/admin/dashboard/sections/ProspectionSection";
-import { InstagramSection } from "@/components/admin/dashboard/sections/InstagramSection";
-import { AffiliatesSection } from "@/components/admin/dashboard/sections/AffiliatesSection";
-import { InfraSection } from "@/components/admin/dashboard/sections/InfraSection";
-import { InsightsSection } from "@/components/admin/dashboard/sections/InsightsSection";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
+const RevenueSection = lazy(() => import("@/components/admin/dashboard/sections/RevenueSection").then((m) => ({ default: m.RevenueSection })));
+const AcquisitionSection = lazy(() => import("@/components/admin/dashboard/sections/AcquisitionSection").then((m) => ({ default: m.AcquisitionSection })));
+const RetentionSection = lazy(() => import("@/components/admin/dashboard/sections/RetentionSection").then((m) => ({ default: m.RetentionSection })));
+const EngagementSection = lazy(() => import("@/components/admin/dashboard/sections/EngagementSection").then((m) => ({ default: m.EngagementSection })));
+const AISection = lazy(() => import("@/components/admin/dashboard/sections/AISection").then((m) => ({ default: m.AISection })));
+const VoiceSection = lazy(() => import("@/components/admin/dashboard/sections/VoiceSection").then((m) => ({ default: m.VoiceSection })));
+const ProspectionSection = lazy(() => import("@/components/admin/dashboard/sections/ProspectionSection").then((m) => ({ default: m.ProspectionSection })));
+const InstagramSection = lazy(() => import("@/components/admin/dashboard/sections/InstagramSection").then((m) => ({ default: m.InstagramSection })));
+const AffiliatesSection = lazy(() => import("@/components/admin/dashboard/sections/AffiliatesSection").then((m) => ({ default: m.AffiliatesSection })));
+const InfraSection = lazy(() => import("@/components/admin/dashboard/sections/InfraSection").then((m) => ({ default: m.InfraSection })));
+const InsightsSection = lazy(() => import("@/components/admin/dashboard/sections/InsightsSection").then((m) => ({ default: m.InsightsSection })));
+
 const STORAGE_KEY = "admin-dashboard-filters-v1";
+
+function DashboardSectionsFallback() {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-24 rounded-lg border border-border bg-card/60 animate-pulse" />
+        ))}
+      </div>
+      <div className="h-80 rounded-lg border border-border bg-card/60 animate-pulse" />
+    </div>
+  );
+}
 
 function buildInitial(): DashboardFiltersState {
   try {
@@ -126,17 +140,19 @@ export default function AdminDashboard() {
             loading={loading}
           />
 
-          <RevenueSection {...sectionProps} />
-          <AcquisitionSection data={data} loading={loading} />
-          <RetentionSection data={data} loading={loading} />
-          <EngagementSection data={data} loading={loading} />
-          <AISection data={data} loading={loading} />
-          <VoiceSection data={data} loading={loading} />
-          <ProspectionSection data={data} loading={loading} />
-          <InstagramSection data={data} loading={loading} />
-          <AffiliatesSection data={data} loading={loading} />
-          <InfraSection data={data} loading={loading} />
-          <InsightsSection {...sectionProps} />
+          <Suspense fallback={<DashboardSectionsFallback />}>
+            <RevenueSection {...sectionProps} />
+            <AcquisitionSection data={data} loading={loading} />
+            <RetentionSection data={data} loading={loading} />
+            <EngagementSection data={data} loading={loading} />
+            <AISection data={data} loading={loading} />
+            <VoiceSection data={data} loading={loading} />
+            <ProspectionSection data={data} loading={loading} />
+            <InstagramSection data={data} loading={loading} />
+            <AffiliatesSection data={data} loading={loading} />
+            <InfraSection data={data} loading={loading} />
+            <InsightsSection {...sectionProps} />
+          </Suspense>
         </div>
       </TooltipProvider>
     </AdminLayout>
