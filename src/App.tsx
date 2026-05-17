@@ -116,10 +116,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const isAdminMaster = useIsAdminMaster();
-  const { data: organization, isLoading: orgLoading } = useUserOrganization();
+  const shouldCheckOrganization = !!user && isAdminMaster === false;
+  const { data: organization, isLoading: orgLoading } = useUserOrganization({ enabled: shouldCheckOrganization });
   const { isActive } = useOrganizationSubscription();
 
-  if (loading || (user && (isAdminMaster === null || orgLoading))) {
+  if (loading || (user && (isAdminMaster === null || (shouldCheckOrganization && orgLoading)))) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -217,9 +218,10 @@ function BrandingInjector() {
 
 function RouteChunkPreloader() {
   const { user } = useAuth();
+  const isAdminMaster = useIsAdminMaster();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isAdminMaster !== false) return;
 
     const id = window.setTimeout(() => {
       void import("./pages/Dashboard");
@@ -228,7 +230,7 @@ function RouteChunkPreloader() {
     }, 2000);
 
     return () => window.clearTimeout(id);
-  }, [user]);
+  }, [user, isAdminMaster]);
 
   return null;
 }
