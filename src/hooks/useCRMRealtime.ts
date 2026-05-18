@@ -142,7 +142,11 @@ export function useCRMRealtime(
           table: "contacts",
           filter: `organization_id=eq.${organization.id}`,
         },
-        handleContactUpdate
+        (payload) => {
+          // New lead arrived — play notification
+          playNotification();
+          handleContactUpdate(payload);
+        }
       )
       .subscribe((status) => {
         console.log("[CRM Realtime] Subscription status:", status);
