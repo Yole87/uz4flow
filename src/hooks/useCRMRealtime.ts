@@ -39,8 +39,10 @@ export function useCRMRealtime(
         exact: false
       });
 
-      // Play notification for any incoming message
-      playNotification();
+      // Play notification only for INBOUND messages (avoid sound on own sends)
+      const msg = payload?.new ?? ({} as any);
+      const isInbound = msg.direction === "inbound" || msg.from_me === false;
+      if (isInbound) playNotification();
 
       options?.onNewMessage?.(payload);
     },
