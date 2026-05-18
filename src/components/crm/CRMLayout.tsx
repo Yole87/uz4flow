@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
+import { useCRMRealtime } from "@/hooks/useCRMRealtime";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +42,10 @@ export function CRMLayout() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const { enabled: soundEnabled, setEnabled: setSoundEnabled, testSound } = useNotificationSound();
+
+  // Global realtime subscription at CRM level so notification sound fires
+  // even when no conversation is open (e.g. Contacts tab, no selection)
+  useCRMRealtime(null);
 
   const SoundToggle = (
     <>

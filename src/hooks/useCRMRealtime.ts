@@ -39,8 +39,10 @@ export function useCRMRealtime(
         exact: false
       });
 
-      // Play notification for any incoming message
-      playNotification();
+      // Play notification only for INBOUND messages (avoid sound on own sends)
+      const msg = payload?.new ?? ({} as any);
+      const isInbound = msg.direction === "inbound" || msg.from_me === false;
+      if (isInbound) playNotification();
 
       options?.onNewMessage?.(payload);
     },
@@ -140,7 +142,11 @@ export function useCRMRealtime(
           table: "contacts",
           filter: `organization_id=eq.${organization.id}`,
         },
-        handleContactUpdate
+        (payload) => {
+          // New lead arrived — play notification
+          playNotification();
+          handleContactUpdate(payload);
+        }
       )
       .subscribe((status) => {
         console.log("[CRM Realtime] Subscription status:", status);
@@ -157,7 +163,7 @@ export function useCRMRealtime(
       console.log("[CRM Realtime] Unsubscribing from organization:", organization.id);
       supabase.removeChannel(channel);
     };
-  }, [organization?.id, handleNewMessage, handleConversationUpdate, handleContactUpdate]);
+  }, [organization?.id, handleNewMessage, handleConversationUpdate, handleContactUpdate, playNotification]);
 
   return { organizationId: organization?.id };
 }
