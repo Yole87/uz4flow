@@ -163,7 +163,7 @@ export function useCRMRealtime(
       console.log("[CRM Realtime] Unsubscribing from organization:", organization.id);
       supabase.removeChannel(channel);
     };
-  }, [organization?.id, handleNewMessage, handleConversationUpdate, handleContactUpdate]);
+  }, [organization?.id, handleNewMessage, handleConversationUpdate, handleContactUpdate, playNotification]);
 
   return { organizationId: organization?.id };
 }
