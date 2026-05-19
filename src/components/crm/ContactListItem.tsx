@@ -76,8 +76,8 @@ export function ContactListItem({
   const { labels: smartLabels } = useSmartLabels();
   if (!contact) return null;
 
-  const displayName = contact.name || contact.phone;
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const displayName = contact.name || contact.phone || "Sem nome";
+  const initials = (displayName || "??").slice(0, 2).toUpperCase();
   const lastSenderType = conversation.last_sender_type;
   const stage = contact.stage;
   const assignedMember = contact.assigned_member;
