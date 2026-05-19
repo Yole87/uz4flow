@@ -24,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
 import { useCRMRealtime } from "@/hooks/useCRMRealtime";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   DropdownMenu,
   DropdownMenuContent,
