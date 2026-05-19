@@ -14,7 +14,7 @@ interface SaveIntegrationRequest {
 interface TestConnectionRequest {
   action: "test";
   apiKey?: string;
-  inboundUrl: string;
+  inboundUrl?: string;
 }
 
 interface GetIntegrationRequest {
@@ -259,44 +259,45 @@ Deno.serve(async (req) => {
     
     // Handle TEST action
     if (body.action === "test") {
-      const { apiKey, inboundUrl } = body as TestConnectionRequest;
-      
-      if (!inboundUrl) {
+      const { apiKey, inboundUrl: bodyInboundUrl } = body as TestConnectionRequest;
+
+      let testApiKey: string | null = null;
+      let testInboundUrl: string | null = bodyInboundUrl?.trim() || null;
+
+      // Always fetch saved integration so we can fall back to stored inboundUrl
+      const { data: integration, error: fetchError } = await supabaseAdmin
+        .from("integrations")
+        .select("openbot_api_key_encrypted, openbot_inbound_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (apiKey) {
+        testApiKey = apiKey;
+      } else if (integration?.openbot_api_key_encrypted) {
+        testApiKey = await decrypt(integration.openbot_api_key_encrypted);
+      }
+
+      if (!testInboundUrl && integration?.openbot_inbound_url) {
+        testInboundUrl = integration.openbot_inbound_url;
+      }
+
+      if (!testInboundUrl) {
         return new Response(
-          JSON.stringify({ error: "Inbound URL is required" }),
+          JSON.stringify({ error: "Configure a URL de entrada do Sistema de WhatsApp AI antes de testar." }),
           { status: 400, headers: { ...corsHeaders, ...rateLimitHeaders, "Content-Type": "application/json" } }
         );
       }
-      
-      let testApiKey: string | null = null;
-      
-      if (apiKey) {
-        // New API key provided directly
-        testApiKey = apiKey;
-      } else {
-        // Fetch existing API key from database (server-side only)
-        const { data: integration, error: fetchError } = await supabaseAdmin
-          .from("integrations")
-          .select("openbot_api_key_encrypted")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        
-        if (fetchError) throw fetchError;
-        
-        if (integration?.openbot_api_key_encrypted) {
-          // Decrypt API key (supports both legacy base64 and new AES encryption)
-          testApiKey = await decrypt(integration.openbot_api_key_encrypted);
-        }
-      }
-      
+
       if (!testApiKey) {
         return new Response(
-          JSON.stringify({ error: "Save an API Key before testing the connection" }),
+          JSON.stringify({ error: "Salve uma API Key antes de testar a conexão." }),
           { status: 400, headers: { ...corsHeaders, ...rateLimitHeaders, "Content-Type": "application/json" } }
         );
       }
-      
-      const result = await sendToOpenBot(testApiKey, inboundUrl);
+
+      const result = await sendToOpenBot(testApiKey, testInboundUrl);
       
       return new Response(
         JSON.stringify({
