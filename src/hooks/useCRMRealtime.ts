@@ -6,10 +6,8 @@ import { useNotificationSound } from "./useNotificationSound";
 
 /**
  * Optimized Realtime subscription for CRM
- * Uses organization-level channel instead of per-conversation channels
- * This dramatically reduces the number of active subscriptions
- * 
- * Includes polling fallback for reliability
+ * Single org-level channel. MUST only be mounted ONCE per app (in CRMLayout)
+ * to avoid duplicate-channel collisions (CHANNEL_ERROR / reconnect loops).
  */
 export function useCRMRealtime(
   contactId: string | null,
@@ -24,146 +22,130 @@ export function useCRMRealtime(
   const { playNotification } = useNotificationSound();
 
   const handleNewMessage = useCallback(
-    (payload: { new: { conversation_id: string; direction?: string; from_me?: boolean } }) => {
-      console.log("[CRM Realtime] New message received:", payload);
+    (payload: { new: { conversation_id?: string; direction?: string; from_me?: boolean } }) => {
+      queryClient.invalidateQueries({ queryKey: ["crm-messages"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["crm-conversations"], exact: false });
 
-      // Invalidate ALL crm-messages queries (contactId may be stale/null)
-      queryClient.invalidateQueries({
-        queryKey: ["crm-messages"],
-        exact: false
-      });
-
-      // Invalidate conversations list for preview update
-      queryClient.invalidateQueries({
-        queryKey: ["crm-conversations"],
-        exact: false
-      });
-
-      // Play notification only for INBOUND messages (avoid sound on own sends)
       const msg = payload?.new ?? ({} as any);
       const isInbound = msg.direction === "inbound" || msg.from_me === false;
       if (isInbound) playNotification();
 
       options?.onNewMessage?.(payload);
     },
-    [queryClient, contactId, options, playNotification]
+    [queryClient, options, playNotification]
   );
 
   const handleConversationUpdate = useCallback(
     (payload: unknown) => {
-      console.log("[CRM Realtime] Conversation updated:", payload);
-      
-      queryClient.invalidateQueries({ 
-        queryKey: ["crm-conversations"],
-        exact: false 
-      });
-
+      queryClient.invalidateQueries({ queryKey: ["crm-conversations"], exact: false });
       options?.onConversationUpdate?.(payload);
     },
     [queryClient, options]
   );
 
   const handleContactUpdate = useCallback(
-    (payload: unknown) => {
-      console.log("[CRM Realtime] Contact changed:", payload);
-      
-      queryClient.invalidateQueries({ 
-        queryKey: ["crm-contact", contactId],
-        exact: false 
-      });
-      
-      queryClient.invalidateQueries({ 
-        queryKey: ["crm-contact-details", contactId],
-        exact: false 
-      });
+    (payload: { new?: any; old?: any }) => {
+      queryClient.invalidateQueries({ queryKey: ["crm-contact", contactId], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["crm-contact-details", contactId], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts"], exact: false });
 
-      // Keep Kanban board and Dashboard metrics in sync (WhatsApp + Instagram)
-      queryClient.invalidateQueries({
-        queryKey: ["kanban-contacts"],
-        exact: false,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["pipeline-contacts-count"],
-        exact: false,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["crm-contacts"],
-        exact: false,
-      });
+      // Only invalidate Kanban/Dashboard when the pipeline stage actually changed.
+      const oldStage = payload?.old?.pipeline_stage_id ?? null;
+      const newStage = payload?.new?.pipeline_stage_id ?? null;
+      if (oldStage !== newStage) {
+        queryClient.invalidateQueries({ queryKey: ["kanban-contacts"], exact: false });
+        queryClient.invalidateQueries({ queryKey: ["pipeline-contacts-count"], exact: false });
+      }
 
       options?.onContactUpdate?.(payload);
     },
     [queryClient, contactId, options]
   );
 
+  const handleContactInsert = useCallback(
+    (payload: unknown) => {
+      // New lead arrived — play notification
+      playNotification();
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["kanban-contacts"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-contacts-count"], exact: false });
+      options?.onContactUpdate?.(payload);
+    },
+    [queryClient, options, playNotification]
+  );
+
   useEffect(() => {
     if (!organization?.id) return;
 
-    console.log("[CRM Realtime] Subscribing to organization:", organization.id);
+    // Unique channel name (timestamp suffix) prevents collision if hook
+    // accidentally mounts twice during navigation/Strict Mode double-render.
+    const channelName = `crm-org-${organization.id}-${Date.now()}`;
+    console.log("[CRM Realtime] Subscribing:", channelName);
 
-    // Single channel per organization (not per conversation!)
-    const channel = supabase
-      .channel(`crm-org-${organization.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `organization_id=eq.${organization.id}`,
-        },
-        handleNewMessage
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "conversations",
-          filter: `organization_id=eq.${organization.id}`,
-        },
-        handleConversationUpdate
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "contacts",
-          filter: `organization_id=eq.${organization.id}`,
-        },
-        handleContactUpdate
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "contacts",
-          filter: `organization_id=eq.${organization.id}`,
-        },
-        (payload) => {
-          // New lead arrived — play notification
-          playNotification();
-          handleContactUpdate(payload);
-        }
-      )
-      .subscribe((status) => {
-        console.log("[CRM Realtime] Subscription status:", status);
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          console.error(
-            "[CRM Realtime] Channel failed for org",
-            organization.id,
-            "— filters or RLS may be misconfigured."
-          );
-        }
-      });
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(channelName)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `organization_id=eq.${organization.id}`,
+          },
+          handleNewMessage
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "conversations",
+            filter: `organization_id=eq.${organization.id}`,
+          },
+          handleConversationUpdate
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "contacts",
+            filter: `organization_id=eq.${organization.id}`,
+          },
+          handleContactUpdate
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "contacts",
+            filter: `organization_id=eq.${organization.id}`,
+          },
+          handleContactInsert
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            console.warn("[CRM Realtime] Channel issue:", status, "— UI continues with polling fallback.");
+          }
+        });
+    } catch (err) {
+      // Never let realtime setup break the CRM UI
+      console.error("[CRM Realtime] Setup failed:", err);
+    }
 
     return () => {
-      console.log("[CRM Realtime] Unsubscribing from organization:", organization.id);
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (err) {
+          console.warn("[CRM Realtime] removeChannel failed:", err);
+        }
+      }
     };
-  }, [organization?.id, handleNewMessage, handleConversationUpdate, handleContactUpdate, playNotification]);
+  }, [organization?.id, handleNewMessage, handleConversationUpdate, handleContactUpdate, handleContactInsert]);
 
   return { organizationId: organization?.id };
 }
