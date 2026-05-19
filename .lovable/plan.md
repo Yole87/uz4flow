@@ -1,53 +1,43 @@
-# Correção do som de notificação do CRM
+## Problema identificado
 
-## Diagnóstico
+No executor `supabase/functions/instagram-process-event/index.ts`, quando o trigger é **comentário** e o `send_dm` é enviado via **Private Reply** (a única chance fora da janela de DM), o código:
 
-O som hoje **não toca de forma confiável** por dois motivos no código:
+1. Marca `_private_reply_used = true` e `_awaiting_inbound_dm = true`
+2. Salva o contexto na sessão **mas não avança `current_step_index`**
+3. **Não retorna** — o `for` loop continua para os passos seguintes na mesma invocação
 
-1. **O gatilho do som vive dentro do `ChatPane`** (`useCRMRealtime` é chamado apenas em `src/components/crm/ChatPane.tsx:348`). Isso significa que o som só dispara se uma conversa já estiver aberta. Quando o atendente está na aba **Contatos**, sem conversa selecionada, ou em outra área do CRM, nenhum evento de mensagem nova chega ao hook → **nenhum som toca**.
-2. **Sem filtro de direção**: em `useCRMRealtime.handleNewMessage` o `playNotification()` é chamado para qualquer INSERT em `messages`, inclusive mensagens **enviadas pelo próprio atendente** (`from_me = true` / `direction = 'outbound'`). Isso gera disparos errados e mascara o problema de "não tocar quando deveria".
+Como o Meta NÃO abre a janela de mensagens automaticamente depois do private reply (só abre quando o usuário responde a DM), os próximos passos (`ask_and_wait`, `check_follower`, `save_lead`, `tag_lead`, segundo `send_dm`) executam fora de hora: alguns falham silenciosamente, outros disparam erro de "messaging window closed", e o índice da sessão fica desalinhado — por isso "só funciona até enviar a DM".
 
-Além disso, o usuário pediu que toque também quando **um novo contato/lead chega** — hoje o INSERT em `contacts` invalida queries mas não dispara `playNotification()`.
+A lógica correta já existe no branch `mustWaitForInboundDm` (linhas 1678-1710) e no `ask_and_wait` (linhas 1842-1873): persistir sessão aguardando e retornar. O branch de sucesso do private_reply em `send_dm` simplesmente não faz isso.
 
-## Mudanças
+## Correção
 
-### 1. `src/hooks/useCRMRealtime.ts`
-- Em `handleNewMessage`, só chamar `playNotification()` quando a mensagem for **inbound** (`payload.new.direction === 'inbound'` ou `from_me === false`). Mensagens enviadas pelo atendente não tocam som.
-- Em `handleContactUpdate` (que já trata INSERT de `contacts`), separar o caminho de INSERT e disparar `playNotification()` quando um **novo contato/lead** é criado na organização.
+### 1. `supabase/functions/instagram-process-event/index.ts` — `case "send_dm"` (linha ~1715)
 
-### 2. Elevar a assinatura realtime para o nível do CRM
-- Hoje `useCRMRealtime(contactId)` só é montado em `ChatPane`. Vamos mantê-lo lá (para os callbacks específicos do chat aberto), **mas também montar uma instância no `CRMLayout`** (`src/components/crm/CRMLayout.tsx`) passando `contactId = null`. Assim o canal por organização fica ativo durante toda a sessão no CRM, garantindo que o som toque mesmo:
-  - na aba **Contatos**,
-  - sem conversa selecionada,
-  - ou com a aba do navegador em segundo plano (combinado com o title flash já existente).
-- O Supabase Realtime já agrupa múltiplas inscrições no mesmo canal — manter duas chamadas do hook é seguro; cada uma cria seu próprio channel, mas o custo é desprezível e o desacoplamento simplifica a correção sem refatorar o `ChatPane`.
+No bloco `if (needsPrivateReply)`, quando `res.ok`:
 
-### 3. Garantir que o áudio possa tocar
-- O `useNotificationSound` já desbloqueia o autoplay ao **ativar o sino** e ao usar o **botão Testar**. Sem mudanças aqui — apenas garantir na UI/tooltip que o usuário precisa ter clicado pelo menos uma vez no sino/teste para liberar o áudio (já existe).
+- Persistir sessão aguardando com `currentStepIndex = i + batchedStepCount + 1` (próximo passo após o batch) usando `persistWaitingSession`
+- Logar sucesso do `send_dm` (e dos passos batched)
+- Marcar evento como `processed`, incrementar `execution_count`
+- **Retornar imediatamente** com `{ processed: true, waiting: true, deferred: true, reason: "awaiting_inbound_dm" }`
 
-## Detalhes técnicos
+Isso espelha exatamente o tratamento já feito em `mustWaitForInboundDm` e em `ask_and_wait` deferido.
 
-```ts
-// useCRMRealtime.ts — handleNewMessage
-const msg = payload.new ?? {};
-const isInbound = msg.direction === 'inbound' || msg.from_me === false;
-if (isInbound) playNotification();
-```
+### 2. Garantir consistência para fluxos futuros
 
-```ts
-// useCRMRealtime.ts — novo handler para INSERT em contacts
-const handleContactInsert = useCallback((payload) => {
-  playNotification();          // novo lead chegando
-  handleContactUpdate(payload); // mantém invalidação de queries
-}, [playNotification, handleContactUpdate]);
-```
+Aplicar o mesmo princípio em qualquer outro ponto que envie via private_reply sem janela aberta:
+- Verificar `case "ask_and_wait"` (já correto: defere quando Meta responde "window closed", mas falta pausar **antes** mesmo em sucesso de private_reply para esperar inbound antes do próximo passo). Ajuste: após `askNeedsPrivateReply` com `res.ok`, também persistir + retornar (igual ao send_dm), pois `ask_and_wait` por natureza já espera resposta — o flow não pode continuar avançando passos no mesmo run.
 
-```tsx
-// CRMLayout.tsx — assinatura global do CRM
-useCRMRealtime(null);
-```
+### 3. Validação após o deploy
 
-## Fora de escopo (não muda agora)
-- Indicador visual piscando no item de origem do lead (linha do contato/conversa).
-- Preview ao vivo.
-- Qualquer mudança no `ChatPane` além do que já é feito pelo hook.
+- Refazer o teste: comentar em post → confirmar que chega a Private Reply
+- Responder a DM → verificar nos logs `[IG-Process] Resuming session ... stepIndex=N+1` e que os passos seguintes (`check_follower`, `ask_and_wait`, `tag_lead`, `save_lead`, próximo `send_dm`) executam em sequência
+
+## Resultado esperado
+
+Toda automação cujo trigger é comentário passará a:
+1. Enviar a Private Reply (já funciona)
+2. **Pausar** aguardando o usuário responder na DM
+3. Quando o usuário responder, **retomar do próximo passo** e executar o restante completo (verificar seguidor, perguntar, salvar lead, taguear, enviar próximas DMs etc.)
+
+Vale para essa automação e qualquer futura — a correção é no motor central, não em uma automação específica.
