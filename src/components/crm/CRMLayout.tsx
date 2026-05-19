@@ -147,7 +147,7 @@ export function CRMLayout() {
   }, [searchParams, isMobile]);
 
   // Fetch instances to check if any exist
-  const { data: instances, isLoading: instancesLoading } = useQuery({
+  const { data: instances, isLoading: instancesLoading, error: instancesError } = useQuery({
     queryKey: ["crm-instances", organization?.id],
     queryFn: async () => {
       if (!organization?.id) return [];
@@ -160,6 +160,7 @@ export function CRMLayout() {
       return data;
     },
     enabled: !!organization?.id,
+    retry: 1,
   });
 
   // Validate stored instance still exists once instances load
