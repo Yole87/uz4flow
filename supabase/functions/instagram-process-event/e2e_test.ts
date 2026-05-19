@@ -138,7 +138,7 @@ async function cleanup(orgId: string, automationIds: string[]) {
     await admin.from("instagram_action_logs").delete().in("automation_id", automationIds);
     await admin.from("instagram_sessions").delete().eq("organization_id", orgId).eq("ig_user_scoped_id", TEST_IGSID);
     await admin.from("instagram_leads").delete().eq("organization_id", orgId).eq("ig_user_scoped_id", TEST_IGSID);
-    await admin.from("instagram_events").delete().in("automation_id" as any, automationIds).catch(() => {});
+    // Event rows have no automation FK; cleaned below by event_hash prefix.
     await admin.from("instagram_events").delete().like("event_hash", `e2e_%`);
     await admin.from("instagram_automations").delete().in("id", automationIds);
   } catch (e) {
