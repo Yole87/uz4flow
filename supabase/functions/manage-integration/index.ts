@@ -260,28 +260,46 @@ Deno.serve(async (req) => {
     
     // Handle TEST action
     if (body.action === "test") {
-      const { apiKey, inboundUrl: bodyInboundUrl } = body as TestConnectionRequest;
+      const { apiKey, inboundUrl: bodyInboundUrl, instance_id } = body as TestConnectionRequest;
 
-      let testApiKey: string | null = null;
+      let testApiKey: string | null = apiKey || null;
       let testInboundUrl: string | null = bodyInboundUrl?.trim() || null;
 
-      // Always fetch saved integration so we can fall back to stored inboundUrl
-      const { data: integration, error: fetchError } = await supabaseAdmin
-        .from("integrations")
-        .select("openbot_api_key_encrypted, openbot_inbound_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // 1) Prefer per-instance config (instances table) when instance_id is provided
+      if (instance_id) {
+        const { data: instance, error: instErr } = await supabaseAdmin
+          .from("instances")
+          .select("api_url, api_key_encrypted, openbot_api_key_encrypted")
+          .eq("id", instance_id)
+          .maybeSingle();
 
-      if (fetchError) throw fetchError;
+        if (instErr) throw instErr;
 
-      if (apiKey) {
-        testApiKey = apiKey;
-      } else if (integration?.openbot_api_key_encrypted) {
-        testApiKey = await decrypt(integration.openbot_api_key_encrypted);
+        if (instance) {
+          if (!testInboundUrl && instance.api_url) testInboundUrl = instance.api_url;
+          if (!testApiKey) {
+            const enc = instance.openbot_api_key_encrypted || instance.api_key_encrypted;
+            if (enc) testApiKey = await decrypt(enc);
+          }
+        }
       }
 
-      if (!testInboundUrl && integration?.openbot_inbound_url) {
-        testInboundUrl = integration.openbot_inbound_url;
+      // 2) Fallback to user-level integrations
+      if (!testInboundUrl || !testApiKey) {
+        const { data: integration } = await supabaseAdmin
+          .from("integrations")
+          .select("openbot_api_key_encrypted, openbot_inbound_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (integration) {
+          if (!testInboundUrl && integration.openbot_inbound_url) {
+            testInboundUrl = integration.openbot_inbound_url;
+          }
+          if (!testApiKey && integration.openbot_api_key_encrypted) {
+            testApiKey = await decrypt(integration.openbot_api_key_encrypted);
+          }
+        }
       }
 
       if (!testInboundUrl) {
