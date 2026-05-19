@@ -1732,13 +1732,30 @@ Deno.serve(async (req) => {
                     console.log(`[IG-Process] send_dm: saved _ig_dm_recipient_id=${resJson.recipient_id}`);
                   }
                 } catch (_) { /* ignore parse errors */ }
-                if (sessionId) {
-                  await supabase.from("instagram_sessions").update({
-                    context_json: contextData,
-                    updated_at: new Date().toISOString(),
-                  }).eq("id", sessionId);
-                }
-                // Skip batched steps
+
+                // Persist waiting session at the NEXT step after the batched send_dm group.
+                // Meta does NOT open the messaging window after a private_reply — we MUST pause
+                // and resume only when the user replies with an inbound DM. Otherwise the
+                // remaining steps (ask_and_wait, check_follower, tag_lead, save_lead, etc.)
+                // would execute in the wrong order or fail with "messaging window closed".
+                const nextStepIndex = i + batchedStepCount + 1;
+                sessionId = await persistWaitingSession(supabase, {
+                  sessionId,
+                  organizationId,
+                  automationId: automation.id as string,
+                  accountId,
+                  igUserScopedId,
+                  contextData,
+                  currentStepIndex: nextStepIndex,
+                });
+
+                await logAction(supabase, {
+                  organizationId, eventId: event_id, automationId: automation.id as string,
+                  sessionId, actionType: "send_dm", actionIndex: i,
+                  status: "success", latencyMs: Date.now() - startMs,
+                  humanSummary: `Resposta privada enviada: "${text.substring(0, 80)}"${batchedStepCount > 0 ? ` [batched ${batchedStepCount + 1} steps]` : ""}`,
+                  requestJson: { recipient: igUserScopedId, text: text.substring(0, 200), method: "private_reply" },
+                });
                 if (batchedStepCount > 0) {
                   for (let b = 1; b <= batchedStepCount; b++) {
                     await logAction(supabase, {
@@ -1748,8 +1765,21 @@ Deno.serve(async (req) => {
                       humanSummary: `Mensagem incluída no batching da private reply (step ${i})`,
                     });
                   }
-                  i += batchedStepCount; // skip batched steps in for-loop
                 }
+
+                await supabase.from("instagram_events").update({
+                  status: "processed", processed_at: new Date().toISOString(),
+                }).eq("id", event_id);
+
+                await supabase.from("instagram_automations").update({
+                  execution_count: (automation.execution_count as number || 0) + 1,
+                  last_executed_at: new Date().toISOString(),
+                }).eq("id", automation.id);
+
+                console.log(`[IG-Process] send_dm private_reply: paused at stepIndex=${nextStepIndex}, awaiting inbound DM to resume`);
+                return new Response(JSON.stringify({ processed: true, waiting: true, deferred: true, reason: "awaiting_inbound_dm" }), {
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
               }
             } else {
               method = "direct_dm";
