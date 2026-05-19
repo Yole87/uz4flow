@@ -1646,32 +1646,47 @@ Deno.serve(async (req) => {
             const needsPrivateReply = originEventType === "comment" && !!originCommentId && !hasOpenDmWindow && !privateReplyAlreadyUsed;
             const mustWaitForInboundDm = originEventType === "comment" && !!originCommentId && !hasOpenDmWindow && privateReplyAlreadyUsed;
 
-            // ── BATCHING: When using private reply (1 chance only), look ahead and merge consecutive send_dm steps ──
+            // ── BATCHING: When using private reply (1 chance only), look ahead and merge
+            // consecutive send_dm steps AND a trailing ask_and_wait into the SAME single message.
+            // Meta only allows 1 Private Reply per comment, so if an ask_and_wait follows the
+            // send_dm we must include its question text now — otherwise it would only fire after
+            // the user sent an inbound DM (which never happens because the user has nothing to reply to).
             let batchedStepCount = 0;
+            let batchedAskStep = false;
             if (needsPrivateReply) {
               const batchedTexts = [text];
               let lastQuickReplies = quickReplies;
               for (let j = i + 1; j < steps.length; j++) {
                 const nextStep = steps[j] as Record<string, unknown>;
-                if (String(nextStep.type || "") !== "send_dm") break;
-                const nextConfig = nextStep.config as Record<string, unknown> || {};
-                const nextText = replaceVars(String(nextConfig.message || nextStep.text || ""), contextData);
-                if (nextText) batchedTexts.push(nextText);
-                // Keep quick_replies from last batched step
-                const nextQr = nextConfig.quick_replies as Array<{ title: string; payload: string }> | undefined;
-                if (Array.isArray(nextQr) && nextQr.length > 0) lastQuickReplies = nextQr;
-                batchedStepCount++;
+                const nextType = String(nextStep.type || "");
+                if (nextType === "send_dm") {
+                  const nextConfig = nextStep.config as Record<string, unknown> || {};
+                  const nextText = replaceVars(String(nextConfig.message || nextStep.text || ""), contextData);
+                  if (nextText) batchedTexts.push(nextText);
+                  const nextQr = nextConfig.quick_replies as Array<{ title: string; payload: string }> | undefined;
+                  if (Array.isArray(nextQr) && nextQr.length > 0) lastQuickReplies = nextQr;
+                  batchedStepCount++;
+                } else if (nextType === "ask_and_wait") {
+                  // Inline the question text into the same private reply, then stop batching.
+                  const nextConfig = nextStep.config as Record<string, unknown> || {};
+                  const askText = replaceVars(String(nextConfig.message || nextStep.message || nextStep.text || ""), contextData);
+                  if (askText) batchedTexts.push(askText);
+                  batchedStepCount++;
+                  batchedAskStep = true;
+                  break;
+                } else {
+                  break;
+                }
               }
               if (batchedStepCount > 0) {
                 text = batchedTexts.join("\n\n");
                 msgPayload.text = text;
-                // Use quick_replies from the last batched step
                 if (Array.isArray(lastQuickReplies) && lastQuickReplies.length > 0) {
                   msgPayload.quick_replies = lastQuickReplies
                     .filter(qr => qr.title && qr.payload)
                     .map(qr => ({ content_type: "text", title: qr.title.substring(0, 20), payload: qr.payload }));
                 }
-                console.log(`[IG-Process] send_dm: batched ${batchedStepCount + 1} consecutive send_dm steps into single private reply`);
+                console.log(`[IG-Process] send_dm: batched ${batchedStepCount + 1} steps into single private reply${batchedAskStep ? " (inc. ask_and_wait)" : ""}`);
               }
             }
 
