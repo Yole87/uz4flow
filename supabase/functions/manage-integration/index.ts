@@ -14,7 +14,7 @@ interface SaveIntegrationRequest {
 interface TestConnectionRequest {
   action: "test";
   apiKey?: string;
-  inboundUrl: string;
+  inboundUrl?: string;
 }
 
 interface GetIntegrationRequest {
