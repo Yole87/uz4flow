@@ -88,7 +88,7 @@ export function FlowsCredentialsTab({ instanceId, webhookUrl }: Props) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ action: "test" }),
+          body: JSON.stringify({ action: "test", instance_id: instanceId }),
         }
       );
       const result = await response.json();
