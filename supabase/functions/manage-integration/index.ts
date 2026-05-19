@@ -15,6 +15,7 @@ interface TestConnectionRequest {
   action: "test";
   apiKey?: string;
   inboundUrl?: string;
+  instance_id?: string;
 }
 
 interface GetIntegrationRequest {
