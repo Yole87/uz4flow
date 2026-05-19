@@ -344,8 +344,8 @@ export function ChatPane({
     onError: () => toast.error("Erro ao apagar mensagens"),
   });
 
-  // Realtime
-  useCRMRealtime(contactId);
+  // Realtime is centralized at CRMLayout (single channel per org) to avoid
+  // duplicate channel-name collisions causing CHANNEL_ERROR/reconnect loops.
   const { data: activeCall } = useActiveVoiceCall(contactId);
 
   useEffect(() => {
