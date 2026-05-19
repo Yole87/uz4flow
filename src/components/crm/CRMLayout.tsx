@@ -24,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
 import { useCRMRealtime } from "@/hooks/useCRMRealtime";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,7 +147,7 @@ export function CRMLayout() {
   }, [searchParams, isMobile]);
 
   // Fetch instances to check if any exist
-  const { data: instances, isLoading: instancesLoading } = useQuery({
+  const { data: instances, isLoading: instancesLoading, error: instancesError } = useQuery({
     queryKey: ["crm-instances", organization?.id],
     queryFn: async () => {
       if (!organization?.id) return [];
@@ -159,6 +160,7 @@ export function CRMLayout() {
       return data;
     },
     enabled: !!organization?.id,
+    retry: 1,
   });
 
   // Validate stored instance still exists once instances load
@@ -441,19 +443,33 @@ export function CRMLayout() {
           )}
 
           <main className="flex-1 bg-background overflow-hidden min-h-0">
-            {activeTab === "contacts" ? (
-              <ContactsListPane onNavigateToConversation={handleNavigateToConversation} globalInstanceId={selectedInstanceId} />
-            ) : instancesLoading ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                Carregando...
-              </div>
-            ) : !hasInstances ? (
-              <CRMEmptyState />
-            ) : isMobile ? (
-              <MobileLayout />
-            ) : (
-              <DesktopLayout />
-            )}
+            <ErrorBoundary label="CRMLayout">
+              {activeTab === "contacts" ? (
+                <ContactsListPane onNavigateToConversation={handleNavigateToConversation} globalInstanceId={selectedInstanceId} />
+              ) : instancesLoading ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Carregando...
+                </div>
+              ) : instancesError ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Não foi possível carregar as instâncias do CRM.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ["crm-instances"] })}
+                  >
+                    Tentar novamente
+                  </Button>
+                </div>
+              ) : !hasInstances ? (
+                <CRMEmptyState />
+              ) : isMobile ? (
+                <MobileLayout />
+              ) : (
+                <DesktopLayout />
+              )}
+            </ErrorBoundary>
           </main>
         </SidebarInset>
       </div>

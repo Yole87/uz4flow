@@ -15,7 +15,7 @@ import { MessageSelectionBar } from "./MessageSelectionBar";
 import { TextSuggestionBar } from "./TextSuggestionBar";
 import { ForwardMessageDialog } from "./ForwardMessageDialog";
 import { useActiveVoiceCall } from "@/hooks/useActiveVoiceCall";
-import { useCRMRealtime } from "@/hooks/useCRMRealtime";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -344,8 +344,8 @@ export function ChatPane({
     onError: () => toast.error("Erro ao apagar mensagens"),
   });
 
-  // Realtime
-  useCRMRealtime(contactId);
+  // Realtime is centralized at CRMLayout (single channel per org) to avoid
+  // duplicate channel-name collisions causing CHANNEL_ERROR/reconnect loops.
   const { data: activeCall } = useActiveVoiceCall(contactId);
 
   useEffect(() => {
