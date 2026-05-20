@@ -304,15 +304,25 @@ Deno.serve(async (req) => {
 
       if (!testInboundUrl) {
         return new Response(
-          JSON.stringify({ error: "Configure a URL de entrada do Sistema de WhatsApp AI antes de testar." }),
-          { status: 400, headers: { ...corsHeaders, ...rateLimitHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({
+            success: false,
+            error: instance_id
+              ? "Esta instância não tem URL de entrada (api_url) configurada. Edite a instância e informe a URL do Sistema de WhatsApp AI."
+              : "Configure a URL de entrada do Sistema de WhatsApp AI antes de testar.",
+          }),
+          { status: 200, headers: { ...corsHeaders, ...rateLimitHeaders, "Content-Type": "application/json" } }
         );
       }
 
       if (!testApiKey) {
         return new Response(
-          JSON.stringify({ error: "Salve uma API Key antes de testar a conexão." }),
-          { status: 400, headers: { ...corsHeaders, ...rateLimitHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({
+            success: false,
+            error: instance_id
+              ? "Esta instância não tem API Key do Sistema de WhatsApp AI configurada. Edite a instância e informe a API Key."
+              : "Salve uma API Key antes de testar a conexão.",
+          }),
+          { status: 200, headers: { ...corsHeaders, ...rateLimitHeaders, "Content-Type": "application/json" } }
         );
       }
 
