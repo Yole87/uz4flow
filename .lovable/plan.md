@@ -1,47 +1,37 @@
-## O que é o erro
+# Corrigir erro "Configure a URL de entrada..." ao testar Conectores e Fluxos
 
-O toast **"Erro: Inbound URL is required"** vem da Edge Function `manage-integration`, na ação `test` (linha ~265 de `supabase/functions/manage-integration/index.ts`):
+## Diagnóstico
 
-```ts
-if (!inboundUrl) {
-  return new Response(JSON.stringify({ error: "Inbound URL is required" }), { status: 400, ... });
-}
-```
+A instância **11-5194-0907** (provedor `meta_official`, organização `imaisdigitalbrasil@gmail.com`) **possui** os dados necessários no banco:
 
-A aba **"Conectores e Fluxos"** das instâncias do WhatsApp é renderizada por `src/components/settings/FlowsCredentialsTab.tsx`. Essa aba foi simplificada — ela mostra apenas a URL do webhook (leitura) + Webhook Secret. Quando o usuário clica em **"Testar Conexão"**, o frontend chama a função com:
+- `api_url` = `https://api.digitalbotia.com.br/sendWebhook`
+- `openbot_api_key_encrypted` / `api_key_encrypted` preenchidos
 
-```ts
-body: JSON.stringify({ action: "test" })   // SEM inboundUrl
-```
+A tabela `integrations` do usuário, porém, está **vazia** (sem `openbot_inbound_url` e sem `openbot_api_key_encrypted`).
 
-Como o backend exige `inboundUrl` no payload, ele responde 400 e o toast exibe a mensagem. Isso acontece em **todas** as instâncias porque o bug é no componente comum, não na configuração de cada conta.
+A função `manage-integration` (ação `test`) já foi atualizada para procurar primeiro pela instância (via `instance_id`) e só depois cair no fallback do usuário. O front (`FlowsCredentialsTab`) já envia `instance_id`. Os logs mostram que a função foi reimplantada às 15:46Z, mas **não há nenhuma invocação `test` registrada após o deploy** — ou seja, o erro do print foi gerado pela versão anterior da função, que ainda não conhecia `instance_id` e caía no fallback do usuário (vazio), retornando 400.
 
-A `openbot_inbound_url` (URL do Sistema de WhatsApp AI para onde mandamos as mensagens) já está salva no banco em `public.integrations` para o usuário — só não está sendo lida no momento do teste.
+Causa provável: cache do navegador / requisição feita antes do deploy concluir.
 
-## Plano de correção (cirúrgico, não quebra nada)
+## Correções propostas
 
-**Escopo:** apenas a Edge Function `manage-integration`. Frontend e demais componentes ficam intactos.
+1. **Pedir ao usuário para recarregar a página (hard refresh) e testar novamente.** A versão atual já resolve corretamente via instância.
 
-1. Na ação `test` da função, **deixar `inboundUrl` opcional no body**.
-2. Se não vier no body, buscar a `openbot_inbound_url` salva em `integrations` do usuário (já é buscada para a API key — vamos só incluir o campo no `select`).
-3. Validar **depois**: se nem o body trouxe nem o banco tem `openbot_inbound_url`, retornar erro amigável: *"Configure a URL de entrada do Sistema de WhatsApp AI antes de testar."* (em vez do críptico "Inbound URL is required").
-4. Manter a action `save` como está — ela continua salvando `inboundUrl` quando o usuário envia.
-5. Tipar `TestConnectionRequest.inboundUrl` como opcional (`inboundUrl?: string`).
+2. **Hardening do backend (`manage-integration`, ação `test`)** para evitar reincidência:
+   - Quando `instance_id` é informado mas a instância pertence a outra organização ou não tem chave/URL, devolver uma mensagem de erro **específica** (ex.: "Instância sem URL de entrada configurada" / "Instância sem API Key"), em vez da mensagem genérica que pede para configurar a URL no formulário (que nem existe mais nesta aba).
+   - Seguindo o padrão `friendly-error-reporting`, retornar `status: 200` com `{ success: false, error: "..." }` para que o `toast` mostre a causa real.
 
-## Por que essa abordagem é segura
+3. **Hardening do frontend (`FlowsCredentialsTab.handleTest`)** para exibir o `error` retornado pela função com fidelidade (já faz) e logar em console o `instance_id` enviado, facilitando suporte futuro.
 
-- Não altera RLS, schema, nem outras funções.
-- Não muda o comportamento da aba "Credenciais CRM" nem da configuração Instagram/Voice.
-- Mantém a validação real: se realmente não houver URL configurada, ainda bloqueia o teste — só que com mensagem clara.
-- Reaproveita o registro já existente em `integrations` (que é por `user_id`), então cada conta WhatsApp do tenant lê a URL correta do seu próprio dono.
+4. **Validação manual pós-deploy**: testar o botão "Testar Conexão" no card da instância 11-5194-0907 e confirmar resposta `success: true` (a instância chama `https://api.digitalbotia.com.br/sendWebhook` com a API Key do Sistema de WhatsApp AI gravada).
 
-## Verificação após implementar
+## Fora de escopo
 
-1. Abrir Conexões → WhatsApp → uma instância → aba "Conectores e Fluxos" → clicar **Testar Conexão**.
-2. Resultado esperado: toast verde "Conexão testada com sucesso" (se a `openbot_inbound_url` estiver salva e a API Key válida), ou toast claro pedindo para configurar a URL se nunca foi salva.
-3. Repetir em outra instância para confirmar que não é mais um erro genérico.
-4. Conferir logs da função `manage-integration` (ação `test`) — não deve mais aparecer "Inbound URL is required" como motivo de falha.
+- Não criar registro em `integrations` para este usuário (config por instância já é suficiente).
+- Não alterar layout da aba Conectores e Fluxos.
 
-## Observação adicional
+## Detalhes técnicos
 
-A aba simplificada não permite mais que o usuário digite/edite a `inboundUrl` ali. Se você quiser, posso (numa próxima iteração) reexpor esse campo na aba, mas isso é melhoria de UX — não é necessário para resolver o erro atual, já que a URL já existe no banco do tenant.
+Arquivos a editar:
+- `supabase/functions/manage-integration/index.ts` — refinar mensagens de erro do bloco `if (body.action === "test")` (linhas ~262–328), trocar 400 por 200 com `success: false`.
+- `src/components/settings/FlowsCredentialsTab.tsx` — `handleTest`: adicionar `console.log("[FlowsTest] instance_id", instanceId)` e exibir `result.error` literal no toast quando vier do backend.
