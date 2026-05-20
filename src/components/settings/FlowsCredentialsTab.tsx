@@ -83,6 +83,7 @@ export function FlowsCredentialsTab({ instanceId, webhookUrl }: Props) {
       const accessToken = sessionData?.session?.access_token;
       if (!accessToken) { toast.error("Sessão expirada"); return; }
 
+      console.log("[FlowsTest] instance_id", instanceId);
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-integration`,
         {
@@ -91,11 +92,11 @@ export function FlowsCredentialsTab({ instanceId, webhookUrl }: Props) {
           body: JSON.stringify({ action: "test", instance_id: instanceId }),
         }
       );
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
       if (result.success) {
         toast.success("Conexão testada com sucesso!");
       } else {
-        toast.error("Erro: " + (result.error || "Falha"));
+        toast.error(result.error || "Falha ao testar conexão");
       }
     } catch {
       toast.error("Erro ao testar conexão");
