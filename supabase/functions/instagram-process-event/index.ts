@@ -2367,15 +2367,19 @@ Deno.serve(async (req) => {
                 } else {
                   const arrayBuffer = await fileData.arrayBuffer();
                   const bytes = new Uint8Array(arrayBuffer);
+                  // Chunked base64 conversion (safer for larger files like PDFs)
+                  const chunkSize = 8192;
                   let binary = "";
-                  for (let b = 0; b < bytes.length; b++) {
-                    binary += String.fromCharCode(bytes[b]);
+                  for (let i = 0; i < bytes.length; i += chunkSize) {
+                    const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
+                    binary += String.fromCharCode.apply(null, Array.from(chunk));
                   }
                   const base64 = btoa(binary);
-                  const mimeType = wppConfig.file_type as string || "application/octet-stream";
+                  const mimeType = (wppConfig.file_type as string) || "application/octet-stream";
                   sendPayload.arquivo = `data:${mimeType};base64,${base64}`;
+                  sendPayload.mimetype = mimeType;
                   if (fileName) sendPayload.fileName = fileName;
-                  console.log(`[IG-Process] File attached: ${wppConfig.file_name}, ${(bytes.length / 1024).toFixed(1)}KB`);
+                  console.log(`[IG-Process] File attached: ${wppConfig.file_name}, ${mimeType}, ${(bytes.length / 1024).toFixed(1)}KB`);
                 }
               } catch (fileErr) {
                 console.error("[IG-Process] File processing error:", fileErr);
