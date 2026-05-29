@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Trash2, Send, Save, Info, UserPlus, Clock, ArrowUp, RefreshCw, CreditCard, XCircle, Ban, Handshake, Sparkles, Wallet, Link as LinkIcon, Copy, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Trash2, Send, Save, Info, UserPlus, Clock, ArrowUp, RefreshCw, CreditCard, XCircle, Ban, Handshake, Sparkles, Wallet, Link as LinkIcon, Copy, Eye, EyeOff, Loader2, Bell } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
