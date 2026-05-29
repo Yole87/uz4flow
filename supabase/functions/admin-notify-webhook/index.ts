@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Webhook receiver for OpenBot delivery callbacks (status, read receipts)
+// Webhook receiver for Uz4FLOW WhatsApp delivery callbacks (status, read receipts)
 // Stub: logs callbacks to admin_notification_logs payload for inspection
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -20,9 +20,9 @@ Deno.serve(async (req) => {
 
     // Best-effort: store callback as a synthetic log entry
     await supabase.from("admin_notification_logs").insert({
-      event_type: "signup_free", // placeholder; OpenBot callbacks don't carry our event_type
+      event_type: "delivery_callback",
       recipient_phone: String(payload?.number || payload?.to || "callback"),
-      recipient_name: "OpenBot callback",
+      recipient_name: "Uz4FLOW callback",
       rendered_body: null,
       status: "callback",
       payload,
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   } catch (e: any) {
     console.error("admin-notify-webhook error", e);
     return new Response(JSON.stringify({ ok: false }), {
-      status: 200, // always 200 to avoid OpenBot retries
+      status: 200, // always 200 to avoid provider retries
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

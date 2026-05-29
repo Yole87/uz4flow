@@ -34,6 +34,7 @@ const EVENT_LABELS: Record<string, string> = {
   affiliate_signup_request: "Pedido de afiliação",
   affiliate_new_referral: "Novo indicado",
   affiliate_payout_request: "Pedido de saque",
+  delivery_callback: "Confirmação de entrega",
 };
 
 const SHOW_READ_KEY = "admin_notif_show_read";

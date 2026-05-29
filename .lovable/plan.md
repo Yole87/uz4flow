@@ -1,37 +1,44 @@
-# Corrigir envio de PDF na automação do Instagram → WhatsApp
+## Diagnóstico
 
-## Problema
+### 1. "OpenBot callback" no sino
+Texto fixo legado em `supabase/functions/admin-notify-webhook/index.ts` (linha 25).
 
-Na automação do Instagram que dispara um envio de WhatsApp via OpenBot (DigitalBotIA), quando o arquivo anexado é uma **imagem**, o ciclo completa normalmente. Quando o arquivo é um **PDF** (ou outro documento), a automação não finaliza o envio no WhatsApp.
+### 2. Notificação de novo cadastro via WhatsApp não chega
+Causa raiz encontrada inspecionando a função `notify_admin_async` no banco: ela tem a **URL do Supabase do projeto antigo hardcoded**:
 
-## Causa
+```
+https://deuhtstjhuvyugilnifg.supabase.co/functions/v1/admin-notify
+```
 
-No envio para o OpenBot dentro de `supabase/functions/instagram-process-event/index.ts` (por volta da linha 2346–2383), o payload só inclui:
+O projeto atual é `yjynquqwhnorsgzsakep`. Por isso o trigger `handle_new_user` "dispara", mas o POST vai para um host inexistente/de outro projeto — nenhum erro borbulha porque está dentro de `EXCEPTION WHEN OTHERS`. Última notificação real enviada com sucesso foi em **14/05/2026**. Depois disso só entram os *callbacks* do OpenBot (que chegam pelo webhook, sem depender da URL).
 
-- `arquivo` (data URL base64)
-- `fileName`
+### 3. Tela "PERÍODO DE TESTE EXPIRADO" aparecendo logado como admin
+Você está em `/dashboard` (não em `/admin`). O `SubscriptionGuard` tem bypass para admin, mas ele **respeita impersonation** (`src/components/SubscriptionGuard.tsx`, linhas 74-83): se `impersonate_org_id` estiver setado, o admin passa a ver exatamente o que o cliente impersonado veria — inclusive a tela de trial expirado da org dele. Provavelmente você iniciou uma impersonation em alguma org com trial vencido e o estado ficou no localStorage.
 
-Faltam dois detalhes que o OpenBot/Baileys precisa para tratar documentos:
+## Correções
 
-1. Campo `mimetype` no nível raiz do payload — sem ele, o provedor não reconhece o anexo como documento (PDF/DOCX/XLSX) e descarta o envio. Para imagem ele consegue inferir pelo data URL, por isso "passa".
-2. A conversão para base64 usa um laço `String.fromCharCode` byte a byte, que é lento e instável para arquivos maiores (PDFs costumam ser bem maiores que imagens). O resto do projeto já usa um helper `arrayBufferToBase64` em blocos.
+### A) Renomear "OpenBot callback" → "Uz4FLOW callback"
+Arquivo: `supabase/functions/admin-notify-webhook/index.ts`
+- Linha 8 (comentário): substituir "OpenBot" por "Uz4FLOW"
+- Linha 23 (comentário): idem
+- Linha 25: `recipient_name: "Uz4FLOW callback"`
+- Linha 37 (comentário): idem
 
-Outros pontos do sistema que enviam PDF via OpenBot (ex.: `openbot-webhook/index.ts` linhas 2158–2163) **já enviam** `arquivo` + `mimetype` + `fileName` juntos — esse é o padrão correto.
+### B) Corrigir URL hardcoded em `notify_admin_async`
+Migration nova que recria a função usando a URL correta do projeto atual. Substituir o literal `https://deuhtstjhuvyugilnifg.supabase.co` por `https://yjynquqwhnorsgzsakep.supabase.co`. Manter o resto da lógica (cron-secret, EXCEPTION, payload) idêntico.
 
-## Correção
+Resultado: a partir do próximo cadastro, o trigger `handle_new_user` dispara o POST para o admin-notify correto, que renderiza o template `signup_free` e envia via OpenBot para o número configurado em "Notificações Admin".
 
-Em `supabase/functions/instagram-process-event/index.ts`, no bloco que monta o `sendPayload` para o OpenBot quando há `file_storage_path`:
+> Observação: se mesmo após o fix a entrega falhar, verificaremos em `admin_notification_logs.error_message`. Os 2 *failed* antigos foram "Token não encontrado" no OpenBot — se reaparecer, é configuração da API key de notificações admin (não código).
 
-- Adicionar `sendPayload.mimetype = mimeType` junto com `arquivo` e `fileName`.
-- Substituir a conversão base64 byte-a-byte por uma função em chunks (mesmo padrão de `arrayBufferToBase64` já usado em `openbot-webhook`), para PDFs maiores serem codificados sem travar.
-- Manter `desativarFluxo: true` e o restante do fluxo intacto.
+### C) Admin sempre vê a UI durante impersonation (não fica preso em trial expirado)
+Arquivo: `src/components/SubscriptionGuard.tsx`
+- Alterar a condição em `isAdmin` (linhas 80-83) para retornar `children` **também quando estiver impersonando**, independente do status da org impersonada. Hoje a checagem `if (isAdmin) return children;` já cobre isso — mas a tela está aparecendo porque o redirect da linha 76 só dispara em `/dashboard` *sem* impersonation. Vou auditar a ordem para garantir que admin **nunca** seja bloqueado por status da org alvo, apenas vê um aviso visual (já existe o `ImpersonationBanner`).
+- Após a alteração, admin impersonando uma org com trial vencido vê o app normalmente, com o banner de impersonation indicando que está agindo como o cliente.
 
-Nenhuma alteração em UI, banco de dados ou outras funções é necessária — é uma correção pontual no payload de saída.
+Se você na verdade *não* estava impersonando, fornecerei um botão "Sair da impersonation" mais visível e limparei o `localStorage.impersonate_org_id` ao trocar de conta.
 
 ## Validação
-
-1. Criar/editar automação no Instagram com um PDF anexado.
-2. Disparar o gatilho (DM/comentário conforme configurado).
-3. Confirmar nos logs da função `instagram-process-event` o `File attached: <nome>.pdf` e resposta 200 do OpenBot.
-4. Confirmar no WhatsApp do contato a chegada da mensagem + PDF.
-5. Re-testar com uma imagem para garantir que o caminho anterior não regrediu.
+1. Sino: criar um novo cadastro de teste → notificação aparece como "Novo cadastro grátis" (não como callback) e o callback subsequente aparece como "Uz4FLOW callback".
+2. WhatsApp: o número configurado em Admin → Notificações recebe a mensagem do template `signup_free`.
+3. Dashboard: ao acessar `/dashboard` como admin (com ou sem impersonation), a tela "PERÍODO DE TESTE EXPIRADO" não aparece mais.

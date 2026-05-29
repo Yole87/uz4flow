@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Trash2, Send, Save, Info, UserPlus, Clock, ArrowUp, RefreshCw, CreditCard, XCircle, Ban, Handshake, Sparkles, Wallet, Link as LinkIcon, Copy, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Trash2, Send, Save, Info, UserPlus, Clock, ArrowUp, RefreshCw, CreditCard, XCircle, Ban, Handshake, Sparkles, Wallet, Link as LinkIcon, Copy, Eye, EyeOff, Loader2, Bell } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +37,7 @@ const EVENT_LABELS: Record<string, string> = {
   affiliate_signup_request: "Pedido de afiliação",
   affiliate_new_referral: "Novo indicado por afiliado",
   affiliate_payout_request: "Pedido de saque de afiliado",
+  delivery_callback: "Confirmação de entrega WhatsApp",
 };
 
 const EVENT_ICONS: Record<string, any> = {
@@ -50,6 +51,7 @@ const EVENT_ICONS: Record<string, any> = {
   affiliate_signup_request: Handshake,
   affiliate_new_referral: Sparkles,
   affiliate_payout_request: Wallet,
+  delivery_callback: Bell,
 };
 
 function EventsTab() {
