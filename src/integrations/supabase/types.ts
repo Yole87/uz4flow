@@ -5994,6 +5994,7 @@ export type Database = {
         | "affiliate_signup_request"
         | "affiliate_new_referral"
         | "affiliate_payout_request"
+        | "delivery_callback"
       affiliate_status: "pending" | "approved" | "rejected" | "suspended"
       app_role: "admin_master" | "admin" | "user"
       applies_to: "all_plans" | "specific_plans"
@@ -6159,6 +6160,7 @@ export const Constants = {
         "affiliate_signup_request",
         "affiliate_new_referral",
         "affiliate_payout_request",
+        "delivery_callback",
       ],
       affiliate_status: ["pending", "approved", "rejected", "suspended"],
       app_role: ["admin_master", "admin", "user"],
