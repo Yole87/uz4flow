@@ -1,44 +1,44 @@
-## Diagnóstico
+## Problema
 
-### 1. "OpenBot callback" no sino
-Texto fixo legado em `supabase/functions/admin-notify-webhook/index.ts` (linha 25).
+A função `openbot-webhook` (que dispara as respostas dos fluxos) consulta `public.integrations` por `user_id` e retorna 404 quando não existe linha. O cliente **awureartes@gmail.com** tem instância CRM conectada (`instances` ok), mas nenhuma linha em `integrations` — por isso o inbound aparece no CRM mas nenhum fluxo responde.
 
-### 2. Notificação de novo cadastro via WhatsApp não chega
-Causa raiz encontrada inspecionando a função `notify_admin_async` no banco: ela tem a **URL do Supabase do projeto antigo hardcoded**:
+Hoje a tabela `integrations` só é populada quando o usuário entra em "Configurações → OpenBot" e salva manualmente. Todo cliente novo cai no mesmo bug.
 
-```
-https://deuhtstjhuvyugilnifg.supabase.co/functions/v1/admin-notify
-```
+## Solução
 
-O projeto atual é `yjynquqwhnorsgzsakep`. Por isso o trigger `handle_new_user` "dispara", mas o POST vai para um host inexistente/de outro projeto — nenhum erro borbulha porque está dentro de `EXCEPTION WHEN OTHERS`. Última notificação real enviada com sucesso foi em **14/05/2026**. Depois disso só entram os *callbacks* do OpenBot (que chegam pelo webhook, sem depender da URL).
+Garantir que `integrations` exista automaticamente, copiando os dados que já temos em `instances`.
 
-### 3. Tela "PERÍODO DE TESTE EXPIRADO" aparecendo logado como admin
-Você está em `/dashboard` (não em `/admin`). O `SubscriptionGuard` tem bypass para admin, mas ele **respeita impersonation** (`src/components/SubscriptionGuard.tsx`, linhas 74-83): se `impersonate_org_id` estiver setado, o admin passa a ver exatamente o que o cliente impersonado veria — inclusive a tela de trial expirado da org dele. Provavelmente você iniciou uma impersonation em alguma org com trial vencido e o estado ficou no localStorage.
+### 1) Migração — trigger de auto-criação
 
-## Correções
+Criar trigger `AFTER INSERT OR UPDATE OF openbot_api_key_encrypted ON public.instances` que faz `INSERT … ON CONFLICT (user_id) DO UPDATE` em `public.integrations`:
 
-### A) Renomear "OpenBot callback" → "Uz4FLOW callback"
-Arquivo: `supabase/functions/admin-notify-webhook/index.ts`
-- Linha 8 (comentário): substituir "OpenBot" por "Uz4FLOW"
-- Linha 23 (comentário): idem
-- Linha 25: `recipient_name: "Uz4FLOW callback"`
-- Linha 37 (comentário): idem
+- `user_id` = owner da `organization_id` da instância (via `organizations.owner_user_id`)
+- `openbot_api_key_encrypted` = copia do `instances.openbot_api_key_encrypted`
+- `openbot_api_key_masked` = mantém o existente (não sobrescreve se já houver)
+- `webhook_secret` = gera com `encode(gen_random_bytes(24), 'hex')` apenas se ainda não existir
+- `openbot_inbound_url` = mantém o que já estiver salvo
 
-### B) Corrigir URL hardcoded em `notify_admin_async`
-Migration nova que recria a função usando a URL correta do projeto atual. Substituir o literal `https://deuhtstjhuvyugilnifg.supabase.co` por `https://yjynquqwhnorsgzsakep.supabase.co`. Manter o resto da lógica (cron-secret, EXCEPTION, payload) idêntico.
+Função `SECURITY DEFINER`, `search_path=public`. Sem mexer em RLS (já existe).
 
-Resultado: a partir do próximo cadastro, o trigger `handle_new_user` dispara o POST para o admin-notify correto, que renderiza o template `signup_free` e envia via OpenBot para o número configurado em "Notificações Admin".
+### 2) Backfill único
 
-> Observação: se mesmo após o fix a entrega falhar, verificaremos em `admin_notification_logs.error_message`. Os 2 *failed* antigos foram "Token não encontrado" no OpenBot — se reaparecer, é configuração da API key de notificações admin (não código).
+Mesmo migration: `INSERT … SELECT` em `integrations` para todos os owners de orgs que têm pelo menos uma `instances.openbot_api_key_encrypted` preenchida e ainda não têm linha em `integrations`. Resolve o awureartes e qualquer outro cliente na mesma situação.
 
-### C) Admin sempre vê a UI durante impersonation (não fica preso em trial expirado)
-Arquivo: `src/components/SubscriptionGuard.tsx`
-- Alterar a condição em `isAdmin` (linhas 80-83) para retornar `children` **também quando estiver impersonando**, independente do status da org impersonada. Hoje a checagem `if (isAdmin) return children;` já cobre isso — mas a tela está aparecendo porque o redirect da linha 76 só dispara em `/dashboard` *sem* impersonation. Vou auditar a ordem para garantir que admin **nunca** seja bloqueado por status da org alvo, apenas vê um aviso visual (já existe o `ImpersonationBanner`).
-- Após a alteração, admin impersonando uma org com trial vencido vê o app normalmente, com o banner de impersonation indicando que está agindo como o cliente.
+### 3) Sem mudanças de frontend
 
-Se você na verdade *não* estava impersonando, fornecerei um botão "Sair da impersonation" mais visível e limparei o `localStorage.impersonate_org_id` ao trocar de conta.
+A tela "Configurações → OpenBot" (`useOpenBotConfig`) continua igual — ela já faz upsert, então só preenche/edita o que o trigger criou. URL do webhook continua sendo copiada da mesma tela.
+
+## Limitação que permanece (não é bug)
+
+O cliente ainda precisa **uma vez** colar a URL `…/openbot-webhook?user_id=<uid>&secret=<secret>` dentro do painel do OpenBot. Isso é feito **pelo OpenBot externo**, fora do nosso controle. O que mudamos é que a URL já estará pronta na tela de Configurações desde o primeiro login.
 
 ## Validação
-1. Sino: criar um novo cadastro de teste → notificação aparece como "Novo cadastro grátis" (não como callback) e o callback subsequente aparece como "Uz4FLOW callback".
-2. WhatsApp: o número configurado em Admin → Notificações recebe a mensagem do template `signup_free`.
-3. Dashboard: ao acessar `/dashboard` como admin (com ou sem impersonation), a tela "PERÍODO DE TESTE EXPIRADO" não aparece mais.
+
+1. `SELECT count(*) FROM integrations WHERE user_id='4d938b5c-…'` → deve retornar 1 após a migração.
+2. Logs do `openbot-webhook` param de mostrar `Integration not found for user`.
+3. Cliente cola a URL no OpenBot e o próximo inbound dispara uma resposta de fluxo (visível no CRM como mensagem `outbound`).
+
+## Arquivos tocados
+
+- 1 migration SQL nova (trigger + função + backfill).
+- Nenhum arquivo de código alterado.
