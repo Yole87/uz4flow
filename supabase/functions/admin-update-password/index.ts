@@ -94,7 +94,17 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error("[admin-update-password] Error:", error);
-      throw error;
+      const code = (error as any).code;
+      let friendly = error.message || "Não foi possível alterar a senha";
+      if (code === "weak_password") {
+        friendly = "Esta senha é fraca ou já apareceu em vazamentos públicos. Escolha uma senha mais forte e única (evite sequências, datas e palavras comuns).";
+      } else if (code === "same_password") {
+        friendly = "A nova senha precisa ser diferente da senha atual.";
+      }
+      return new Response(
+        JSON.stringify({ error: friendly, code }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // If force_change is true, set force_password_change flag on profile
