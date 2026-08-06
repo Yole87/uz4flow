@@ -53,6 +53,7 @@ const Kanban = lazy(() => import("./pages/Kanban"));
 const Team = lazy(() => import("./pages/Team"));
 const Queue = lazy(() => import("./pages/Queue"));
 const Prospection = lazy(() => import("./pages/Prospection"));
+const BaseFormularios = lazy(() => import("./pages/BaseFormularios"));
 const Docs = lazy(() => import("./pages/Docs"));
 const VoiceAI = lazy(() => import("./pages/VoiceAI"));
 const McpGateway = lazy(() => import("./pages/McpGateway"));
@@ -163,6 +164,8 @@ function AppRoutes() {
       <Route path="/queue" element={<SubscriptionGuard><PermissionGuard menu="team" action="view_queue"><Queue /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/team/queue" element={<Navigate to="/queue" replace />} />
       <Route path="/prospection" element={<SubscriptionGuard><PermissionGuard menu="prospection"><Prospection /></PermissionGuard></SubscriptionGuard>} />
+      <Route path="/base-formularios" element={<SubscriptionGuard><PermissionGuard menu="base_formularios"><BaseFormularios /></PermissionGuard></SubscriptionGuard>} />
+      <Route path="/base-formularios/:sourceId" element={<SubscriptionGuard><PermissionGuard menu="base_formularios"><BaseFormularios /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/flows" element={<SubscriptionGuard><PermissionGuard menu="automation"><Flows /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/flows/:id" element={<SubscriptionGuard><PermissionGuard menu="automation"><FlowEditor /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/flows/:id/results" element={<SubscriptionGuard><PermissionGuard menu="automation"><FlowResults /></PermissionGuard></SubscriptionGuard>} />

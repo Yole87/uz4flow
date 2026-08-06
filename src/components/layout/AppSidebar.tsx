@@ -29,7 +29,8 @@ import {
   UserCog,
   Activity,
   Handshake,
-  BarChart3
+  BarChart3,
+  Database
 } from "lucide-react";
   import { Link, useLocation, useNavigate } from "react-router-dom";
  import { useAuth } from "@/lib/auth";
@@ -62,6 +63,7 @@ import { useIsAffiliateOnly } from "@/hooks/useIsAffiliateOnly";
    { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", dataId: "dashboard", permKey: "dashboard" },
    { title: "Voice AI", icon: Phone, path: "/voice", dataId: "voice-ai", permKey: "voice" },
    { title: "Prospecção", icon: UserSearch, path: "/prospection", dataId: "prospection", permKey: "prospection" },
+   { title: "Base e Formulários", icon: Database, path: "/base-formularios", dataId: "base-formularios", permKey: "base_formularios" },
    { title: "MCP Gateway", icon: Server, path: "/mcp-gateway", dataId: "mcp-gateway", disabled: true, badge: "Em breve", permKey: "mcp_gateway" },
    { title: "Instagram", icon: Instagram, path: "/instagram", dataId: "instagram", permKey: "instagram" },
 ];
