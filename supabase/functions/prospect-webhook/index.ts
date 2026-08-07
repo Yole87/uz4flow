@@ -165,9 +165,8 @@ Deno.serve(async (req) => {
     );
   }
 
-
-
   // ── 4. Resolve source by webhook_token ──────────────────────────────────────
+
   const { data: source, error: sourceError } = await supabase
     .from("prospect_sources")
     .select("id, organization_id, name, is_active")
