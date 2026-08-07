@@ -32,11 +32,46 @@ interface ProspectSource {
  *  2. Flat object format          – { nome: "João", whatsapp: "..." }
  *  3. Mixed / unknown             – falls back to string-coercing every top-level value
  */
-function extractFieldData(body: ElementorBody): Record<string, string> {
-  // Format 1: Elementor Pro standard array
-  if (Array.isArray(body.fields) && body.fields.length > 0) {
+function extractFieldData(
+  body: ElementorBody | string,
+  contentType: string,
+): Record<string, string> {
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    let params: URLSearchParams;
+    if (typeof body === "string") {
+      params = new URLSearchParams(body);
+    } else {
+      params = new URLSearchParams();
+      for (const [key, value] of Object.entries(body)) {
+        if (value !== null && value !== undefined) {
+          params.append(key, String(value));
+        }
+      }
+    }
     const result: Record<string, string> = {};
-    for (const field of body.fields) {
+    const skipFields = new Set([
+      "Data",
+      "Horário",
+      "URL da página",
+      "Agente de usuário",
+      "IP remoto",
+      "Desenvolvido por",
+      "form_id",
+      "form_name",
+    ]);
+
+    for (const [key, value] of params.entries()) {
+      if (skipFields.has(key)) continue;
+      result[key] = value;
+    }
+    return result;
+  }
+
+  // Format 1: Elementor Pro standard array (from parsed JSON)
+  const parsedBody = typeof body === "string" ? JSON.parse(body) : body;
+  if (Array.isArray(parsedBody.fields) && parsedBody.fields.length > 0) {
+    const result: Record<string, string> = {};
+    for (const field of parsedBody.fields) {
       if (field && typeof field.id === "string") {
         result[field.id] = String(field.value ?? "");
       }
@@ -47,7 +82,7 @@ function extractFieldData(body: ElementorBody): Record<string, string> {
   // Format 2 / 3: flat object — copy all string-coercible top-level keys,
   // skipping the `meta` key and any nested objects/arrays that are not useful.
   const result: Record<string, string> = {};
-  for (const [key, value] of Object.entries(body)) {
+  for (const [key, value] of Object.entries(parsedBody)) {
     if (key === "meta") continue; // Elementor meta block — not a form field
     if (value === null || value === undefined) continue;
     if (typeof value === "object") continue; // skip nested objects/arrays
@@ -98,6 +133,8 @@ Deno.serve(async (req) => {
 
   // ── 3. Parse request body ────────────────────────────────────────────────────
   let body: ElementorBody;
+  const contentType = req.headers.get("content-type") || "";
+
   try {
     const rawText = await req.text();
 
@@ -124,15 +161,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    body = JSON.parse(rawText);
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const params = new URLSearchParams(rawText);
+      body = Object.fromEntries(params.entries());
+    } else {
+      body = JSON.parse(rawText);
+    }
     console.log(
       "[prospect-webhook] Body received:",
       JSON.stringify(body).substring(0, 500),
     );
   } catch (err) {
-    console.error("[prospect-webhook] JSON parse error:", err);
+    console.error("[prospect-webhook] Parse error:", err);
     return new Response(
-      JSON.stringify({ error: "JSON inválido" }),
+      JSON.stringify({ error: "Conteúdo inválido" }),
       {
         status: 400,
         headers: { ...publicCorsHeaders, "Content-Type": "application/json" },
@@ -179,7 +221,7 @@ Deno.serve(async (req) => {
   );
 
   // ── 5. Extract field_data from the form body ─────────────────────────────────
-  const fieldData = extractFieldData(body);
+  const fieldData = extractFieldData(body, contentType);
   console.log(
     "[prospect-webhook] Extracted field_data:",
     JSON.stringify(fieldData),
