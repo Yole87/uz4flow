@@ -32,6 +32,19 @@ interface ProspectSource {
  *  2. Flat object format          – { nome: "João", whatsapp: "..." }
  *  3. Mixed / unknown             – falls back to string-coercing every top-level value
  */
+// Known Elementor/WordPress meta fields that should not be stored as lead data.
+const META_FIELD_SKIP_SET = new Set([
+  "Data",
+  "Horário",
+  "URL da página",
+  "Agente de usuário",
+  "IP remoto",
+  "Desenvolvido por",
+  "form_id",
+  "form_name",
+  "URL+da+p",
+]);
+
 function extractFieldData(body: ElementorBody): Record<string, string> {
   // Format 1: Elementor Pro standard array
   if (Array.isArray(body.fields) && body.fields.length > 0) {
@@ -45,10 +58,11 @@ function extractFieldData(body: ElementorBody): Record<string, string> {
   }
 
   // Format 2 / 3: flat object — copy all string-coercible top-level keys,
-  // skipping the `meta` key and any nested objects/arrays that are not useful.
+  // skipping the `meta` key, known meta fields, and any nested objects/arrays that are not useful.
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(body)) {
     if (key === "meta") continue; // Elementor meta block — not a form field
+    if (META_FIELD_SKIP_SET.has(key)) continue;
     if (value === null || value === undefined) continue;
     if (typeof value === "object") continue; // skip nested objects/arrays
     result[key] = String(value);
@@ -248,5 +262,5 @@ Deno.serve(async (req) => {
 });
 
 // Exported for unit testing without starting the server.
-export { parseRequestBody };
+export { parseRequestBody, extractFieldData };
 
