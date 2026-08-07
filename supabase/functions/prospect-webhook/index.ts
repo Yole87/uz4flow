@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
       body = JSON.parse(rawText);
     }
     console.log(
-      "[prospect-webhook] Body received:",
+      "[prospect-webhook] v2 Body received:",
       JSON.stringify(body).substring(0, 500),
     );
   } catch (err) {
