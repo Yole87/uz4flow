@@ -124,13 +124,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    body = JSON.parse(rawText);
-    console.log(
-      "[prospect-webhook] Body received:",
-      JSON.stringify(body).substring(0, 500),
-    );
+    const contentType = req.headers.get("content-type") ?? "";
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const params = new URLSearchParams(rawText);
+      const formBody: Record<string, unknown> = {};
+      for (const [key, value] of params.entries()) {
+        formBody[key] = value;
+      }
+      body = formBody as ElementorBody;
+      console.log(
+        "[prospect-webhook] Form-encoded body received:",
+        JSON.stringify(formBody).substring(0, 500),
+      );
+    } else {
+      body = JSON.parse(rawText);
+      console.log(
+        "[prospect-webhook] Body received:",
+        JSON.stringify(body).substring(0, 500),
+      );
+    }
   } catch (err) {
-    console.error("[prospect-webhook] JSON parse error:", err);
+    console.error("[prospect-webhook] Body parse error:", err);
     return new Response(
       JSON.stringify({ error: "JSON inválido" }),
       {
@@ -139,6 +153,7 @@ Deno.serve(async (req) => {
       },
     );
   }
+
 
   // ── 4. Resolve source by webhook_token ──────────────────────────────────────
   const { data: source, error: sourceError } = await supabase
