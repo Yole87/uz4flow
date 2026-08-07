@@ -1,1 +1,4 @@
 project_id = "yjynquqwhnorsgzsakep"
+
+[functions.prospect-webhook]
+verify_jwt = false
