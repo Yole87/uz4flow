@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 Deno.serve(async (req) => {
@@ -16,18 +16,29 @@ Deno.serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const CRON_SECRET = Deno.env.get("CRON_SECRET")!;
+    const CRON_SECRET = Deno.env.get("CRON_SECRET") || "";
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+    // Mandatory authentication: valid cron secret header OR service-role bearer.
+    const incomingSecret = req.headers.get("x-cron-secret") || "";
+    const authHeader = req.headers.get("authorization") || "";
+    const isServiceRoleCall = !!SERVICE_ROLE && authHeader === `Bearer ${SERVICE_ROLE}`;
+    const hasValidCronSecret =
+      !!CRON_SECRET &&
+      incomingSecret.length === CRON_SECRET.length &&
+      incomingSecret
+        .split("")
+        .reduce((acc, c, i) => acc | (c.charCodeAt(0) ^ CRON_SECRET.charCodeAt(i)), 0) === 0;
 
-    // Optionally verify cron secret if header is provided (defense-in-depth)
-    const incomingSecret = req.headers.get("x-cron-secret");
-    if (incomingSecret && incomingSecret !== CRON_SECRET) {
-      return new Response(JSON.stringify({ error: "invalid cron secret" }), {
+    if (!isServiceRoleCall && !hasValidCronSecret) {
+      console.warn("[process-scheduled-messages] Unauthorized invocation blocked");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+
 
     // Fetch pending messages due now (limit 50/run)
     const { data: pending, error: queryErr } = await supabase
