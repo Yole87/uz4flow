@@ -56,6 +56,30 @@ function extractFieldData(body: ElementorBody): Record<string, string> {
   return result;
 }
 
+/**
+ * Parses the raw request body into the internal ElementorBody shape.
+ *
+ * Supports:
+ *  - `application/x-www-form-urlencoded` via URLSearchParams
+ *  - `application/json` via JSON.parse
+ */
+function parseRequestBody(
+  rawText: string,
+  contentType: string,
+): ElementorBody {
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(rawText);
+    const formBody: Record<string, unknown> = {};
+    for (const [key, value] of params.entries()) {
+      formBody[key] = value;
+    }
+    return formBody as ElementorBody;
+  }
+
+  return JSON.parse(rawText) as ElementorBody;
+}
+
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
