@@ -255,7 +255,7 @@ Deno.serve(async (req) => {
 
   // ── 7. Return success ────────────────────────────────────────────────────────
   return new Response(
-    JSON.stringify({ success: true, lead_id: leadId }),
+    JSON.stringify({ success: true }),
     {
       status: 200,
       headers: { ...publicCorsHeaders, "Content-Type": "application/json" },
