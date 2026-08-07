@@ -56,6 +56,30 @@ function extractFieldData(body: ElementorBody): Record<string, string> {
   return result;
 }
 
+/**
+ * Parses the raw request body into the internal ElementorBody shape.
+ *
+ * Supports:
+ *  - `application/x-www-form-urlencoded` via URLSearchParams
+ *  - `application/json` via JSON.parse
+ */
+function parseRequestBody(
+  rawText: string,
+  contentType: string,
+): ElementorBody {
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(rawText);
+    const formBody: Record<string, unknown> = {};
+    for (const [key, value] of params.entries()) {
+      formBody[key] = value;
+    }
+    return formBody as ElementorBody;
+  }
+
+  return JSON.parse(rawText) as ElementorBody;
+}
+
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -124,13 +148,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    body = JSON.parse(rawText);
+    const contentType = req.headers.get("content-type") ?? "";
+    body = parseRequestBody(rawText, contentType);
     console.log(
       "[prospect-webhook] Body received:",
       JSON.stringify(body).substring(0, 500),
     );
   } catch (err) {
-    console.error("[prospect-webhook] JSON parse error:", err);
+    console.error("[prospect-webhook] Body parse error:", err);
     return new Response(
       JSON.stringify({ error: "JSON inválido" }),
       {
@@ -141,6 +166,7 @@ Deno.serve(async (req) => {
   }
 
   // ── 4. Resolve source by webhook_token ──────────────────────────────────────
+
   const { data: source, error: sourceError } = await supabase
     .from("prospect_sources")
     .select("id, organization_id, name, is_active")
@@ -220,3 +246,7 @@ Deno.serve(async (req) => {
     },
   );
 });
+
+// Exported for unit testing without starting the server.
+export { parseRequestBody };
+
