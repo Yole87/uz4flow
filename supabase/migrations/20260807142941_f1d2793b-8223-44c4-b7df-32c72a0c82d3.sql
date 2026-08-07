@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.audit_user_role_changes() FROM PUBLIC, anon, authenticated;
