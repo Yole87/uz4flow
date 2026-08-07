@@ -3979,6 +3979,88 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_columns: {
+        Row: {
+          col_order: number
+          col_type: string
+          created_at: string
+          id: string
+          key_name: string
+          label: string
+          select_options: Json
+          source_id: string
+        }
+        Insert: {
+          col_order?: number
+          col_type?: string
+          created_at?: string
+          id?: string
+          key_name: string
+          label: string
+          select_options?: Json
+          source_id: string
+        }
+        Update: {
+          col_order?: number
+          col_type?: string
+          created_at?: string
+          id?: string
+          key_name?: string
+          label?: string
+          select_options?: Json
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_columns_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_leads: {
+        Row: {
+          crm_contact_id: string | null
+          field_data: Json
+          id: string
+          organization_id: string
+          raw_data: Json
+          received_at: string
+          source_id: string
+          updated_at: string
+        }
+        Insert: {
+          crm_contact_id?: string | null
+          field_data?: Json
+          id?: string
+          organization_id: string
+          raw_data?: Json
+          received_at?: string
+          source_id: string
+          updated_at?: string
+        }
+        Update: {
+          crm_contact_id?: string | null
+          field_data?: Json
+          id?: string
+          organization_id?: string
+          raw_data?: Json
+          received_at?: string
+          source_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_leads_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_providers: {
         Row: {
           active_provider: string | null
@@ -4228,6 +4310,44 @@ export type Database = {
           },
           {
             foreignKeyName: "prospect_searches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_sources: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+          webhook_token: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+          webhook_token?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+          webhook_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_sources_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
