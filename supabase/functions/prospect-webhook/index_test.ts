@@ -7,13 +7,14 @@ Deno.test("parseRequestBody parses JSON Elementor payload", () => {
       { id: "nome", title: "Nome", value: "João" },
       { id: "whatsapp", title: "WhatsApp", value: "+55 11 91234-5678" },
     ],
-    meta: { {"posted_data"}: { form_id: "123" } } as never,
+    meta: { posted_data: { form_id: "123" } },
   });
 
   const body = parseRequestBody(raw, "application/json");
   assertEquals(body.fields?.length, 2);
   assertEquals(body.fields?.[0].value, "João");
 });
+
 
 Deno.test("parseRequestBody parses application/x-www-form-urlencoded payload", () => {
   const raw = "nome=Jo%C3%A3o&whatsapp=%2B55%2011%2091234-5678&origem=elementor";
