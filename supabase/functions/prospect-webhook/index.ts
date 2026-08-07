@@ -246,3 +246,7 @@ Deno.serve(async (req) => {
     },
   );
 });
+
+// Exported for unit testing without starting the server.
+export { parseRequestBody };
+
