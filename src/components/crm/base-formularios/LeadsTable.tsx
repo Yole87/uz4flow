@@ -53,6 +53,11 @@ function formatDateBR(iso: string): string {
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+function isLeadNew(lead: ProspectLead): boolean {
+  const diff = Date.now() - new Date(lead.received_at).getTime();
+  return diff > 0 && diff < 24 * 60 * 60 * 1000;
+}
+
 const PHONE_KEYS_LOWER = ["whatsapp", "telefone", "phone", "celular"];
 
 function getPhoneFromLead(lead: ProspectLead): string | null {
@@ -190,12 +195,33 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [globalSearch, setGlobalSearch] = useState("");
+  const [seenIds, setSeenIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(`seen_leads_${source.id}`);
+      return stored ? new Set(JSON.parse(stored)) : new Set<string>();
+    } catch {
+      return new Set<string>();
+    }
+  });
+
+  // Reload seen IDs when source.id changes
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`seen_leads_${source.id}`);
+      setSeenIds(stored ? new Set(JSON.parse(stored)) : new Set<string>());
+    } catch {
+      setSeenIds(new Set<string>());
+    }
+  }, [source.id]);
 
   useEffect(() => {
     setSelectedIds([]);
   }, [page, source.id]);
 
   const sortedColumns = [...columns].sort((a, b) => a.col_order - b.col_order);
+  const statusCol = columns.find(
+    (c) => c.col_type === "select" && c.key_name.toLowerCase() === "status"
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ["prospect-leads", source.id, page, sortColumn === "received_at" ? sortOrder : null],
@@ -300,6 +326,31 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
 
     return result;
   }, [leads, globalSearch, filters, sortColumn, sortOrder, columns]);
+
+  // Mark visible leads as seen after 3 seconds
+  useEffect(() => {
+    if (filteredLeads.length === 0) return;
+
+    const timer = setTimeout(() => {
+      setSeenIds((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+        for (const lead of filteredLeads) {
+          if (!next.has(lead.id)) {
+            next.add(lead.id);
+            changed = true;
+          }
+        }
+        if (changed) {
+          localStorage.setItem(`seen_leads_${source.id}`, JSON.stringify(Array.from(next)));
+          return next;
+        }
+        return prev;
+      });
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [filteredLeads, source.id]);
 
   const handleSort = (colKey: string) => {
     if (sortColumn !== colKey) {
@@ -554,6 +605,80 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
 
   return (
     <div className="space-y-3">
+      {/* Status Pills */}
+      {statusCol && (
+        <div className="flex items-center gap-2 flex-wrap text-xs pb-1 animate-in fade-in duration-200">
+          <span className="text-muted-foreground font-medium">Status:</span>
+          {normalizeSelectOptions(statusCol.select_options).map((opt) => {
+            const isActive = filters[statusCol.key_name]?.length === 1 && filters[statusCol.key_name][0] === opt.label;
+            const count = leads.filter((l) => (l.field_data[statusCol.key_name] ?? "") === opt.label).length;
+            
+            return (
+              <button
+                key={opt.label}
+                type="button"
+                onClick={() => {
+                  setFilters((prev) => {
+                    const current = prev[statusCol.key_name];
+                    if (Array.isArray(current) && current.length === 1 && current[0] === opt.label) {
+                      const next = { ...prev };
+                      delete next[statusCol.key_name];
+                      return next;
+                    }
+                    return { ...prev, [statusCol.key_name]: [opt.label] };
+                  });
+                }}
+                className={`px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 ${
+                  isActive
+                    ? "bg-accent/15 border-accent text-accent font-semibold shadow-sm"
+                    : "bg-muted/50 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: opt.color }}
+                />
+                <span>{opt.label}</span>
+                <span className="text-[10px] opacity-70">({count})</span>
+              </button>
+            );
+          })}
+          {(() => {
+            const isActive = filters[statusCol.key_name]?.length === 1 && filters[statusCol.key_name][0] === "";
+            const unmarkedCount = leads.filter((l) => {
+              const val = l.field_data[statusCol.key_name];
+              return !val || val.trim() === "";
+            }).length;
+
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilters((prev) => {
+                    const current = prev[statusCol.key_name];
+                    if (Array.isArray(current) && current.length === 1 && current[0] === "") {
+                      const next = { ...prev };
+                      delete next[statusCol.key_name];
+                      return next;
+                    }
+                    return { ...prev, [statusCol.key_name]: [""] };
+                  });
+                }}
+                className={`px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 ${
+                  isActive
+                    ? "bg-accent/15 border-accent text-accent font-semibold shadow-sm"
+                    : "bg-muted/50 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full shrink-0 bg-muted-foreground/40" />
+                <span>Sem marcação</span>
+                <span className="text-[10px] opacity-70">({unmarkedCount})</span>
+              </button>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-card border border-border p-3 rounded-lg">
         <div className="flex items-center gap-2 flex-1 min-w-[200px] max-w-md">
@@ -784,7 +909,14 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                       </TableCell>
                       {/* Received at — read-only */}
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDateBR(lead.received_at)}
+                        <div className="flex items-center gap-1.5">
+                          {isLeadNew(lead) && !seenIds.has(lead.id) && (
+                            <span className="px-1.5 py-0.5 rounded bg-success/20 text-success text-[10px] font-bold uppercase tracking-wider shrink-0">
+                              Novo
+                            </span>
+                          )}
+                          <span>{formatDateBR(lead.received_at)}</span>
+                        </div>
                       </TableCell>
                       
                       {/* Dynamic columns — editable */}
