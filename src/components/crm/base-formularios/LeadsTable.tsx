@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   getLeads,
   updateLeadFieldData,
   exportLeadsAsCSV,
+  deleteLeads,
 } from "@/services/prospectSourceService";
 import type { ProspectSource, ProspectColumn, ProspectLead } from "@/types/prospect";
 import {
@@ -24,6 +25,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Loader2, MessageCircle, Download, ChevronLeft, ChevronRight, Inbox } from "lucide-react";
 import { toast } from "sonner";
 
@@ -167,6 +179,12 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, source.id]);
 
   const sortedColumns = [...columns].sort((a, b) => a.col_order - b.col_order);
 
@@ -202,6 +220,40 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
     }
   };
 
+  const handleExportSelectedCSV = async () => {
+    try {
+      const csv = await exportLeadsAsCSV(source.id, sortedColumns, selectedIds);
+      const bom = "\uFEFF";
+      const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const date = new Date().toISOString().split("T")[0];
+      a.download = `${source.name.replace(/[^a-z0-9]/gi, "_")}_leads_selecionados_${date}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV exportado com sucesso");
+    } catch {
+      toast.error("Erro ao exportar CSV");
+    }
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (ids: string[]) => deleteLeads(ids),
+    onSuccess: () => {
+      toast.success("Leads excluídos com sucesso");
+      setSelectedIds([]);
+      handleInvalidate();
+    },
+    onError: () => {
+      toast.error("Erro ao excluir leads");
+    },
+  });
+
+  const handleDeleteSelected = () => {
+    deleteMutation.mutate(selectedIds);
+  };
+
   const handleIniciarConversa = (lead: ProspectLead) => {
     if (lead.crm_contact_id) {
       navigate(`/crm?contact=${lead.crm_contact_id}`);
@@ -227,8 +279,13 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {totalCount} lead{totalCount !== 1 ? "s" : ""}
+        <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
+          <span>{totalCount} lead{totalCount !== 1 ? "s" : ""}</span>
+          {selectedIds.length > 0 && (
+            <span className="text-xs text-muted-foreground/80 font-medium">
+              · {selectedIds.length} de {totalCount} selecionados
+            </span>
+          )}
         </p>
         <Button
           variant="outline"
@@ -241,6 +298,44 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
           Exportar CSV
         </Button>
       </div>
+
+      {/* Selection Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border border-border animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-foreground">
+              Ações em lote ({selectedIds.length} selecionado{selectedIds.length !== 1 ? "s" : ""})
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedIds([])}
+              className="h-7 text-xs text-muted-foreground hover:text-foreground px-2"
+            >
+              Desmarcar todos
+            </Button>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportSelectedCSV}
+              className="h-7 text-xs border-border hover:border-accent/50"
+            >
+              <Download className="h-3.5 w-3.5 mr-1" />
+              Exportar selecionados
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="h-7 text-xs"
+            >
+              Excluir selecionados
+            </Button>
+          </div>
+        </div>
+      )}
 
       {leads.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-48 gap-3 border border-dashed border-border rounded-lg">
@@ -257,6 +352,36 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
               <Table>
                 <TableHeader className="sticky top-0 bg-muted/80 z-10">
                   <TableRow className="border-border hover:bg-muted/50">
+                    <TableHead className="w-12 text-center p-2">
+                      <Checkbox
+                        checked={
+                          leads.length > 0 &&
+                          (leads.every((lead) => selectedIds.includes(lead.id))
+                            ? true
+                            : leads.some((lead) => selectedIds.includes(lead.id))
+                            ? "indeterminate"
+                            : false)
+                        }
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedIds((prev) => {
+                              const newIds = [...prev];
+                              for (const lead of leads) {
+                                if (!newIds.includes(lead.id)) {
+                                  newIds.push(lead.id);
+                                }
+                              }
+                              return newIds;
+                            });
+                          } else {
+                            setSelectedIds((prev) =>
+                              prev.filter((id) => !leads.some((l) => l.id === id))
+                            );
+                          }
+                        }}
+                        aria-label="Selecionar todos os leads da página"
+                      />
+                    </TableHead>
                     <TableHead className="text-muted-foreground text-xs whitespace-nowrap w-36">
                       Recebido em
                     </TableHead>
@@ -276,6 +401,21 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                 <TableBody>
                   {leads.map((lead) => (
                     <TableRow key={lead.id} className="border-border hover:bg-muted/30">
+                      <TableCell className="w-12 text-center p-2">
+                        <Checkbox
+                          checked={selectedIds.includes(lead.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedIds((prev) => [...prev, lead.id]);
+                            } else {
+                              setSelectedIds((prev) =>
+                                prev.filter((id) => id !== lead.id)
+                              );
+                            }
+                          }}
+                          aria-label={`Selecionar lead ${lead.id}`}
+                        />
+                      </TableCell>
                       {/* Received at — read-only */}
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatDateBR(lead.received_at)}
@@ -347,6 +487,27 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
           )}
         </>
       )}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Excluir Leads</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Tem certeza que deseja excluir os {selectedIds.length} leads selecionados? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border text-muted-foreground hover:bg-muted">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSelected}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -218,6 +218,18 @@ export async function updateLeadFieldData(
   if (error) throw error;
 }
 
+/**
+ * Permanently delete multiple leads by id.
+ */
+export async function deleteLeads(ids: string[]): Promise<void> {
+  const { error } = await supabase
+    .from("prospect_leads" as any)
+    .delete()
+    .in("id", ids);
+
+  if (error) throw error;
+}
+
 // ─── CSV Export ──────────────────────────────────────────────────────────────
 
 /**
@@ -234,13 +246,19 @@ export async function updateLeadFieldData(
 export async function exportLeadsAsCSV(
   sourceId: string,
   columns: ProspectColumn[],
+  selectedLeadIds?: string[],
 ): Promise<string> {
-  // Fetch all leads — no pagination
-  const { data, error } = await supabase
+  let query = supabase
     .from("prospect_leads" as any)
     .select("*")
     .eq("source_id", sourceId)
     .order("received_at", { ascending: false });
+
+  if (selectedLeadIds && selectedLeadIds.length > 0) {
+    query = query.in("id", selectedLeadIds);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
 
