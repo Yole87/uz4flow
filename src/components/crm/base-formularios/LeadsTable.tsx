@@ -607,7 +607,7 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
     }
     const phone = getPhoneFromLead(lead);
     if (!phone) return;
-    navigate(`/crm?new_chat=${phone}`);
+    navigate("/crm", { state: { openNewConversation: true, phone } });
   };
 
   const hasPhoneField = (lead: ProspectLead) =>

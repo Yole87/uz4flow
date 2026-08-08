@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Search, Plus, Trash2, CheckSquare, Bell, Zap, MessageSquare, Filter, BookOpen, Clock, X } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +37,7 @@ interface ContactsPaneProps {
 export function ContactsPane({ selectedContactId, onSelectContact, instanceId }: ContactsPaneProps) {
   const { data: organization } = useUserOrganization();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const unansweredFilter = searchParams.get("filter") === "unanswered_1h";
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,6 +48,7 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId }:
   const [prefilledPhone, setPrefilledPhone] = useState<string | undefined>(undefined);
 
   useEffect(() => {
+    // 1. Check query parameter 'new_chat' (fallback)
     const newChatPhone = searchParams.get("new_chat");
     if (newChatPhone) {
       setPrefilledPhone(newChatPhone);
@@ -55,8 +57,18 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId }:
       const next = new URLSearchParams(searchParams);
       next.delete("new_chat");
       setSearchParams(next, { replace: true });
+      return;
     }
-  }, [searchParams, setSearchParams]);
+
+    // 2. Check location state (primary)
+    const state = location.state as { openNewConversation?: boolean; phone?: string } | null;
+    if (state?.openNewConversation) {
+      setPrefilledPhone(state.phone);
+      setShowNewConversationDialog(true);
+      // Clear location state using replace
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [searchParams, setSearchParams, location.state, location.pathname, navigate]);
   const [showAllReminders, setShowAllReminders] = useState(false);
   const [showQuickReplyManager, setShowQuickReplyManager] = useState(false);
   const [channelFilter, setChannelFilter] = useState<"all" | "whatsapp" | "instagram">("all");
