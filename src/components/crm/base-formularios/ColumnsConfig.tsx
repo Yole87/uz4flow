@@ -50,7 +50,11 @@ function TagInput({
 
   const addOption = () => {
     const val = input.trim();
-    if (!val || options.includes(val)) return;
+    if (!val) return;
+    if (options.includes(val)) {
+      toast.error("Opção já existe");
+      return;
+    }
     onChange([...options, val]);
     setInput("");
   };
@@ -185,8 +189,9 @@ function ColumnRow({ col, index, total, onMoveUp, onMoveDown, onSave, onDelete }
           <Select
             value={colType}
             onValueChange={(v) => {
-              setColType(v as "text" | "select");
-              setTimeout(handleBlurSave, 0);
+              const newType = v as "text" | "select";
+              setColType(newType);
+              onSave({ ...col, label, key_name: keyName, col_type: newType, select_options: selectOptions });
             }}
           >
             <SelectTrigger className="h-8 text-sm bg-background border-border">
@@ -243,7 +248,7 @@ function ColumnRow({ col, index, total, onMoveUp, onMoveDown, onSave, onDelete }
             options={selectOptions}
             onChange={(opts) => {
               setSelectOptions(opts);
-              setTimeout(handleBlurSave, 0);
+              onSave({ ...col, label, key_name: keyName, col_type: colType, select_options: opts });
             }}
           />
         </div>
