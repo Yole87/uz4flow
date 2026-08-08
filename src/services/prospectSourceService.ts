@@ -206,6 +206,24 @@ export async function getLeads(
 }
 
 /**
+ * Count leads received after a specific timestamp for a source.
+ */
+export async function getNewLeadsCount(
+  sourceId: string,
+  lastVisitIsoString: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("prospect_leads" as any)
+    .select("*", { count: "exact", head: true })
+    .eq("source_id", sourceId)
+    .gt("received_at", lastVisitIsoString);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+
+/**
  * Overwrite the field_data map for a lead (inline cell editing).
  * updated_at is set to now() on the DB side via the trigger, but we
  * also send it explicitly so optimistic UI can reflect it immediately.

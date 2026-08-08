@@ -38,13 +38,27 @@ const META_FIELD_SKIP_SET = new Set([
 ]);
 
 function extractFieldData(body: ElementorBody): Record<string, string> {
+  const PHONE_KEYS_LOWER = ["whatsapp", "telefone", "phone", "celular"];
+
+  const normalizePhone = (value: string): string => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return value;
+    return digits.startsWith("55") ? digits : `55${digits}`;
+  };
+
+  const isPhoneKey = (key: string): boolean => {
+    const lowerKey = key.toLowerCase();
+    return PHONE_KEYS_LOWER.some((pk) => lowerKey.includes(pk));
+  };
+
   // Format 1: Elementor Pro standard array (from parsed JSON)
   const parsedBody = typeof body === "string" ? JSON.parse(body) : body;
   if (Array.isArray(parsedBody.fields) && parsedBody.fields.length > 0) {
     const result: Record<string, string> = {};
     for (const field of parsedBody.fields) {
       if (field && typeof field.id === "string") {
-        result[field.id] = String(field.value ?? "");
+        const val = String(field.value ?? "");
+        result[field.id] = isPhoneKey(field.id) ? normalizePhone(val) : val;
       }
     }
     return result;
@@ -58,7 +72,8 @@ function extractFieldData(body: ElementorBody): Record<string, string> {
     if (META_FIELD_SKIP_SET.has(key)) continue;
     if (value === null || value === undefined) continue;
     if (typeof value === "object") continue; // skip nested objects/arrays
-    result[key] = String(value);
+    const val = String(value);
+    result[key] = isPhoneKey(key) ? normalizePhone(val) : val;
   }
   return result;
 }
@@ -214,8 +229,28 @@ Deno.serve(async (req) => {
 
   // ── 5. Extract field_data from the form body ─────────────────────────────────
   const fieldData = extractFieldData(body);
+
+  // Post-processing phone normalization
+  const phoneKeys = ["whatsapp", "telefone", "phone", "celular", "tel"];
+  for (const [key, value] of Object.entries(fieldData)) {
+    const lowerKey = key.toLowerCase();
+    const isPhone = phoneKeys.some((pk) => lowerKey.includes(pk));
+    if (isPhone && value) {
+      let digits = value.replace(/\D/g, "");
+      if (digits) {
+        if (digits.startsWith("0")) {
+          digits = digits.substring(1);
+        }
+        if (!digits.startsWith("55")) {
+          digits = "55" + digits;
+        }
+        fieldData[key] = digits;
+      }
+    }
+  }
+
   console.log(
-    "[prospect-webhook] Extracted field_data:",
+    "[prospect-webhook] Extracted and normalized field_data:",
     JSON.stringify(fieldData),
   );
 

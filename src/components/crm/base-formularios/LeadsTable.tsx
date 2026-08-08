@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -62,7 +62,9 @@ const PHONE_KEYS_LOWER = ["whatsapp", "telefone", "phone", "celular"];
 
 function getPhoneFromLead(lead: ProspectLead): string | null {
   for (const [key, value] of Object.entries(lead.field_data)) {
-    if (PHONE_KEYS_LOWER.includes(key.toLowerCase()) && value && value.trim() !== "") {
+    const lowerKey = key.toLowerCase();
+    const isPhone = PHONE_KEYS_LOWER.some((pk) => lowerKey.includes(pk));
+    if (isPhone && value && value.trim() !== "") {
       const digits = value.replace(/\D/g, "");
       if (digits) {
         return digits.startsWith("55") ? digits : `55${digits}`;
@@ -97,9 +99,25 @@ function EditableCell({ leadId, fieldKey, value, col, allFieldData, onSaved }: E
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
+  const isPhoneField = (key: string) => {
+    const lowerKey = key.toLowerCase();
+    return PHONE_KEYS_LOWER.some((pk) => lowerKey.includes(pk));
+  };
+
+  const normalizePhoneValue = (value: string) => {
+    let digits = value.replace(/\D/g, "");
+    if (!digits) return value;
+    if (digits.startsWith("0")) {
+      digits = digits.substring(1);
+    }
+    return digits.startsWith("55") ? digits : `55${digits}`;
+  };
+
   const saveMutation = useMutation({
-    mutationFn: (newVal: string) =>
-      updateLeadFieldData(leadId, { ...allFieldData, [fieldKey]: newVal }),
+    mutationFn: (newVal: string) => {
+      const finalVal = isPhoneField(fieldKey) ? normalizePhoneValue(newVal) : newVal;
+      return updateLeadFieldData(leadId, { ...allFieldData, [fieldKey]: finalVal });
+    },
     onSuccess: () => {
       toast.success("Dados atualizados. Lembre-se: isso não altera o envio original do formulário.");
       onSaved();
@@ -278,13 +296,13 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
           result = result.filter((lead) => {
             const leadDate = new Date(lead.received_at);
             if (from) {
-              const fromDate = new Date(from);
-              fromDate.setHours(0, 0, 0, 0);
+              const [y, m, d] = from.split('-').map(Number);
+              const fromDate = new Date(y, m - 1, d, 0, 0, 0, 0);
               if (leadDate < fromDate) return false;
             }
             if (to) {
-              const toDate = new Date(to);
-              toDate.setHours(23, 59, 59, 999);
+              const [y, m, d] = to.split('-').map(Number);
+              const toDate = new Date(y, m - 1, d, 23, 59, 59, 999);
               if (leadDate > toDate) return false;
             }
             return true;
@@ -589,7 +607,7 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
     }
     const phone = getPhoneFromLead(lead);
     if (!phone) return;
-    navigate("/crm", { state: { phone } });
+    navigate(`/crm?new_chat=${phone}`);
   };
 
   const hasPhoneField = (lead: ProspectLead) =>

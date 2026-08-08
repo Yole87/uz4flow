@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { getSources, getColumns } from "@/services/prospectSourceService";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +15,16 @@ interface SourceDetailProps {
 
 export function SourceDetail({ sourceId, onBack }: SourceDetailProps) {
   const { data: org } = useUserOrganization();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (sourceId) {
+      localStorage.setItem(`last_visit_${sourceId}`, new Date().toISOString());
+      // Invalidate counts to immediately update the UI
+      queryClient.invalidateQueries({ queryKey: ["prospect-total-new-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["prospect-new-leads-count", sourceId] });
+    }
+  }, [sourceId, queryClient]);
 
   // Fetch the specific source from the org's source list
   const { data: sources, isLoading: sourcesLoading } = useQuery({
@@ -65,7 +76,7 @@ export function SourceDetail({ sourceId, onBack }: SourceDetailProps) {
         </Button>
         <div>
           <h2 className="text-xl font-semibold text-foreground">{source.name}</h2>
-          <p className="text-xs text-muted-foreground">
+          <p className={`text-xs ${source.is_active ? "text-success font-medium" : "text-destructive"}`}>
             {source.is_active ? "● Ativa" : "○ Inativa"}
           </p>
         </div>

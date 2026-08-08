@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
@@ -28,17 +28,30 @@ interface NewConversationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConversationCreated?: (contactId: string) => void;
+  initialPhone?: string;
 }
 
 export function NewConversationDialog({
   open,
   onOpenChange,
   onConversationCreated,
+  initialPhone,
 }: NewConversationDialogProps) {
   const { data: organization } = useUserOrganization();
   const queryClient = useQueryClient();
   
   const [phone, setPhone] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      if (initialPhone) {
+        setPhone(formatPhoneInput(initialPhone));
+      } else {
+        setPhone("");
+      }
+      setPhoneError(null);
+    }
+  }, [open, initialPhone]);
   const [selectedInstanceId, setSelectedInstanceId] = useState<string>("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
 

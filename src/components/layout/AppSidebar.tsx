@@ -36,6 +36,8 @@ import {
  import { useAuth } from "@/lib/auth";
  import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
  import { useUserPermissions } from "@/hooks/useUserPermissions";
+ import { useUserOrganization } from "@/hooks/useUserOrganization";
+ import { getSources, getNewLeadsCount } from "@/services/prospectSourceService";
  import {
    Sidebar,
    SidebarContent,
@@ -109,6 +111,34 @@ export function AppSidebar() {
       return data;
     },
     enabled: !!user?.id,
+  });
+
+  const { data: org } = useUserOrganization();
+
+  // Fetch sources to get their IDs and new lead counts for each source
+  const { data: sidebarSources } = useQuery({
+    queryKey: ["prospect-sources-sidebar", org?.id],
+    queryFn: () => getSources(org!.id),
+    enabled: !!org?.id,
+  });
+
+  // Query to get total new leads across all sources
+  const { data: totalNewLeads = 0 } = useQuery({
+    queryKey: ["prospect-total-new-leads", org?.id, location.pathname, sidebarSources?.map(s => s.id).join(",")],
+    queryFn: async () => {
+      if (!org?.id || !sidebarSources || sidebarSources.length === 0) return 0;
+      
+      const counts = await Promise.all(
+        sidebarSources.map(async (source) => {
+          const lastVisit = localStorage.getItem(`last_visit_${source.id}`) || "1970-01-01T00:00:00.000Z";
+          return getNewLeadsCount(source.id, lastVisit);
+        })
+      );
+      
+      return counts.reduce((acc, val) => acc + val, 0);
+    },
+    enabled: !!org?.id && !!sidebarSources,
+    staleTime: 1000 * 5, // keep relatively fresh
   });
 
   const isFreePlan = !planLoading && plan?.is_free === true;
@@ -275,9 +305,16 @@ export function AppSidebar() {
                         )}
                       </span>
                     ) : (
-                      <Link to={item.path} className="flex items-center gap-3">
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.title}</span>
+                      <Link to={item.path} className="flex items-center justify-between w-full">
+                        <span className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          <span>{item.title}</span>
+                        </span>
+                        {item.path === "/base-formularios" && totalNewLeads > 0 && (
+                          <span className="text-xs bg-success text-success-foreground px-1.5 py-0.5 rounded-full font-semibold min-w-[20px] text-center">
+                            {totalNewLeads}
+                          </span>
+                        )}
                       </Link>
                     )}
                   </SidebarMenuButton>

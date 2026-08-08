@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
@@ -44,6 +44,19 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId }:
   const [selectedConversationIds, setSelectedConversationIds] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showNewConversationDialog, setShowNewConversationDialog] = useState(false);
+  const [prefilledPhone, setPrefilledPhone] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const newChatPhone = searchParams.get("new_chat");
+    if (newChatPhone) {
+      setPrefilledPhone(newChatPhone);
+      setShowNewConversationDialog(true);
+      
+      const next = new URLSearchParams(searchParams);
+      next.delete("new_chat");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const [showAllReminders, setShowAllReminders] = useState(false);
   const [showQuickReplyManager, setShowQuickReplyManager] = useState(false);
   const [channelFilter, setChannelFilter] = useState<"all" | "whatsapp" | "instagram">("all");
@@ -505,7 +518,13 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId }:
 
       <NewConversationDialog
         open={showNewConversationDialog}
-        onOpenChange={setShowNewConversationDialog}
+        onOpenChange={(open) => {
+          setShowNewConversationDialog(open);
+          if (!open) {
+            setPrefilledPhone(undefined);
+          }
+        }}
+        initialPhone={prefilledPhone}
         onConversationCreated={handleNewConversationCreated}
       />
 
