@@ -36,7 +36,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, MessageCircle, Download, ChevronLeft, ChevronRight, Inbox } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Loader2, MessageCircle, Download, ChevronLeft, ChevronRight, Inbox, ChevronUp, ChevronDown, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 50;
@@ -181,6 +186,10 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
   const [page, setPage] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [globalSearch, setGlobalSearch] = useState("");
 
   useEffect(() => {
     setSelectedIds([]);
@@ -189,12 +198,280 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
   const sortedColumns = [...columns].sort((a, b) => a.col_order - b.col_order);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["prospect-leads", source.id, page],
-    queryFn: () => getLeads(source.id, page, PAGE_SIZE),
+    queryKey: ["prospect-leads", source.id, page, sortColumn === "received_at" ? sortOrder : null],
+    queryFn: () => getLeads(source.id, page, PAGE_SIZE, sortColumn === "received_at" ? (sortOrder ?? undefined) : undefined),
     placeholderData: (prev) => prev,
   });
 
   const leads = data?.data ?? [];
+  const isAnyFilterActive = useMemo(() => {
+    for (const [key, value] of Object.entries(filters)) {
+      if (key === "received_at") {
+        if (value?.from || value?.to) return true;
+      } else if (Array.isArray(value)) {
+        if (value.length > 0) return true;
+      } else if (typeof value === "string" && value.trim() !== "") {
+        return true;
+      }
+    }
+    return false;
+  }, [filters]);
+
+  const isFilterActive = (colKey: string) => {
+    const val = filters[colKey];
+    if (!val) return false;
+    if (colKey === "received_at") {
+      return !!(val.from || val.to);
+    }
+    if (Array.isArray(val)) {
+      return val.length > 0;
+    }
+    return typeof val === "string" && val.trim() !== "";
+  };
+
+  const filteredLeads = useMemo(() => {
+    let result = [...leads];
+
+    // Global Search
+    if (globalSearch && globalSearch.trim() !== "") {
+      const searchLower = globalSearch.toLowerCase().trim();
+      result = result.filter((lead) => {
+        return Object.values(lead.field_data).some((val) =>
+          val && val.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    // Column Filters
+    for (const [colKey, filterVal] of Object.entries(filters)) {
+      if (!filterVal) continue;
+
+      if (colKey === "received_at") {
+        const { from, to } = filterVal;
+        if (from || to) {
+          result = result.filter((lead) => {
+            const leadDate = new Date(lead.received_at);
+            if (from) {
+              const fromDate = new Date(from);
+              fromDate.setHours(0, 0, 0, 0);
+              if (leadDate < fromDate) return false;
+            }
+            if (to) {
+              const toDate = new Date(to);
+              toDate.setHours(23, 59, 59, 999);
+              if (leadDate > toDate) return false;
+            }
+            return true;
+          });
+        }
+      } else {
+        const column = columns.find((c) => c.key_name === colKey);
+        if (!column) continue;
+
+        if (column.col_type === "select") {
+          const selectedOptions = filterVal as string[];
+          if (selectedOptions.length > 0) {
+            result = result.filter((lead) => {
+              const val = lead.field_data[colKey] ?? "";
+              return selectedOptions.includes(val);
+            });
+          }
+        } else {
+          const searchStr = (filterVal as string).toLowerCase().trim();
+          if (searchStr !== "") {
+            result = result.filter((lead) => {
+              const val = (lead.field_data[colKey] ?? "").toLowerCase();
+              return val.includes(searchStr);
+            });
+          }
+        }
+      }
+    }
+
+    // Dynamic Columns Sorting (client-side)
+    if (sortColumn && sortColumn !== "received_at" && sortOrder) {
+      result.sort((a, b) => {
+        const valA = a.field_data[sortColumn] ?? "";
+        const valB = b.field_data[sortColumn] ?? "";
+        const comp = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: "base" });
+        return sortOrder === "asc" ? comp : -comp;
+      });
+    }
+
+    return result;
+  }, [leads, globalSearch, filters, sortColumn, sortOrder, columns]);
+
+  const handleSort = (colKey: string) => {
+    if (sortColumn !== colKey) {
+      setSortColumn(colKey);
+      setSortOrder("asc");
+    } else {
+      if (sortOrder === "asc") {
+        setSortOrder("desc");
+      } else if (sortOrder === "desc") {
+        setSortColumn(null);
+        setSortOrder(null);
+      } else {
+        setSortOrder("asc");
+      }
+    }
+  };
+
+  const renderReceivedAtFilter = () => {
+    const val = filters["received_at"] || {};
+    return (
+      <div className="space-y-3">
+        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          Filtrar por data
+        </h4>
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <label className="text-[10px] text-muted-foreground uppercase font-medium">De</label>
+            <Input
+              type="date"
+              value={val.from ?? ""}
+              onChange={(e) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  received_at: { ...prev.received_at, from: e.target.value || undefined },
+                }));
+              }}
+              className="h-8 text-xs bg-muted border-border"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] text-muted-foreground uppercase font-medium">Até</label>
+            <Input
+              type="date"
+              value={val.to ?? ""}
+              onChange={(e) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  received_at: { ...prev.received_at, to: e.target.value || undefined },
+                }));
+              }}
+              className="h-8 text-xs bg-muted border-border"
+            />
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-7 text-xs border-border"
+          onClick={() => {
+            setFilters((prev) => {
+              const next = { ...prev };
+              delete next.received_at;
+              return next;
+            });
+          }}
+        >
+          Limpar filtro
+        </Button>
+      </div>
+    );
+  };
+
+  const renderColumnFilter = (col: ProspectColumn) => {
+    if (col.col_type === "select") {
+      const options = normalizeSelectOptions(col.select_options);
+      const selected = (filters[col.key_name] as string[]) || [];
+      return (
+        <div className="space-y-3">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+            Filtrar por {col.label}
+          </h4>
+          {options.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Sem opções configuradas</p>
+          ) : (
+            <div className="max-h-40 overflow-y-auto space-y-2">
+              {options.map((opt) => {
+                const isChecked = selected.includes(opt.label);
+                return (
+                  <div key={opt.label} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`filter-${col.id}-${opt.label}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => {
+                        setFilters((prev) => {
+                          const currentSelected = (prev[col.key_name] as string[]) || [];
+                          const nextSelected = checked
+                            ? [...currentSelected, opt.label]
+                            : currentSelected.filter((l) => l !== opt.label);
+                          return {
+                            ...prev,
+                            [col.key_name]: nextSelected,
+                          };
+                        });
+                      }}
+                    />
+                    <label
+                      htmlFor={`filter-${col.id}-${opt.label}`}
+                      className="text-xs text-foreground cursor-pointer flex items-center gap-1.5 flex-1"
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: opt.color }}
+                      />
+                      <span className="truncate">{opt.label}</span>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-7 text-xs border-border"
+            onClick={() => {
+              setFilters((prev) => {
+                const next = { ...prev };
+                delete next[col.key_name];
+                return next;
+              });
+            }}
+          >
+            Limpar filtro
+          </Button>
+        </div>
+      );
+    }
+
+    const val = (filters[col.key_name] as string) || "";
+    return (
+      <div className="space-y-3">
+        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          Filtrar por {col.label}
+        </h4>
+        <Input
+          placeholder="Buscar..."
+          value={val}
+          onChange={(e) => {
+            setFilters((prev) => ({
+              ...prev,
+              [col.key_name]: e.target.value || undefined,
+            }));
+          }}
+          className="h-8 text-xs bg-muted border-border"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-7 text-xs border-border"
+          onClick={() => {
+            setFilters((prev) => {
+              const next = { ...prev };
+              delete next[col.key_name];
+              return next;
+            });
+          }}
+        >
+          Limpar filtro
+        </Button>
+      </div>
+    );
+  };
   const totalCount = data?.count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
@@ -278,25 +555,46 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
-          <span>{totalCount} lead{totalCount !== 1 ? "s" : ""}</span>
-          {selectedIds.length > 0 && (
-            <span className="text-xs text-muted-foreground/80 font-medium">
-              · {selectedIds.length} de {totalCount} selecionados
-            </span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-card border border-border p-3 rounded-lg">
+        <div className="flex items-center gap-2 flex-1 min-w-[200px] max-w-md">
+          <Input
+            placeholder="Buscar em todos os campos..."
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            className="h-9 text-xs bg-muted border-border flex-1"
+          />
+          {isAnyFilterActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilters({})}
+              className="h-9 text-xs border-border text-muted-foreground hover:text-foreground shrink-0"
+            >
+              Limpar filtros
+            </Button>
           )}
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportCSV}
-          disabled={totalCount === 0}
-          className="border-border hover:border-accent/50"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Exportar CSV
-        </Button>
+        </div>
+        
+        <div className="flex items-center justify-between md:justify-end gap-3 shrink-0">
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            <span>{totalCount} lead{totalCount !== 1 ? "s" : ""}</span>
+            {selectedIds.length > 0 && (
+              <span className="text-xs text-muted-foreground/80 font-medium">
+                · {selectedIds.length} de {totalCount} selecionados
+              </span>
+            )}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={totalCount === 0}
+            className="border-border hover:border-accent/50"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+        </div>
       </div>
 
       {/* Selection Action Bar */}
@@ -355,10 +653,10 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                     <TableHead className="w-12 text-center p-2">
                       <Checkbox
                         checked={
-                          leads.length > 0 &&
-                          (leads.every((lead) => selectedIds.includes(lead.id))
+                          filteredLeads.length > 0 &&
+                          (filteredLeads.every((lead) => selectedIds.includes(lead.id))
                             ? true
-                            : leads.some((lead) => selectedIds.includes(lead.id))
+                            : filteredLeads.some((lead) => selectedIds.includes(lead.id))
                             ? "indeterminate"
                             : false)
                         }
@@ -366,7 +664,7 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                           if (checked) {
                             setSelectedIds((prev) => {
                               const newIds = [...prev];
-                              for (const lead of leads) {
+                              for (const lead of filteredLeads) {
                                 if (!newIds.includes(lead.id)) {
                                   newIds.push(lead.id);
                                 }
@@ -375,22 +673,90 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                             });
                           } else {
                             setSelectedIds((prev) =>
-                              prev.filter((id) => !leads.some((l) => l.id === id))
+                              prev.filter((id) => !filteredLeads.some((l) => l.id === id))
                             );
                           }
                         }}
                         aria-label="Selecionar todos os leads da página"
                       />
                     </TableHead>
-                    <TableHead className="text-muted-foreground text-xs whitespace-nowrap w-36">
-                      Recebido em
+                    <TableHead className="text-muted-foreground text-xs whitespace-nowrap w-44">
+                      <div className="flex items-center gap-1.5 justify-between">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("received_at")}
+                          className="flex items-center gap-1 hover:text-foreground font-semibold"
+                        >
+                          Recebido em
+                          {sortColumn === "received_at" && (
+                            sortOrder === "asc" ? (
+                              <ChevronUp className="h-3 w-3" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            )
+                          )}
+                        </button>
+
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={`h-6 w-6 p-0 hover:bg-muted ${
+                                isFilterActive("received_at")
+                                  ? "text-primary"
+                                  : "text-muted-foreground/60"
+                              }`}
+                            >
+                              <Filter className="h-3.5 w-3.5" fill={isFilterActive("received_at") ? "currentColor" : "none"} />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 bg-card border-border p-3 z-50">
+                            {renderReceivedAtFilter()}
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                     </TableHead>
                     {sortedColumns.map((col) => (
                       <TableHead
                         key={col.id}
-                        className="text-muted-foreground text-xs whitespace-nowrap min-w-[120px]"
+                        className="text-muted-foreground text-xs whitespace-nowrap min-w-[140px]"
                       >
-                        {col.label}
+                        <div className="flex items-center gap-1.5 justify-between font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => handleSort(col.key_name)}
+                            className="flex items-center gap-1 hover:text-foreground font-semibold"
+                          >
+                            {col.label}
+                            {sortColumn === col.key_name && (
+                              sortOrder === "asc" ? (
+                                <ChevronUp className="h-3 w-3" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )
+                            )}
+                          </button>
+
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-6 w-6 p-0 hover:bg-muted ${
+                                  isFilterActive(col.key_name)
+                                    ? "text-primary"
+                                    : "text-muted-foreground/60"
+                                }`}
+                              >
+                                <Filter className="h-3.5 w-3.5" fill={isFilterActive(col.key_name) ? "currentColor" : "none"} />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-60 bg-card border-border p-3 z-50">
+                              {renderColumnFilter(col)}
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                       </TableHead>
                     ))}
                     <TableHead className="text-muted-foreground text-xs text-right whitespace-nowrap w-28">
@@ -399,7 +765,7 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.map((lead) => (
+                  {filteredLeads.map((lead) => (
                     <TableRow key={lead.id} className="border-border hover:bg-muted/30">
                       <TableCell className="w-12 text-center p-2">
                         <Checkbox
@@ -420,7 +786,7 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatDateBR(lead.received_at)}
                       </TableCell>
-
+                      
                       {/* Dynamic columns — editable */}
                       {sortedColumns.map((col) => (
                         <TableCell key={col.id} className="p-1.5">

@@ -180,16 +180,23 @@ export async function getLeads(
   sourceId: string,
   page: number,
   pageSize: number,
+  sortOrder?: "asc" | "desc",
 ): Promise<{ data: ProspectLead[]; count: number }> {
   const from = page * pageSize;
   const to = from + pageSize - 1;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from("prospect_leads" as any)
     .select("*", { count: "exact" })
-    .eq("source_id", sourceId)
-    .order("received_at", { ascending: false })
-    .range(from, to);
+    .eq("source_id", sourceId);
+
+  if (sortOrder) {
+    query = query.order("received_at", { ascending: sortOrder === "asc" });
+  } else {
+    query = query.order("received_at", { ascending: false });
+  }
+
+  const { data, error, count } = await query.range(from, to);
 
   if (error) throw error;
   return {
