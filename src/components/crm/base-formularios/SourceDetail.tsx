@@ -71,23 +71,23 @@ export function SourceDetail({ sourceId, onBack }: SourceDetailProps) {
         </div>
       </div>
 
-      <Tabs defaultValue="config" className="space-y-4">
+      <Tabs defaultValue="leads" className="space-y-4">
         <TabsList className="quantum-glass border border-border/50">
+          <TabsTrigger value="leads">
+            Leads
+          </TabsTrigger>
           <TabsTrigger value="config">
             <Settings className="h-4 w-4 mr-2" />
             Configurar Campos
           </TabsTrigger>
-          <TabsTrigger value="leads">
-            Leads
-          </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="config">
-          <ColumnsConfig source={source} columns={columns} />
-        </TabsContent>
 
         <TabsContent value="leads">
           <LeadsTable source={source} columns={columns} />
+        </TabsContent>
+
+        <TabsContent value="config">
+          <ColumnsConfig source={source} columns={columns} />
         </TabsContent>
       </Tabs>
     </div>

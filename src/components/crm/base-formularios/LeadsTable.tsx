@@ -28,9 +28,7 @@ import { Loader2, MessageCircle, Download, ChevronLeft, ChevronRight, Inbox } fr
 import { toast } from "sonner";
 
 const PAGE_SIZE = 50;
-const PHONE_KEYS = ["whatsapp", "telefone", "phone", "celular"];
 
-// DD/MM/YYYY HH:mm in local time
 function formatDateBR(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
@@ -38,10 +36,18 @@ function formatDateBR(iso: string): string {
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-function normalizePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  if (!digits) return "";
-  return digits.startsWith("55") ? digits : `55${digits}`;
+const PHONE_KEYS_LOWER = ["whatsapp", "telefone", "phone", "celular"];
+
+function getPhoneFromLead(lead: ProspectLead): string | null {
+  for (const [key, value] of Object.entries(lead.field_data)) {
+    if (PHONE_KEYS_LOWER.includes(key.toLowerCase()) && value && value.trim() !== "") {
+      const digits = value.replace(/\D/g, "");
+      if (digits) {
+        return digits.startsWith("55") ? digits : `55${digits}`;
+      }
+    }
+  }
+  return null;
 }
 function normalizeSelectOptions(options: any): Array<{ label: string; color: string }> {
   if (!Array.isArray(options)) return [];
@@ -197,17 +203,17 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
   };
 
   const handleIniciarConversa = (lead: ProspectLead) => {
-    const phoneKey = PHONE_KEYS.find(
-      (k) => lead.field_data[k] && lead.field_data[k].trim() !== ""
-    );
-    if (!phoneKey) return;
-    const phone = normalizePhone(lead.field_data[phoneKey]);
+    if (lead.crm_contact_id) {
+      navigate(`/crm?contact=${lead.crm_contact_id}`);
+      return;
+    }
+    const phone = getPhoneFromLead(lead);
     if (!phone) return;
-    navigate(`/crm?phone=${phone}`);
+    navigate("/crm", { state: { phone } });
   };
 
   const hasPhoneField = (lead: ProspectLead) =>
-    PHONE_KEYS.some((k) => lead.field_data[k] && lead.field_data[k].trim() !== "");
+    getPhoneFromLead(lead) !== null;
 
   if (isLoading) {
     return (
