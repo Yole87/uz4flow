@@ -24,49 +24,20 @@ interface ProspectSource {
 
 // ─── Field extraction ─────────────────────────────────────────────────────────
 
-/**
- * Normalises the incoming body into a flat key→value map.
- *
- * Handles three formats defensively:
- *  1. Elementor Pro array format  – { fields: [{ id, title, value }], meta: {} }
- *  2. Flat object format          – { nome: "João", whatsapp: "..." }
- *  3. Mixed / unknown             – falls back to string-coercing every top-level value
- */
-function extractFieldData(
-  body: ElementorBody | string,
-  contentType: string,
-): Record<string, string> {
-  if (contentType.includes("application/x-www-form-urlencoded")) {
-    let params: URLSearchParams;
-    if (typeof body === "string") {
-      params = new URLSearchParams(body);
-    } else {
-      params = new URLSearchParams();
-      for (const [key, value] of Object.entries(body)) {
-        if (value !== null && value !== undefined) {
-          params.append(key, String(value));
-        }
-      }
-    }
-    const result: Record<string, string> = {};
-    const skipFields = new Set([
-      "Data",
-      "Horário",
-      "URL da página",
-      "Agente de usuário",
-      "IP remoto",
-      "Desenvolvido por",
-      "form_id",
-      "form_name",
-    ]);
+// Known Elementor/WordPress meta fields that should not be stored as lead data.
+const META_FIELD_SKIP_SET = new Set([
+  "Data",
+  "Horário",
+  "URL da página",
+  "Agente de usuário",
+  "IP remoto",
+  "Desenvolvido por",
+  "form_id",
+  "form_name",
+  "URL+da+p",
+]);
 
-    for (const [key, value] of params.entries()) {
-      if (skipFields.has(key)) continue;
-      result[key] = value;
-    }
-    return result;
-  }
-
+function extractFieldData(body: ElementorBody): Record<string, string> {
   // Format 1: Elementor Pro standard array (from parsed JSON)
   const parsedBody = typeof body === "string" ? JSON.parse(body) : body;
   if (Array.isArray(parsedBody.fields) && parsedBody.fields.length > 0) {
@@ -80,16 +51,41 @@ function extractFieldData(
   }
 
   // Format 2 / 3: flat object — copy all string-coercible top-level keys,
-  // skipping the `meta` key and any nested objects/arrays that are not useful.
+  // skipping the `meta` key, known meta fields, and any nested objects/arrays that are not useful.
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(parsedBody)) {
     if (key === "meta") continue; // Elementor meta block — not a form field
+    if (META_FIELD_SKIP_SET.has(key)) continue;
     if (value === null || value === undefined) continue;
     if (typeof value === "object") continue; // skip nested objects/arrays
     result[key] = String(value);
   }
   return result;
 }
+
+/**
+ * Parses the raw request body into the internal ElementorBody shape.
+ *
+ * Supports:
+ *  - `application/x-www-form-urlencoded` via URLSearchParams
+ *  - `application/json` via JSON.parse
+ */
+function parseRequestBody(
+  rawText: string,
+  contentType: string,
+): ElementorBody {
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(rawText);
+    const formBody: Record<string, unknown> = {};
+    for (const [key, value] of params.entries()) {
+      formBody[key] = value;
+    }
+    return formBody as ElementorBody;
+  }
+
+  return JSON.parse(rawText) as ElementorBody;
+}
+
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
@@ -161,18 +157,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (contentType.includes("application/x-www-form-urlencoded")) {
-      const params = new URLSearchParams(rawText);
-      body = Object.fromEntries(params.entries());
-    } else {
-      body = JSON.parse(rawText);
-    }
+    body = parseRequestBody(rawText, contentType);
     console.log(
       "[prospect-webhook] v2 Body received:",
       JSON.stringify(body).substring(0, 500),
     );
   } catch (err) {
-    console.error("[prospect-webhook] Parse error:", err);
+    console.error("[prospect-webhook] Body parse error:", err);
     return new Response(
       JSON.stringify({ error: "Conteúdo inválido" }),
       {
@@ -183,6 +174,7 @@ Deno.serve(async (req) => {
   }
 
   // ── 4. Resolve source by webhook_token ──────────────────────────────────────
+
   const { data: source, error: sourceError } = await supabase
     .from("prospect_sources")
     .select("id, organization_id, name, is_active")
@@ -221,7 +213,7 @@ Deno.serve(async (req) => {
   );
 
   // ── 5. Extract field_data from the form body ─────────────────────────────────
-  const fieldData = extractFieldData(body, contentType);
+  const fieldData = extractFieldData(body);
   console.log(
     "[prospect-webhook] Extracted field_data:",
     JSON.stringify(fieldData),
@@ -262,3 +254,6 @@ Deno.serve(async (req) => {
     },
   );
 });
+
+// Exported for unit testing without starting the server.
+export { parseRequestBody, extractFieldData };

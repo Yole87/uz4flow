@@ -127,6 +127,56 @@ async function getProviderConnection(instanceId: string): Promise<ProviderConnec
   return connection as ProviderConnection;
 }
 
+
+/**
+ * Resolves the organization for an instance and its configured webhook secret.
+ */
+async function getInstanceAuthContext(instanceId: string): Promise<{ organizationId: string; secret: string | null } | null> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) return null;
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+  const { data: instance } = await supabase
+    .from("instances")
+    .select("organization_id")
+    .eq("openbot_instance_id", instanceId)
+    .maybeSingle();
+  if (!instance) return null;
+
+  const { data: cfg } = await supabase
+    .from("crm_openbot_config")
+    .select("webhook_secret")
+    .eq("organization_id", instance.organization_id)
+    .maybeSingle();
+
+  return { organizationId: instance.organization_id, secret: cfg?.webhook_secret ?? null };
+}
+
+/** HMAC-SHA256 hex signature validation with constant-time comparison. */
+async function validateWebhookSignature(body: string, signature: string, secret: string): Promise<boolean> {
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+    const expected = Array.from(new Uint8Array(sig))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    if (expected.length !== signature.length) return false;
+    let result = 0;
+    for (let i = 0; i < expected.length; i++) result |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+    return result === 0;
+  } catch (_e) {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   const preflightResponse = handleCorsOptions(req);
@@ -140,9 +190,19 @@ Deno.serve(async (req) => {
     );
   }
 
+  let rawBody: string;
+  try {
+    rawBody = await req.text();
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Invalid body" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   let payload: any;
   try {
-    payload = await req.json();
+    payload = JSON.parse(rawBody);
   } catch {
     return new Response(
       JSON.stringify({ error: "Invalid JSON" }),
@@ -157,6 +217,47 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "Missing required fields: chatId, instanceId" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+  }
+
+  // --- Mandatory caller authentication ---
+  // The caller must prove knowledge of a shared secret bound to the instance's
+  // organization (HMAC-SHA256 of the raw body, or the raw secret), or present
+  // the service-role bearer token. Anonymous invocation is rejected.
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const isServiceRoleCall =
+    !!serviceRoleKey && req.headers.get("authorization") === `Bearer ${serviceRoleKey}`;
+
+  if (!isServiceRoleCall) {
+    const providedSignature =
+      req.headers.get("x-webhook-secret") ||
+      req.headers.get("x-hub-signature-256") ||
+      req.headers.get("x-signature") ||
+      "";
+
+    const authCtx = await getInstanceAuthContext(payload.instanceId);
+    if (!authCtx || !authCtx.secret) {
+      console.warn("[MCP-Gateway] Unauthorized: no webhook secret configured for instance");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const secret = authCtx.secret;
+    const validHmac = providedSignature
+      ? await validateWebhookSignature(rawBody, providedSignature.replace(/^sha256=/, ""), secret)
+      : false;
+    const validRaw =
+      providedSignature.length === secret.length &&
+      providedSignature.split("").reduce((acc, c, i) => acc | (c.charCodeAt(0) ^ secret.charCodeAt(i)), 0) === 0;
+
+    if (!validHmac && !validRaw) {
+      console.warn("[MCP-Gateway] Unauthorized: invalid webhook signature");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
   }
 
   console.log(

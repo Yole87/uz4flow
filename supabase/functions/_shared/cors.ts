@@ -36,7 +36,7 @@ function isOriginAllowed(origin: string | null): boolean {
 }
 
 const BASE_HEADERS =
-  "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version";
+  "authorization, x-client-info, apikey, content-type, x-webhook-secret, x-signature, x-hub-signature-256, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version";
 
 /**
  * Returns CORS headers scoped to the request origin (if allowed).
