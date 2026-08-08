@@ -27,7 +27,7 @@ export interface ProspectColumn {
   /** Display name shown to the tenant */
   label: string;
   col_type: 'text' | 'select';
-  select_options: string[];
+  select_options: Array<{ label: string; color: string }>;
   col_order: number;
   created_at: string;
 }

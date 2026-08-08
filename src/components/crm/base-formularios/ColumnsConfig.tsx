@@ -39,24 +39,44 @@ interface ColumnsConfigProps {
   columns: ProspectColumn[];
 }
 
+interface SelectOption {
+  label: string;
+  color: string;
+}
+
+function normalizeSelectOptions(options: any): SelectOption[] {
+  if (!Array.isArray(options)) return [];
+  return options.map((opt) => {
+    if (typeof opt === "string") {
+      return { label: opt, color: "#6366f1" };
+    }
+    if (opt && typeof opt === "object" && typeof opt.label === "string") {
+      return { label: opt.label, color: opt.color || "#6366f1" };
+    }
+    return { label: String(opt), color: "#6366f1" };
+  });
+}
+
 function TagInput({
   options,
   onChange,
 }: {
-  options: string[];
-  onChange: (opts: string[]) => void;
+  options: SelectOption[];
+  onChange: (opts: SelectOption[]) => void;
 }) {
   const [input, setInput] = useState("");
+  const [color, setColor] = useState("#6366f1");
 
   const addOption = () => {
     const val = input.trim();
     if (!val) return;
-    if (options.includes(val)) {
+    if (options.some((o) => o.label.toLowerCase() === val.toLowerCase())) {
       toast.error("Opção já existe");
       return;
     }
-    onChange([...options, val]);
+    onChange([...options, { label: val, color }]);
     setInput("");
+    setColor("#6366f1");
   };
 
   return (
@@ -64,31 +84,67 @@ function TagInput({
       <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => (
           <span
-            key={opt}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/15 text-accent text-xs border border-accent/30"
+            key={opt.label}
+            style={{
+              backgroundColor: `${opt.color}15`,
+              color: opt.color,
+              borderColor: `${opt.color}40`,
+            }}
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border"
           >
-            {opt}
+            {opt.label}
+            <input
+              type="color"
+              value={opt.color}
+              onChange={(e) => {
+                const newColor = e.target.value;
+                onChange(
+                  options.map((o) =>
+                    o.label === opt.label ? { ...o, color: newColor } : o
+                  )
+                );
+              }}
+              className="w-3.5 h-3.5 p-0 border-0 rounded-full cursor-pointer overflow-hidden shrink-0"
+              style={{ backgroundColor: opt.color }}
+              title="Mudar cor"
+            />
             <button
               type="button"
-              onClick={() => onChange(options.filter((o) => o !== opt))}
-              className="hover:text-destructive transition-colors"
+              onClick={() => onChange(options.filter((o) => o.label !== opt.label))}
+              className="hover:text-destructive transition-colors ml-0.5"
             >
               <X className="h-3 w-3" />
             </button>
           </span>
         ))}
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1.5 items-center">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); addOption(); }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addOption();
+            }
           }}
           placeholder="Nova opção..."
           className="h-7 text-xs bg-background border-border"
         />
-        <Button type="button" size="sm" variant="outline" onClick={addOption} className="h-7 px-2 border-border text-xs">
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          className="w-7 h-7 p-0 border border-border rounded cursor-pointer shrink-0"
+          title="Escolher cor da opção"
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={addOption}
+          className="h-7 px-2 border-border text-xs"
+        >
           Add
         </Button>
       </div>
@@ -111,7 +167,9 @@ function ColumnRow({ col, index, total, onMoveUp, onMoveDown, onSave, onDelete }
   const [keyName, setKeyName] = useState(col.key_name);
   const [keyDirty, setKeyDirty] = useState(false);
   const [colType, setColType] = useState<"text" | "select">(col.col_type);
-  const [selectOptions, setSelectOptions] = useState<string[]>(col.select_options ?? []);
+  const [selectOptions, setSelectOptions] = useState<SelectOption[]>(
+    normalizeSelectOptions(col.select_options)
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleBlurSave = useCallback(() => {

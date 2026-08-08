@@ -43,6 +43,18 @@ function normalizePhone(raw: string): string {
   if (!digits) return "";
   return digits.startsWith("55") ? digits : `55${digits}`;
 }
+function normalizeSelectOptions(options: any): Array<{ label: string; color: string }> {
+  if (!Array.isArray(options)) return [];
+  return options.map((opt) => {
+    if (typeof opt === "string") {
+      return { label: opt, color: "#6366f1" };
+    }
+    if (opt && typeof opt === "object" && typeof opt.label === "string") {
+      return { label: opt.label, color: opt.color || "#6366f1" };
+    }
+    return { label: String(opt), color: "#6366f1" };
+  });
+}
 
 interface EditableCellProps {
   leadId: string;
@@ -68,17 +80,39 @@ function EditableCell({ leadId, fieldKey, value, col, allFieldData, onSaved }: E
   });
 
   if (col.col_type === "select") {
+    const normalizedOptions = normalizeSelectOptions(col.select_options);
+    const selectedOpt = normalizedOptions.find((o) => o.label === value);
+
+    const triggerStyle = selectedOpt
+      ? {
+          backgroundColor: `${selectedOpt.color}15`,
+          color: selectedOpt.color,
+          borderColor: `${selectedOpt.color}40`,
+        }
+      : undefined;
+
     return (
       <Select
         value={value || ""}
         onValueChange={(v) => saveMutation.mutate(v)}
       >
-        <SelectTrigger className="h-7 text-xs bg-transparent border-border w-full">
+        <SelectTrigger 
+          className="h-7 text-xs bg-transparent border-border w-full"
+          style={triggerStyle}
+        >
           <SelectValue placeholder="—" />
         </SelectTrigger>
         <SelectContent>
-          {col.select_options.map((opt) => (
-            <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+          {normalizedOptions.map((opt) => (
+            <SelectItem key={opt.label} value={opt.label} className="text-xs">
+              <span className="flex items-center gap-2">
+                <span 
+                  className="w-2 h-2 rounded-full shrink-0" 
+                  style={{ backgroundColor: opt.color }}
+                />
+                {opt.label}
+              </span>
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
