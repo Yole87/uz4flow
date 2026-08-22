@@ -68,16 +68,16 @@ interface UzFormEditorProps {
 }
 
 const FIELD_TYPES = [
-  { type: "name", label: "Nome completo", icon: User },
+  { type: "name", label: "Nome Completo", icon: User },
   { type: "email", label: "E-mail", icon: Mail },
   { type: "phone", label: "Celular / WhatsApp", icon: Phone },
-  { type: "short_text", label: "Texto curto", icon: AlignLeft },
-  { type: "long_text", label: "Texto longo", icon: FileText },
+  { type: "short_text", label: "Texto Curto", icon: AlignLeft },
+  { type: "long_text", label: "Texto Longo", icon: FileText },
   { type: "date", label: "Data", icon: Calendar },
-  { type: "multiple_choice", label: "Múltipla escolha (Radio)", icon: CheckSquare },
-  { type: "select_list", label: "Lista de seleção (Dropdown)", icon: List },
-  { type: "file_upload", label: "Upload de arquivo", icon: Upload },
-  { type: "address", label: "Endereço completo", icon: MapPin },
+  { type: "multiple_choice", label: "Múltipla Escolha", icon: CheckSquare },
+  { type: "select_list", label: "Seleção", icon: List },
+  { type: "file_upload", label: "Upload de Arquivo", icon: Upload },
+  { type: "address", label: "Endereço", icon: MapPin },
   { type: "cpf", label: "CPF", icon: CreditCard },
   { type: "cnpj", label: "CNPJ", icon: Building },
 ] as const;
@@ -86,6 +86,7 @@ function getFieldIcon(type: UzFormFieldType) {
   const match = FIELD_TYPES.find((f) => f.type === type);
   return match ? match.icon : AlignLeft;
 }
+
 
 function getYouTubeId(url: string): string | null {
   if (!url) return null;
