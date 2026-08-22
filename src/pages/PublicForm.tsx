@@ -202,33 +202,80 @@ export default function PublicForm() {
       });
     }
 
+    // ViaCEP lookup: always work with digits only, fire at exactly 8 digits.
     const cleanCep = masked.replace(/\D/g, "");
-    if (cleanCep.length === 8) {
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await response.json();
-        if (!data.erro) {
-          const updatedAddr = {
-            ...nextAddr,
-            rua: data.logradouro || "",
-            bairro: data.bairro || "",
-            cidade: data.localidade || "",
-            estado: data.uf || "",
-          };
 
-          setAddressResponses((prev) => ({
-            ...prev,
-            [fieldId]: updatedAddr,
-          }));
+    setCepError((prev) => {
+      if (!prev[fieldId]) return prev;
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
 
-          setResponses((prev) => ({
-            ...prev,
-            [keyName]: formatAddress(updatedAddr),
-          }));
-        }
-      } catch (err) {
-        console.error("Erro ao buscar CEP:", err);
+    if (cleanCep.length !== 8) return;
+
+    setCepLoading((prev) => ({ ...prev, [fieldId]: true }));
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+
+      if (data?.erro) {
+        setCepError((prev) => ({ ...prev, [fieldId]: "CEP não encontrado" }));
+        return;
       }
+
+      const updatedAddr = {
+        ...nextAddr,
+        rua: data.logradouro || "",
+        bairro: data.bairro || "",
+        cidade: data.localidade || "",
+        estado: data.uf || "",
+      };
+
+      setAddressResponses((prev) => ({
+        ...prev,
+        [fieldId]: updatedAddr,
+      }));
+
+      setResponses((prev) => ({
+        ...prev,
+        [keyName]: formatAddress(updatedAddr),
+      }));
+    } catch (err) {
+      console.error("Erro ao buscar CEP:", err);
+      setCepError((prev) => ({ ...prev, [fieldId]: "Não foi possível consultar o CEP" }));
+    } finally {
+      setCepLoading((prev) => ({ ...prev, [fieldId]: false }));
+    }
+  };
+
+  // ─── File Upload ────────────────────────────────────────────────────────────
+
+  const handleFileUpload = async (field: UzFormField, file: File) => {
+    // TODO: add file type validation (allowed extensions / mime types) in a future
+    // iteration. For now any file type is accepted; only the 10MB limit applies.
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error("O arquivo deve ter no máximo 10MB");
+      return;
+    }
+
+    setUploadingFields((prev) => ({ ...prev, [field.id]: true }));
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
+      const safeName = `${crypto.randomUUID()}.${ext}`;
+      const path = `${form.organization_id}/${form.id}/${safeName}`;
+
+      const url = await uploadToBucket("form-uploads", path, file);
+
+      setFileNames((prev) => ({ ...prev, [field.id]: file.name }));
+      handleFieldChange(field.key_name, url);
+      toast.success("Arquivo enviado!");
+    } catch (err) {
+      console.error("Erro ao enviar arquivo:", err);
+      toast.error("Erro ao enviar o arquivo. Tente novamente.");
+    } finally {
+      setUploadingFields((prev) => ({ ...prev, [field.id]: false }));
     }
   };
 
