@@ -54,8 +54,26 @@ export interface UzFormWithSteps extends UzForm {
   steps: UzFormStep[];
 }
 
+export type UzFormWatermarkMode = 'platform' | 'custom' | 'tenant_choice';
+
+export type UzFormEndingType = 'thank_you' | 'whatsapp' | 'both';
+
+/** Keys stored inside `uz_forms.settings` (jsonb). */
+export interface UzFormSettings {
+  ending_type?: UzFormEndingType;
+  ending_message?: string;
+  ending_whatsapp_number?: string;
+  ending_whatsapp_message?: string;
+  /** Only used when the plan watermark mode is 'tenant_choice'. */
+  watermark_text?: string;
+  [key: string]: unknown;
+}
+
 /** Payload returned by the public `get_public_form` database function. */
 export interface PublicUzForm extends UzFormWithSteps {
-  /** Watermark text defined by the organization's plan (super admin controlled). */
+  /** Watermark mode defined by the organization's plan (super admin controlled). */
+  watermark_mode: UzFormWatermarkMode;
+  /** Watermark text defined by the organization's plan (used when mode is 'custom'). */
   watermark_text: string;
 }
+

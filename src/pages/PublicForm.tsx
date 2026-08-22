@@ -132,9 +132,24 @@ export default function PublicForm() {
   const totalSteps = steps.length;
   const currentStep = steps[currentStepIndex];
 
-  // Watermark comes from the organization's PLAN (super admin controlled), not from form settings.
-  const watermarkText = form.watermark_text || "";
-  const successMessage = (form.settings as any)?.success_message || "Obrigado! Suas respostas foram enviadas com sucesso.";
+  // Watermark comes from the organization's PLAN (super admin controlled).
+  const formSettings = (form.settings ?? {}) as Record<string, string | undefined>;
+  const watermarkMode = form.watermark_mode || "platform";
+  const watermarkText =
+    watermarkMode === "custom"
+      ? form.watermark_text || "Feito com Uz4Flow"
+      : watermarkMode === "tenant_choice"
+        ? formSettings.watermark_text || ""
+        : "Feito com Uz4Flow";
+
+  const endingType = formSettings.ending_type || "thank_you";
+  const endingMessage =
+    formSettings.ending_message ||
+    formSettings.success_message ||
+    "Obrigado! Suas respostas foram enviadas com sucesso.";
+  const endingWhatsappNumber = (formSettings.ending_whatsapp_number || "").replace(/\D/g, "");
+  const endingWhatsappMessage = formSettings.ending_whatsapp_message || "";
+
 
   // ─── Format Address String ──────────────────────────────────────────────────
 
@@ -777,16 +792,44 @@ export default function PublicForm() {
   // ─── Success Screen ────────────────────────────────────────────────────────
 
   if (isSubmitted) {
+    const showThankYou = endingType === "thank_you" || endingType === "both";
+    const showWhatsapp =
+      (endingType === "whatsapp" || endingType === "both") && !!endingWhatsappNumber;
+    const waLink = `https://wa.me/${endingWhatsappNumber}${
+      endingWhatsappMessage ? `?text=${encodeURIComponent(endingWhatsappMessage)}` : ""
+    }`;
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
         <div className="w-full max-w-md text-center space-y-6 animate-in zoom-in duration-300">
           <BrandLogo className="mx-auto h-12 w-auto object-contain" />
           <div className="bg-card border border-border p-8 rounded-2xl shadow-xl space-y-4">
-            <CheckCircle className="mx-auto h-16 w-16 text-success" />
-            <h2 className="text-2xl font-bold text-foreground">Enviado com sucesso!</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {successMessage}
-            </p>
+            {showThankYou && (
+              <>
+                <CheckCircle className="mx-auto h-16 w-16 text-success" />
+                <h2 className="text-2xl font-bold text-foreground">Enviado com sucesso!</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {endingMessage}
+                </p>
+              </>
+            )}
+
+            {showWhatsapp && (
+              <Button
+                size="lg"
+                className="w-full h-12 rounded-xl text-base"
+                onClick={() => window.open(waLink, "_blank", "noopener,noreferrer")}
+              >
+                Falar no WhatsApp
+              </Button>
+            )}
+
+            {!showThankYou && !showWhatsapp && (
+              <>
+                <CheckCircle className="mx-auto h-16 w-16 text-success" />
+                <h2 className="text-2xl font-bold text-foreground">Enviado com sucesso!</h2>
+              </>
+            )}
           </div>
           {watermarkText && (
             <p className="text-xs text-muted-foreground/60">{watermarkText}</p>
@@ -795,6 +838,7 @@ export default function PublicForm() {
       </div>
     );
   }
+
 
   // ─── Main Form Experience ──────────────────────────────────────────────────
 
@@ -834,14 +878,13 @@ export default function PublicForm() {
 
           {/* Media Player */}
           {mediaType === "image" && mediaUrl && (
-            <div className="w-full overflow-hidden rounded-xl border border-border">
-              <img
-                src={mediaUrl}
-                alt={stepTitle || "Imagem do passo"}
-                className="w-full h-auto max-h-64 sm:max-h-80 object-cover"
-              />
-            </div>
+            <img
+              src={mediaUrl}
+              alt={stepTitle || "Imagem do passo"}
+              className="aspect-video w-full object-cover rounded-lg border border-border"
+            />
           )}
+
 
           {mediaType === "youtube" && mediaUrl && getYouTubeId(mediaUrl) && (
             <div className="w-full overflow-hidden rounded-xl border border-border aspect-video">
@@ -924,14 +967,11 @@ export default function PublicForm() {
 
       {/* Footer / Watermark */}
       <footer className="w-full py-6 text-center border-t border-border mt-auto">
-        {watermarkText ? (
+        {watermarkText && (
           <p className="text-xs text-muted-foreground/60">{watermarkText}</p>
-        ) : (
-          <p className="text-xs text-muted-foreground/40">
-            Desenvolvido com <span className="text-accent">UzFlow</span>
-          </p>
         )}
       </footer>
+
     </div>
   );
 }
