@@ -271,7 +271,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
       field: {
         step_id: activeStep.id,
         field_type: type,
-        label: `Campo de ${FIELD_TYPES.find((f) => f.type === type)?.label || type}`,
+        label: FIELD_TYPES.find((f) => f.type === type)?.label || type,
         key_name,
         is_required: false,
         options: [],
