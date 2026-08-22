@@ -11,6 +11,7 @@ import {
   deleteField,
   reorderFields,
   updateForm,
+  uploadToBucket,
 } from "@/services/uzFormService";
 import { supabase } from "@/integrations/supabase/client";
 import type { UzForm, UzFormStep, UzFormField, UzFormFieldType, UzFormMediaType } from "@/types/uzForm";
