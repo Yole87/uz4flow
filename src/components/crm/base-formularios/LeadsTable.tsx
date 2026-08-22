@@ -796,12 +796,13 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                     <TableHead className="w-12 text-center p-2">
                       <Checkbox
                         checked={
-                          filteredLeads.length > 0 &&
-                          (filteredLeads.every((lead) => selectedIds.includes(lead.id))
-                            ? true
-                            : filteredLeads.some((lead) => selectedIds.includes(lead.id))
-                            ? "indeterminate"
-                            : false)
+                          filteredLeads.length === 0
+                            ? false
+                            : filteredLeads.every((lead) => selectedIds.includes(lead.id))
+                              ? true
+                              : filteredLeads.some((lead) => selectedIds.includes(lead.id))
+                                ? "indeterminate"
+                                : false
                         }
                         onCheckedChange={(checked) => {
                           if (checked) {
