@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getPublicForm, submitFormResponse } from "@/services/uzFormService";
-import type { UzFormWithSteps, UzFormField, UzFormStep } from "@/types/uzForm";
+import { getPublicForm, submitFormResponse, uploadToBucket } from "@/services/uzFormService";
+import type { PublicUzForm, UzFormField, UzFormStep } from "@/types/uzForm";
 import { BrandLogo } from "@/components/branding/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
