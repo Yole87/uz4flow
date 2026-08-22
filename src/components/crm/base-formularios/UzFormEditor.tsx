@@ -522,12 +522,15 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                             />
                             {isUploading && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
                           </div>
+                          <p className="text-xs text-muted-foreground">
+                            Recomendado: 1280×720px (proporção 16:9), máximo 2MB. A imagem será exibida na proporção 16:9.
+                          </p>
                           {activeStep.media_url && (
                             <div className="relative mt-2 border border-border rounded-lg overflow-hidden max-w-[200px]">
                               <img
                                 src={activeStep.media_url}
                                 alt="Mídia do Passo"
-                                className="w-full h-auto object-cover max-h-32"
+                                className="aspect-video w-full object-cover"
                               />
                             </div>
                           )}
@@ -539,15 +542,12 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                           <Label>Link do vídeo do YouTube</Label>
                           <Input
                             type="text"
-                            value={activeStep.media_url || ""}
-                            onChange={(e) =>
-                              updateStepMutation.mutate({
-                                id: activeStep.id,
-                                data: { media_url: e.target.value },
-                              })
-                            }
+                            value={stepDrafts[activeStep.id]?.media_url ?? activeStep.media_url ?? ""}
+                            onChange={(e) => setStepDraft(activeStep.id, { media_url: e.target.value })}
+                            onBlur={(e) => commitStep(activeStep, { media_url: e.target.value })}
                             placeholder="Ex: https://www.youtube.com/watch?v=..."
                           />
+
                           {activeStep.media_url && getYouTubeId(activeStep.media_url) && (
                             <div className="relative aspect-video rounded-lg overflow-hidden border border-border mt-2 max-w-[320px]">
                               <iframe
