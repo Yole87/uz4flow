@@ -132,7 +132,8 @@ export default function PublicForm() {
   const totalSteps = steps.length;
   const currentStep = steps[currentStepIndex];
 
-  const watermarkText = (form.settings as any)?.watermark_text || "";
+  // Watermark comes from the organization's PLAN (super admin controlled), not from form settings.
+  const watermarkText = form.watermark_text || "";
   const successMessage = (form.settings as any)?.success_message || "Obrigado! Suas respostas foram enviadas com sucesso.";
 
   // ─── Format Address String ──────────────────────────────────────────────────
