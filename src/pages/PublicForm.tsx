@@ -76,7 +76,7 @@ interface AddressState {
 
 export default function PublicForm() {
   const { token } = useParams<{ token: string }>();
-  const [form, setForm] = useState<UzFormWithSteps | null>(null);
+  const [form, setForm] = useState<PublicUzForm | null>(null);
   const [loading, setLoading] = useState(true);
   
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -85,6 +85,10 @@ export default function PublicForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [cepLoading, setCepLoading] = useState<Record<string, boolean>>({});
+  const [cepError, setCepError] = useState<Record<string, string>>({});
+  const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
+  const [fileNames, setFileNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!token) return;
