@@ -170,14 +170,11 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                   <TableCell className="text-xs font-medium whitespace-nowrap">
                     {formatDateBR(res.submitted_at)}
                   </TableCell>
-                  {orderedFields.map((field) => {
-                    const value = res.response_data[field.key_name];
-                    return (
-                      <TableCell key={field.id} className="text-sm">
-                        {value !== undefined && value !== "" ? value : <span className="text-muted-foreground/45">—</span>}
-                      </TableCell>
-                    );
-                  })}
+                  {orderedFields.map((field) => (
+                    <TableCell key={field.id} className="text-sm max-w-[280px]">
+                      {renderCell(field, res.response_data[field.key_name])}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>
