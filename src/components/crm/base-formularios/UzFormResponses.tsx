@@ -11,7 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, Inbox } from "lucide-react";
+import { Loader2, Download, Inbox, FileDown, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface UzFormResponsesProps {
@@ -27,6 +28,75 @@ function formatDateBR(iso: string): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
+/** Formats a plain date value (YYYY-MM-DD) as DD/MM/YYYY without timezone shifting. */
+function formatPlainDateBR(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return value;
+  const [, y, m, d] = match;
+  return `${d}/${m}/${y}`;
+}
+
+function isUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
+
+function normalizePhone(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.startsWith("55") ? digits : `55${digits}`;
+}
+
+function CellValue({ field, value }: { field: UzFormField; value: unknown }) {
+  const navigate = useNavigate();
+  const raw = value === undefined || value === null ? "" : String(value);
+
+  if (raw === "") return <span className="text-muted-foreground/45">—</span>;
+
+  if (field.field_type === "file_upload" || isUrl(raw)) {
+    return (
+      <a
+        href={raw}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-accent hover:underline"
+      >
+        <FileDown className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate max-w-[180px]">Abrir arquivo</span>
+      </a>
+    );
+  }
+
+  if (field.field_type === "date") {
+    return <span className="whitespace-nowrap">{formatPlainDateBR(raw)}</span>;
+  }
+
+  if (field.field_type === "phone") {
+    const phone = normalizePhone(raw);
+    return (
+      <div className="flex items-center gap-2">
+        <span className="whitespace-nowrap">{raw}</span>
+        {phone && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-accent hover:text-accent gap-1"
+            onClick={() => navigate(`/crm?new_conversation_phone=${phone}`)}
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Conversa
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  return <span className="block truncate">{raw}</span>;
+}
+
+const renderCell = (field: UzFormField, value: unknown) => (
+  <CellValue field={field} value={value} />
+);
+
 
 export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
   const [page, setPage] = useState(0);
@@ -151,10 +221,10 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
       </div>
 
       {/* Responses Data Table */}
-      <div className="rounded-lg border border-border overflow-hidden bg-card">
-        <div className="overflow-x-auto max-h-[calc(100vh-320px)]">
+      <div className="relative w-full min-w-0 max-w-full rounded-lg border border-border overflow-hidden bg-card">
+        <div className="relative w-full min-w-0 max-w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)]">
           <Table>
-            <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+            <TableHeader className="sticky top-0 bg-muted backdrop-blur z-[1]">
               <TableRow className="border-border hover:bg-muted/50">
                 <TableHead className="min-w-[150px] font-semibold text-foreground">Enviado em</TableHead>
                 {orderedFields.map((field) => (
@@ -170,14 +240,11 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                   <TableCell className="text-xs font-medium whitespace-nowrap">
                     {formatDateBR(res.submitted_at)}
                   </TableCell>
-                  {orderedFields.map((field) => {
-                    const value = res.response_data[field.key_name];
-                    return (
-                      <TableCell key={field.id} className="text-sm">
-                        {value !== undefined && value !== "" ? value : <span className="text-muted-foreground/45">—</span>}
-                      </TableCell>
-                    );
-                  })}
+                  {orderedFields.map((field) => (
+                    <TableCell key={field.id} className="text-sm max-w-[280px]">
+                      {renderCell(field, res.response_data[field.key_name])}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>

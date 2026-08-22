@@ -18,6 +18,7 @@ import type {
   UzFormField,
   UzFormResponse,
   UzFormWithSteps,
+  PublicUzForm,
 } from "@/types/uzForm";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -44,7 +45,63 @@ function slugify(name: string): string {
   return `${base}-${randomDigits}`;
 }
 
-// ─── Forms CRUD ──────────────────────────────────────────────────────────────
+// ─── Storage ─────────────────────────────────────────────────────────────────
+
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10; // 10 anos
+
+/**
+ * Upload a file to a storage bucket and return a long-lived URL.
+ * If the bucket does not exist yet ("NoSuchBucket" / 404), tries to create it
+ * once (ignoring "already exists") and retries the upload.
+ */
+export async function uploadToBucket(
+  bucket: string,
+  path: string,
+  file: File,
+): Promise<string> {
+  const doUpload = () =>
+    supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || "application/octet-stream",
+    });
+
+  let { error } = await doUpload();
+
+  if (error) {
+    const err = error as unknown as { message?: string; statusCode?: string | number };
+    const msg = (err.message || "").toLowerCase();
+    const isMissingBucket =
+      msg.includes("bucket not found") ||
+      msg.includes("nosuchbucket") ||
+      msg.includes("bucket") && msg.includes("not found") ||
+      String(err.statusCode) === "404";
+
+    if (!isMissingBucket) throw error;
+
+    try {
+      await supabase.storage.createBucket(bucket, { public: false });
+    } catch {
+      // bucket may already exist / no permission — ignore and retry the upload
+    }
+
+    const retry = await doUpload();
+    if (retry.error) throw retry.error;
+  }
+
+  const { data: signed, error: signedError } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, SIGNED_URL_TTL);
+
+  if (signedError || !signed?.signedUrl) {
+    // Fallback for public buckets
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  return signed.signedUrl;
+}
+
 
 /**
  * List all active forms for an organization, newest first.
@@ -361,21 +418,16 @@ export async function getFormResponses(
 /**
  * Fetch a public active form with all its steps and fields.
  */
-export async function getPublicForm(token: string): Promise<UzFormWithSteps | null> {
-  const { data, error } = await supabase
-    .from("uz_forms" as any)
-    .select("*, steps:uz_form_steps(*, fields:uz_form_fields(*))")
-    .eq("token", token)
-    .eq("is_active", true)
-    .eq("is_deleted", false)
-    .maybeSingle();
+export async function getPublicForm(token: string): Promise<PublicUzForm | null> {
+  const { data, error } = await supabase.rpc("get_public_form" as any, {
+    p_token: token,
+  });
 
   if (error) throw error;
   if (!data) return null;
 
-  const form = data as unknown as UzFormWithSteps;
+  const form = data as unknown as PublicUzForm;
 
-  // Order steps and fields
   if (form.steps) {
     form.steps.sort((a, b) => a.step_order - b.step_order);
     for (const step of form.steps) {

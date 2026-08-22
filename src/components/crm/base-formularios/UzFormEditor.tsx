@@ -10,10 +10,13 @@ import {
   updateField,
   deleteField,
   reorderFields,
+  updateForm,
+  uploadToBucket,
 } from "@/services/uzFormService";
 import { supabase } from "@/integrations/supabase/client";
 import type { UzForm, UzFormStep, UzFormField, UzFormFieldType, UzFormMediaType } from "@/types/uzForm";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
+import { useOrganizationLimits } from "@/hooks/useOrganizationLimits";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +102,20 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [newOptionText, setNewOptionText] = useState("");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [slugDraft, setSlugDraft] = useState(form.slug || "");
+
+  const { hasFeature } = useOrganizationLimits();
+  const canCustomSlug = hasFeature("uz_forms_custom_slug") || hasFeature("uz_forms");
+
+  const updateFormMutation = useMutation({
+    mutationFn: (slug: string) => updateForm(form.id, { slug }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["uz-forms"] });
+      toast.success("Link personalizado salvo!");
+    },
+    onError: () => toast.error("Não foi possível salvar o link. Ele pode já estar em uso."),
+  });
 
   const { data: steps = [], isLoading } = useQuery({
     queryKey: ["uz-form-steps", form.id],
@@ -225,23 +242,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
       const fileExt = file.name.split(".").pop();
       const filePath = `${form.id}/${crypto.randomUUID()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("form-images")
-        .upload(filePath, file);
-
-      if (uploadError && (uploadError as any).message?.includes("bucket")) {
-        await supabase.storage.createBucket("form-images", { public: true });
-        const { error: retryError } = await supabase.storage
-          .from("form-images")
-          .upload(filePath, file);
-        if (retryError) throw retryError;
-      } else if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("form-images")
-        .getPublicUrl(filePath);
+      const publicUrl = await uploadToBucket("form-images", filePath, file);
 
       await updateStepMutation.mutateAsync({
         id: activeStep.id,
@@ -801,6 +802,90 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
               </p>
             </div>
           )}
+
+          {/* Form Settings (slug) */}
+          <div className="border border-border rounded-lg bg-card">
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <h3 className="font-semibold text-foreground">Configurações do Formulário</h3>
+              {isSettingsOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {isSettingsOpen && (
+              <div className="px-4 pb-5 space-y-3 border-t border-border pt-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="form-slug">Link personalizado (slug)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground shrink-0">/f/</span>
+                    <Input
+                      id="form-slug"
+                      value={slugDraft}
+                      disabled={!canCustomSlug}
+                      placeholder="meu-formulario"
+                      onChange={(e) =>
+                        setSlugDraft(
+                          e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9-]/g, "-")
+                            .replace(/-+/g, "-"),
+                        )
+                      }
+                      className="bg-background border-border"
+                    />
+                    <Button
+                      size="sm"
+                      disabled={!canCustomSlug || updateFormMutation.isPending || !slugDraft.trim()}
+                      onClick={() => updateFormMutation.mutate(slugDraft.trim())}
+                    >
+                      {updateFormMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Salvar"
+                      )}
+                    </Button>
+                  </div>
+                  {!canCustomSlug ? (
+                    <p className="text-xs text-muted-foreground">
+                      Link personalizado disponível apenas em planos superiores.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Use apenas letras minúsculas, números e hífens.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Link público</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      readOnly
+                      value={`${window.location.origin}/f/${form.token}`}
+                      className="bg-muted/40 border-border text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-border"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/f/${form.token}`);
+                        toast.success("Link copiado!");
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

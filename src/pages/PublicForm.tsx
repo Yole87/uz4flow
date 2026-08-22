@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getPublicForm, submitFormResponse } from "@/services/uzFormService";
-import type { UzFormWithSteps, UzFormField, UzFormStep } from "@/types/uzForm";
+import { getPublicForm, submitFormResponse, uploadToBucket } from "@/services/uzFormService";
+import type { PublicUzForm, UzFormField, UzFormStep } from "@/types/uzForm";
 import { BrandLogo } from "@/components/branding/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,12 +35,11 @@ function maskPhone(value: string) {
 }
 
 function maskCPF(value: string) {
-  const clean = value.replace(/\D/g, "");
+  const clean = value.replace(/\D/g, "").substring(0, 11);
   return clean
     .replace(/^(\d{3})(\d)/, "$1.$2")
     .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
-    .substring(0, 14);
+    .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})$/, "$1.$2.$3-$4");
 }
 
 function maskCNPJ(value: string) {
@@ -77,7 +76,7 @@ interface AddressState {
 
 export default function PublicForm() {
   const { token } = useParams<{ token: string }>();
-  const [form, setForm] = useState<UzFormWithSteps | null>(null);
+  const [form, setForm] = useState<PublicUzForm | null>(null);
   const [loading, setLoading] = useState(true);
   
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -86,6 +85,10 @@ export default function PublicForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [cepLoading, setCepLoading] = useState<Record<string, boolean>>({});
+  const [cepError, setCepError] = useState<Record<string, string>>({});
+  const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
+  const [fileNames, setFileNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!token) return;
@@ -129,7 +132,8 @@ export default function PublicForm() {
   const totalSteps = steps.length;
   const currentStep = steps[currentStepIndex];
 
-  const watermarkText = (form.settings as any)?.watermark_text || "";
+  // Watermark comes from the organization's PLAN (super admin controlled), not from form settings.
+  const watermarkText = form.watermark_text || "";
   const successMessage = (form.settings as any)?.success_message || "Obrigado! Suas respostas foram enviadas com sucesso.";
 
   // ─── Format Address String ──────────────────────────────────────────────────
@@ -198,33 +202,80 @@ export default function PublicForm() {
       });
     }
 
+    // ViaCEP lookup: always work with digits only, fire at exactly 8 digits.
     const cleanCep = masked.replace(/\D/g, "");
-    if (cleanCep.length === 8) {
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await response.json();
-        if (!data.erro) {
-          const updatedAddr = {
-            ...nextAddr,
-            rua: data.logradouro || "",
-            bairro: data.bairro || "",
-            cidade: data.localidade || "",
-            estado: data.uf || "",
-          };
 
-          setAddressResponses((prev) => ({
-            ...prev,
-            [fieldId]: updatedAddr,
-          }));
+    setCepError((prev) => {
+      if (!prev[fieldId]) return prev;
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
 
-          setResponses((prev) => ({
-            ...prev,
-            [keyName]: formatAddress(updatedAddr),
-          }));
-        }
-      } catch (err) {
-        console.error("Erro ao buscar CEP:", err);
+    if (cleanCep.length !== 8) return;
+
+    setCepLoading((prev) => ({ ...prev, [fieldId]: true }));
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+
+      if (data?.erro) {
+        setCepError((prev) => ({ ...prev, [fieldId]: "CEP não encontrado" }));
+        return;
       }
+
+      const updatedAddr = {
+        ...nextAddr,
+        rua: data.logradouro || "",
+        bairro: data.bairro || "",
+        cidade: data.localidade || "",
+        estado: data.uf || "",
+      };
+
+      setAddressResponses((prev) => ({
+        ...prev,
+        [fieldId]: updatedAddr,
+      }));
+
+      setResponses((prev) => ({
+        ...prev,
+        [keyName]: formatAddress(updatedAddr),
+      }));
+    } catch (err) {
+      console.error("Erro ao buscar CEP:", err);
+      setCepError((prev) => ({ ...prev, [fieldId]: "Não foi possível consultar o CEP" }));
+    } finally {
+      setCepLoading((prev) => ({ ...prev, [fieldId]: false }));
+    }
+  };
+
+  // ─── File Upload ────────────────────────────────────────────────────────────
+
+  const handleFileUpload = async (field: UzFormField, file: File) => {
+    // TODO: add file type validation (allowed extensions / mime types) in a future
+    // iteration. For now any file type is accepted; only the 10MB limit applies.
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error("O arquivo deve ter no máximo 10MB");
+      return;
+    }
+
+    setUploadingFields((prev) => ({ ...prev, [field.id]: true }));
+    try {
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
+      const safeName = `${crypto.randomUUID()}.${ext}`;
+      const path = `${form.organization_id}/${form.id}/${safeName}`;
+
+      const url = await uploadToBucket("form-uploads", path, file);
+
+      setFileNames((prev) => ({ ...prev, [field.id]: file.name }));
+      handleFieldChange(field.key_name, url);
+      toast.success("Arquivo enviado!");
+    } catch (err) {
+      console.error("Erro ao enviar arquivo:", err);
+      toast.error("Erro ao enviar o arquivo. Tente novamente.");
+    } finally {
+      setUploadingFields((prev) => ({ ...prev, [field.id]: false }));
     }
   };
 
@@ -526,34 +577,53 @@ export default function PublicForm() {
                 </Select>
               );
 
-            case "file_upload":
+            case "file_upload": {
+              const uploading = !!uploadingFields[field.id];
+              const uploadedName = fileNames[field.id];
               return (
                 <div className="space-y-2">
                   <label
-                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-center ${
-                      error ? "border-destructive bg-destructive/5" : "border-border"
-                    }`}
+                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 transition-all text-center ${
+                      uploading ? "opacity-60 cursor-wait" : "cursor-pointer hover:border-primary/50 hover:bg-primary/5"
+                    } ${error ? "border-destructive bg-destructive/5" : "border-border"}`}
                   >
-                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    {uploading ? (
+                      <Loader2 className="h-8 w-8 text-primary mb-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    )}
                     <span className="text-sm font-medium text-foreground truncate max-w-full px-4">
-                      {value || "Clique para escolher o arquivo"}
+                      {uploading
+                        ? "Enviando arquivo..."
+                        : uploadedName || (value ? "Arquivo enviado" : "Clique para escolher o arquivo")}
                     </span>
                     <span className="text-xs text-muted-foreground mt-1">
-                      {value ? "Clique para alterar o arquivo" : "Nenhum arquivo selecionado"}
+                      {value ? "Clique para alterar o arquivo" : "Tamanho máximo: 10MB"}
                     </span>
                     <input
                       type="file"
                       className="hidden"
+                      disabled={uploading}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) {
-                          handleFieldChange(field.key_name, file.name);
-                        }
+                        if (file) void handleFileUpload(field, file);
+                        e.target.value = "";
                       }}
                     />
                   </label>
+                  {value && !uploading && (
+                    <a
+                      href={value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary underline block truncate"
+                    >
+                      Ver arquivo enviado
+                    </a>
+                  )}
                 </div>
               );
+            }
 
             case "address": {
               const addr = addressResponses[field.id] || {
@@ -571,15 +641,24 @@ export default function PublicForm() {
                   {/* CEP */}
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">CEP</Label>
-                    <Input
-                      type="text"
-                      placeholder="00000-000"
-                      value={addr.cep || ""}
-                      onChange={(e) => handleCepChange(field.id, field.key_name, e.target.value)}
-                      className={`h-11 rounded-lg text-sm bg-background border-2 ${
-                        error && !addr.cep ? "border-destructive" : "border-border"
-                      }`}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="00000-000"
+                        value={addr.cep || ""}
+                        onChange={(e) => handleCepChange(field.id, field.key_name, e.target.value)}
+                        className={`h-11 rounded-lg text-sm bg-background border-2 pr-10 ${
+                          error && !addr.cep ? "border-destructive" : "border-border"
+                        }`}
+                      />
+                      {cepLoading[field.id] && (
+                        <Loader2 className="h-4 w-4 animate-spin text-primary absolute right-3 top-1/2 -translate-y-1/2" />
+                      )}
+                    </div>
+                    {cepError[field.id] && (
+                      <p className="text-xs text-destructive">{cepError[field.id]}</p>
+                    )}
                   </div>
                   {/* Rua */}
                   <div className="space-y-1">

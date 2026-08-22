@@ -6223,6 +6223,7 @@ export type Database = {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       generate_affiliate_code: { Args: never; Returns: string }
       get_cron_secret: { Args: never; Returns: string }
+      get_public_form: { Args: { p_token: string }; Returns: Json }
       get_user_id_by_email: { Args: { p_email: string }; Returns: string }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_organization_ids: {

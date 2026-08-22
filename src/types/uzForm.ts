@@ -53,3 +53,9 @@ export interface UzFormResponse {
 export interface UzFormWithSteps extends UzForm {
   steps: UzFormStep[];
 }
+
+/** Payload returned by the public `get_public_form` database function. */
+export interface PublicUzForm extends UzFormWithSteps {
+  /** Watermark text defined by the organization's plan (super admin controlled). */
+  watermark_text: string;
+}
