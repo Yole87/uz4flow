@@ -35,12 +35,11 @@ function maskPhone(value: string) {
 }
 
 function maskCPF(value: string) {
-  const clean = value.replace(/\D/g, "");
+  const clean = value.replace(/\D/g, "").substring(0, 11);
   return clean
     .replace(/^(\d{3})(\d)/, "$1.$2")
     .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
-    .substring(0, 14);
+    .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})$/, "$1.$2.$3-$4");
 }
 
 function maskCNPJ(value: string) {
