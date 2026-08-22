@@ -968,14 +968,11 @@ export default function PublicForm() {
 
       {/* Footer / Watermark */}
       <footer className="w-full py-6 text-center border-t border-border mt-auto">
-        {watermarkText ? (
+        {watermarkText && (
           <p className="text-xs text-muted-foreground/60">{watermarkText}</p>
-        ) : (
-          <p className="text-xs text-muted-foreground/40">
-            Desenvolvido com <span className="text-accent">UzFlow</span>
-          </p>
         )}
       </footer>
+
     </div>
   );
 }
