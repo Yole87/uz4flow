@@ -729,16 +729,19 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                     </TooltipProvider>
                                   </div>
                                   <Input
-                                    value={field.key_name}
+                                    value={fieldDrafts[field.id]?.key_name ?? field.key_name}
                                     onChange={(e) => {
                                       // enforce alphanumeric and underscore only
                                       const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
-                                      updateFieldMutation.mutate({
-                                        id: field.id,
-                                        data: { key_name: sanitized },
-                                      });
+                                      setFieldDraft(field.id, { key_name: sanitized });
+                                    }}
+                                    onBlur={(e) => {
+                                      const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                                      if (!sanitized) return;
+                                      commitField(field, { key_name: sanitized });
                                     }}
                                   />
+
                                 </div>
                               </div>
 
