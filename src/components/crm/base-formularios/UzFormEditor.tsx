@@ -922,7 +922,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Link público</Label>
+                  <Label>Link principal (permanente)</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       readOnly
@@ -941,10 +941,143 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                       Copiar
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Este link nunca muda, mesmo que o slug seja alterado.
+                  </p>
                 </div>
+
+                {form.slug && (
+                  <div className="space-y-1.5">
+                    <Label>Link alternativo (slug)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        readOnly
+                        value={`${window.location.origin}/f/${form.slug}`}
+                        className="bg-muted/40 border-border text-xs"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-border"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/f/${form.slug}`);
+                          toast.success("Link copiado!");
+                        }}
+                      >
+                        Copiar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {watermarkMode === "tenant_choice" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="watermark-text">Marca d'água do formulário</Label>
+                    <Input
+                      id="watermark-text"
+                      value={endingDraft.watermark_text}
+                      placeholder="Ex: Feito por Minha Empresa"
+                      onChange={(e) =>
+                        setEndingDraft((d) => ({ ...d, watermark_text: e.target.value }))
+                      }
+                      onBlur={(e) => saveSetting("watermark_text", e.target.value)}
+                      className="bg-background border-border"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Deixe em branco para não exibir nenhuma marca d'água.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
+
+          {/* Ending screen */}
+          <div className="border border-border rounded-lg bg-card">
+            <button
+              type="button"
+              onClick={() => setIsEndingOpen((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <h3 className="font-semibold text-foreground">Tela Final</h3>
+              {isEndingOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {isEndingOpen && (
+              <div className="px-4 pb-5 space-y-3 border-t border-border pt-4">
+                <div className="space-y-1.5">
+                  <Label>O que acontece após o envio?</Label>
+                  <Select
+                    value={endingDraft.ending_type}
+                    onValueChange={(v) => {
+                      setEndingDraft((d) => ({ ...d, ending_type: v }));
+                      saveSetting("ending_type", v);
+                    }}
+                  >
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="thank_you">Mensagem de agradecimento</SelectItem>
+                      <SelectItem value="whatsapp">Botão de WhatsApp</SelectItem>
+                      <SelectItem value="both">Mensagem + botão de WhatsApp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(endingDraft.ending_type === "thank_you" || endingDraft.ending_type === "both") && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ending-message">Mensagem de agradecimento</Label>
+                    <Input
+                      id="ending-message"
+                      value={endingDraft.ending_message}
+                      onChange={(e) =>
+                        setEndingDraft((d) => ({ ...d, ending_message: e.target.value }))
+                      }
+                      onBlur={(e) => saveSetting("ending_message", e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                )}
+
+                {(endingDraft.ending_type === "whatsapp" || endingDraft.ending_type === "both") && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ending-wa">Número de WhatsApp</Label>
+                      <Input
+                        id="ending-wa"
+                        value={endingDraft.ending_whatsapp_number}
+                        placeholder="+55 11 91234-5678"
+                        onChange={(e) =>
+                          setEndingDraft((d) => ({ ...d, ending_whatsapp_number: e.target.value }))
+                        }
+                        onBlur={(e) => saveSetting("ending_whatsapp_number", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ending-wa-msg">Mensagem pré-preenchida</Label>
+                      <Input
+                        id="ending-wa-msg"
+                        value={endingDraft.ending_whatsapp_message}
+                        placeholder="Olá! Acabei de preencher o formulário."
+                        onChange={(e) =>
+                          setEndingDraft((d) => ({ ...d, ending_whatsapp_message: e.target.value }))
+                        }
+                        onBlur={(e) => saveSetting("ending_whatsapp_message", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>
