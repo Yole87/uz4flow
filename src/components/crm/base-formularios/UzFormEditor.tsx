@@ -99,6 +99,20 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [newOptionText, setNewOptionText] = useState("");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [slugDraft, setSlugDraft] = useState(form.slug || "");
+
+  const { hasFeature } = useOrganizationLimits();
+  const canCustomSlug = hasFeature("uz_forms_custom_slug") || hasFeature("uz_forms");
+
+  const updateFormMutation = useMutation({
+    mutationFn: (slug: string) => updateForm(form.id, { slug }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["uz-forms"] });
+      toast.success("Link personalizado salvo!");
+    },
+    onError: () => toast.error("Não foi possível salvar o link. Ele pode já estar em uso."),
+  });
 
   const { data: steps = [], isLoading } = useQuery({
     queryKey: ["uz-form-steps", form.id],
