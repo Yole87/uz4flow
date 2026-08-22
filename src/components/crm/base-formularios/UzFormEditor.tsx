@@ -433,13 +433,9 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                     <Label htmlFor="step-title">Título do passo</Label>
                     <Input
                       id="step-title"
-                      value={activeStep.title || ""}
-                      onChange={(e) =>
-                        updateStepMutation.mutate({
-                          id: activeStep.id,
-                          data: { title: e.target.value },
-                        })
-                      }
+                      value={stepDrafts[activeStep.id]?.title ?? activeStep.title ?? ""}
+                      onChange={(e) => setStepDraft(activeStep.id, { title: e.target.value })}
+                      onBlur={(e) => commitStep(activeStep, { title: e.target.value })}
                       placeholder="Ex: Dados Pessoais"
                     />
                   </div>
@@ -447,17 +443,14 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                     <Label htmlFor="step-description">Descrição / Subtítulo</Label>
                     <Input
                       id="step-description"
-                      value={activeStep.description || ""}
-                      onChange={(e) =>
-                        updateStepMutation.mutate({
-                          id: activeStep.id,
-                          data: { description: e.target.value },
-                        })
-                      }
+                      value={stepDrafts[activeStep.id]?.description ?? activeStep.description ?? ""}
+                      onChange={(e) => setStepDraft(activeStep.id, { description: e.target.value })}
+                      onBlur={(e) => commitStep(activeStep, { description: e.target.value })}
                       placeholder="Ex: Preencha com seus dados de contato"
                     />
                   </div>
                 </div>
+
 
                 {/* Media Section */}
                 <div className="border-t border-border pt-4 space-y-4">
