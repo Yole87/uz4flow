@@ -11,7 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, Inbox } from "lucide-react";
+import { Loader2, Download, Inbox, FileDown, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface UzFormResponsesProps {
