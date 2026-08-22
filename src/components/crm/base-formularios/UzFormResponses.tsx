@@ -27,6 +27,24 @@ function formatDateBR(iso: string): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
+/** Formats a plain date value (YYYY-MM-DD) as DD/MM/YYYY without timezone shifting. */
+function formatPlainDateBR(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return value;
+  const [, y, m, d] = match;
+  return `${d}/${m}/${y}`;
+}
+
+function isUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
+
+function normalizePhone(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.startsWith("55") ? digits : `55${digits}`;
+}
+
 
 export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
   const [page, setPage] = useState(0);
