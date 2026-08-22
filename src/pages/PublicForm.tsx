@@ -792,16 +792,44 @@ export default function PublicForm() {
   // ─── Success Screen ────────────────────────────────────────────────────────
 
   if (isSubmitted) {
+    const showThankYou = endingType === "thank_you" || endingType === "both";
+    const showWhatsapp =
+      (endingType === "whatsapp" || endingType === "both") && !!endingWhatsappNumber;
+    const waLink = `https://wa.me/${endingWhatsappNumber}${
+      endingWhatsappMessage ? `?text=${encodeURIComponent(endingWhatsappMessage)}` : ""
+    }`;
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
         <div className="w-full max-w-md text-center space-y-6 animate-in zoom-in duration-300">
           <BrandLogo className="mx-auto h-12 w-auto object-contain" />
           <div className="bg-card border border-border p-8 rounded-2xl shadow-xl space-y-4">
-            <CheckCircle className="mx-auto h-16 w-16 text-success" />
-            <h2 className="text-2xl font-bold text-foreground">Enviado com sucesso!</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {successMessage}
-            </p>
+            {showThankYou && (
+              <>
+                <CheckCircle className="mx-auto h-16 w-16 text-success" />
+                <h2 className="text-2xl font-bold text-foreground">Enviado com sucesso!</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {endingMessage}
+                </p>
+              </>
+            )}
+
+            {showWhatsapp && (
+              <Button
+                size="lg"
+                className="w-full h-12 rounded-xl text-base"
+                onClick={() => window.open(waLink, "_blank", "noopener,noreferrer")}
+              >
+                Falar no WhatsApp
+              </Button>
+            )}
+
+            {!showThankYou && !showWhatsapp && (
+              <>
+                <CheckCircle className="mx-auto h-16 w-16 text-success" />
+                <h2 className="text-2xl font-bold text-foreground">Enviado com sucesso!</h2>
+              </>
+            )}
           </div>
           {watermarkText && (
             <p className="text-xs text-muted-foreground/60">{watermarkText}</p>
@@ -810,6 +838,7 @@ export default function PublicForm() {
       </div>
     );
   }
+
 
   // ─── Main Form Experience ──────────────────────────────────────────────────
 
