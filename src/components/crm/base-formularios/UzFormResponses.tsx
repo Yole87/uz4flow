@@ -221,10 +221,10 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
       </div>
 
       {/* Responses Data Table */}
-      <div className="rounded-lg border border-border overflow-hidden bg-card">
-        <div className="overflow-x-auto max-h-[calc(100vh-320px)]">
+      <div className="relative w-full min-w-0 max-w-full rounded-lg border border-border overflow-hidden bg-card">
+        <div className="relative w-full min-w-0 max-w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)]">
           <Table>
-            <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+            <TableHeader className="sticky top-0 bg-muted backdrop-blur z-[1]">
               <TableRow className="border-border hover:bg-muted/50">
                 <TableHead className="min-w-[150px] font-semibold text-foreground">Enviado em</TableHead>
                 {orderedFields.map((field) => (
