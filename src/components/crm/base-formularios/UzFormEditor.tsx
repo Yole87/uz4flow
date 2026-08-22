@@ -589,12 +589,15 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                             <Button
                               key={field.type}
                               variant="outline"
-                              className="flex flex-col gap-2 h-24 border-border hover:border-accent hover:bg-accent/5 justify-center items-center text-center p-2"
+                              className="flex flex-col gap-2 h-24 min-h-24 whitespace-normal border-border hover:border-accent hover:bg-accent/5 justify-center items-center p-2"
                               onClick={() => handleAddField(field.type)}
                             >
-                              <Icon className="h-5 w-5 text-accent" />
-                              <span className="text-xs font-medium text-foreground">{field.label}</span>
+                              <Icon className="h-5 w-5 text-accent shrink-0" />
+                              <span className="text-xs font-medium text-foreground text-center break-words leading-tight">
+                                {field.label}
+                              </span>
                             </Button>
+
                           );
                         })}
                       </div>
