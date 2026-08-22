@@ -241,23 +241,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
       const fileExt = file.name.split(".").pop();
       const filePath = `${form.id}/${crypto.randomUUID()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("form-images")
-        .upload(filePath, file);
-
-      if (uploadError && (uploadError as any).message?.includes("bucket")) {
-        await supabase.storage.createBucket("form-images", { public: true });
-        const { error: retryError } = await supabase.storage
-          .from("form-images")
-          .upload(filePath, file);
-        if (retryError) throw retryError;
-      } else if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("form-images")
-        .getPublicUrl(filePath);
+      const publicUrl = await uploadToBucket("form-images", filePath, file);
 
       await updateStepMutation.mutateAsync({
         id: activeStep.id,
