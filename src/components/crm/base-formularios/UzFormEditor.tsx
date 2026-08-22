@@ -801,6 +801,90 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
               </p>
             </div>
           )}
+
+          {/* Form Settings (slug) */}
+          <div className="border border-border rounded-lg bg-card">
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <h3 className="font-semibold text-foreground">Configurações do Formulário</h3>
+              {isSettingsOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {isSettingsOpen && (
+              <div className="px-4 pb-5 space-y-3 border-t border-border pt-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="form-slug">Link personalizado (slug)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground shrink-0">/f/</span>
+                    <Input
+                      id="form-slug"
+                      value={slugDraft}
+                      disabled={!canCustomSlug}
+                      placeholder="meu-formulario"
+                      onChange={(e) =>
+                        setSlugDraft(
+                          e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9-]/g, "-")
+                            .replace(/-+/g, "-"),
+                        )
+                      }
+                      className="bg-background border-border"
+                    />
+                    <Button
+                      size="sm"
+                      disabled={!canCustomSlug || updateFormMutation.isPending || !slugDraft.trim()}
+                      onClick={() => updateFormMutation.mutate(slugDraft.trim())}
+                    >
+                      {updateFormMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Salvar"
+                      )}
+                    </Button>
+                  </div>
+                  {!canCustomSlug ? (
+                    <p className="text-xs text-muted-foreground">
+                      Link personalizado disponível apenas em planos superiores.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Use apenas letras minúsculas, números e hífens.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Link público</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      readOnly
+                      value={`${window.location.origin}/f/${form.token}`}
+                      className="bg-muted/40 border-border text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-border"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/f/${form.token}`);
+                        toast.success("Link copiado!");
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
