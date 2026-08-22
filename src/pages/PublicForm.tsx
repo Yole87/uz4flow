@@ -878,14 +878,13 @@ export default function PublicForm() {
 
           {/* Media Player */}
           {mediaType === "image" && mediaUrl && (
-            <div className="w-full overflow-hidden rounded-xl border border-border">
-              <img
-                src={mediaUrl}
-                alt={stepTitle || "Imagem do passo"}
-                className="w-full h-auto max-h-64 sm:max-h-80 object-cover"
-              />
-            </div>
+            <img
+              src={mediaUrl}
+              alt={stepTitle || "Imagem do passo"}
+              className="aspect-video w-full object-cover rounded-lg border border-border"
+            />
           )}
+
 
           {mediaType === "youtube" && mediaUrl && getYouTubeId(mediaUrl) && (
             <div className="w-full overflow-hidden rounded-xl border border-border aspect-video">
