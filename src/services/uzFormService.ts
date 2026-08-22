@@ -417,21 +417,16 @@ export async function getFormResponses(
 /**
  * Fetch a public active form with all its steps and fields.
  */
-export async function getPublicForm(token: string): Promise<UzFormWithSteps | null> {
-  const { data, error } = await supabase
-    .from("uz_forms" as any)
-    .select("*, steps:uz_form_steps(*, fields:uz_form_fields(*))")
-    .eq("token", token)
-    .eq("is_active", true)
-    .eq("is_deleted", false)
-    .maybeSingle();
+export async function getPublicForm(token: string): Promise<PublicUzForm | null> {
+  const { data, error } = await supabase.rpc("get_public_form" as any, {
+    p_token: token,
+  });
 
   if (error) throw error;
   if (!data) return null;
 
-  const form = data as unknown as UzFormWithSteps;
+  const form = data as unknown as PublicUzForm;
 
-  // Order steps and fields
   if (form.steps) {
     form.steps.sort((a, b) => a.step_order - b.step_order);
     for (const step of form.steps) {
