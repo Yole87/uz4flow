@@ -705,14 +705,11 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                 <div className="space-y-1.5">
                                   <Label>Rótulo (Label)</Label>
                                   <Input
-                                    value={field.label}
-                                    onChange={(e) =>
-                                      updateFieldMutation.mutate({
-                                        id: field.id,
-                                        data: { label: e.target.value },
-                                      })
-                                    }
+                                    value={fieldDrafts[field.id]?.label ?? field.label}
+                                    onChange={(e) => setFieldDraft(field.id, { label: e.target.value })}
+                                    onBlur={(e) => commitField(field, { label: e.target.value })}
                                   />
+
                                 </div>
 
                                 <div className="space-y-1.5">
