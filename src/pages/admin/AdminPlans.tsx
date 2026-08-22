@@ -44,6 +44,7 @@ interface Plan {
     uz_forms_allow_media?: boolean;
     uz_forms_allow_custom_slug?: boolean;
     uz_forms_watermark_text?: string;
+    uz_forms_watermark_mode?: string;
   };
   is_public: boolean;
   is_active: boolean;
@@ -67,6 +68,7 @@ const defaultLimits = {
   uz_forms_allow_media: false,
   uz_forms_allow_custom_slug: false,
   uz_forms_watermark_text: "",
+  uz_forms_watermark_mode: "platform",
 };
 
 export default function AdminPlans() {
@@ -121,6 +123,7 @@ export default function AdminPlans() {
           uz_forms_allow_media: ((p.limits as Record<string, unknown>)?.uz_forms_allow_media as boolean) ?? false,
           uz_forms_allow_custom_slug: ((p.limits as Record<string, unknown>)?.uz_forms_allow_custom_slug as boolean) ?? false,
           uz_forms_watermark_text: ((p.limits as Record<string, unknown>)?.uz_forms_watermark_text as string) ?? "",
+          uz_forms_watermark_mode: ((p.limits as Record<string, unknown>)?.uz_forms_watermark_mode as string) ?? "platform",
         }
       })));
     } catch (error) {
@@ -159,6 +162,7 @@ export default function AdminPlans() {
           uz_forms_allow_media: plan.limits.uz_forms_allow_media ?? false,
           uz_forms_allow_custom_slug: plan.limits.uz_forms_allow_custom_slug ?? false,
           uz_forms_watermark_text: plan.limits.uz_forms_watermark_text ?? "",
+          uz_forms_watermark_mode: plan.limits.uz_forms_watermark_mode ?? "platform",
         },
         trial_days: plan.trial_days,
       });
@@ -214,6 +218,7 @@ export default function AdminPlans() {
           uz_forms_allow_media: formData.limits.uz_forms_allow_media ?? false,
           uz_forms_allow_custom_slug: formData.limits.uz_forms_allow_custom_slug ?? false,
           uz_forms_watermark_text: formData.limits.uz_forms_watermark_text ?? "",
+          uz_forms_watermark_mode: formData.limits.uz_forms_watermark_mode ?? "platform",
         },
         trial_days: formData.is_free ? (formData.trial_days || null) : null,
       };
