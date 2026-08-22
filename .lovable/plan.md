@@ -53,12 +53,17 @@ Antes de tudo: verifiquei o código e dois pontos do pedido estão diagnosticado
 - Editável apenas se o plano tiver `limits.uz_forms_allow_custom_slug === true`; caso contrário aparece somente leitura com aviso de upgrade.
 - Adicionar essa chave também no editor de planos do super admin.
 
+### 9. Botão "Iniciar Conversa" em colunas de telefone
+- Em `UzFormResponses.tsx`, colunas cujo `key_name` contenha `whatsapp`, `celular`, `telefone` ou `phone` ganham um botão ao lado do valor que normaliza o número (só dígitos, prefixo 55) e navega para `/crm?new_conversation_phone=...`, igual ao comportamento de `LeadsTable.tsx`.
+
+### 10. ViaCEP
 - Limpar o CEP (só dígitos) antes de medir e consultar; disparar exatamente com 8 dígitos.
 - Spinner no campo durante a consulta; preencher Rua/Bairro/Cidade/Estado; erro inline "CEP não encontrado" quando a API retornar `erro: true`.
 
 ## Detalhes técnicos
-- Migração: função `public.get_public_form(p_token text)` `SECURITY DEFINER`, `search_path = public`, com `GRANT EXECUTE` para `anon` e `authenticated`; retorna `jsonb` só de formulários com `is_active = true and is_deleted = false`.
-- Buckets criados via `storage.create_bucket` + políticas em `storage.objects` restritas por prefixo `organization_id/`.
+- Migração: função `public.get_public_form(p_token text)` `SECURITY DEFINER`, `search_path = public`, com `GRANT EXECUTE` para `anon` e `authenticated`; retorna `jsonb` só de formulários com `is_active = true and is_deleted = false`, incluindo o texto da marca d'água do plano.
+- Buckets criados pela ferramenta de storage da plataforma (não por SQL), com fallback de `createBucket()` no cliente; políticas em `storage.objects` restritas por prefixo `organization_id/` e limite de 10 MB no `form-uploads`.
+
 - Chaves novas em `subscription_plans.limits`: `uz_forms_watermark_text` (texto) e `uz_forms_allow_custom_slug` (booleano).
 - Frontend tocado: `src/pages/PublicForm.tsx`, `src/services/uzFormService.ts`, `src/components/crm/base-formularios/UzFormEditor.tsx`, `UzFormDetail.tsx`, `UzFormResponses.tsx`, e o editor de planos em `src/pages/admin/AdminPlans.tsx`.
 - Ao final: `npm run build` e lista dos arquivos alterados.
