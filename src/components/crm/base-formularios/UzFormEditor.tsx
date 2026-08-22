@@ -238,7 +238,31 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     },
   });
 
+  // Draft helpers (type locally, persist on blur)
+  const setStepDraft = (id: string, patch: Partial<UzFormStep>) =>
+    setStepDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+
+  const commitStep = (step: UzFormStep, patch: Partial<UzFormStep>) => {
+    const changed = Object.entries(patch).some(
+      ([key, value]) => (step[key as keyof UzFormStep] ?? "") !== (value ?? ""),
+    );
+    if (!changed) return;
+    updateStepMutation.mutate({ id: step.id, data: patch });
+  };
+
+  const setFieldDraft = (id: string, patch: Partial<UzFormField>) =>
+    setFieldDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+
+  const commitField = (field: UzFormField, patch: Partial<UzFormField>) => {
+    const changed = Object.entries(patch).some(
+      ([key, value]) => (field[key as keyof UzFormField] ?? "") !== (value ?? ""),
+    );
+    if (!changed) return;
+    updateFieldMutation.mutate({ id: field.id, data: patch });
+  };
+
   // Reorder Handlers
+
   const moveStepHandler = async (index: number, direction: "up" | "down") => {
     const newIndex = direction === "up" ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= steps.length) return;
