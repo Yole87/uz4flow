@@ -641,15 +641,24 @@ export default function PublicForm() {
                   {/* CEP */}
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">CEP</Label>
-                    <Input
-                      type="text"
-                      placeholder="00000-000"
-                      value={addr.cep || ""}
-                      onChange={(e) => handleCepChange(field.id, field.key_name, e.target.value)}
-                      className={`h-11 rounded-lg text-sm bg-background border-2 ${
-                        error && !addr.cep ? "border-destructive" : "border-border"
-                      }`}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="00000-000"
+                        value={addr.cep || ""}
+                        onChange={(e) => handleCepChange(field.id, field.key_name, e.target.value)}
+                        className={`h-11 rounded-lg text-sm bg-background border-2 pr-10 ${
+                          error && !addr.cep ? "border-destructive" : "border-border"
+                        }`}
+                      />
+                      {cepLoading[field.id] && (
+                        <Loader2 className="h-4 w-4 animate-spin text-primary absolute right-3 top-1/2 -translate-y-1/2" />
+                      )}
+                    </div>
+                    {cepError[field.id] && (
+                      <p className="text-xs text-destructive">{cepError[field.id]}</p>
+                    )}
                   </div>
                   {/* Rua */}
                   <div className="space-y-1">
