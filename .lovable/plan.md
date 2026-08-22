@@ -34,18 +34,25 @@ Antes de tudo: verifiquei o código e dois pontos do pedido estão diagnosticado
 - Ajustar o contêiner da tabela de respostas com rolagem horizontal contida (`overflow-x-auto` + largura mínima na tabela), para não invadir o menu lateral.
 
 ### 7. Marca d'água controlada pelo plano
-- O texto passa a vir do plano (`limits.uz_forms_watermark_text`), entregue pela função pública do item 1. O tenant não edita mais esse campo.
+- O texto vem do plano e é entregue pela função pública do item 1. O tenant não edita mais esse campo.
+- Onde está o dado (confirmado no banco): `subscription_plans.limits` (jsonb). O vínculo é `organizations.id` → `subscriptions.organization_id` → `subscriptions.plan_id` → `subscription_plans.id`.
+- JOIN dentro de `get_public_form`:
+  ```sql
+  select sp.limits->>'uz_forms_watermark_text'
+    from subscriptions s
+    join subscription_plans sp on sp.id = s.plan_id
+   where s.organization_id = f.organization_id
+     and s.status = 'active'
+   limit 1
+  ```
+  Se não houver assinatura ativa ou a chave estiver vazia, cai num texto padrão da plataforma. É um subselect simples dentro da função `SECURITY DEFINER` — não precisa da alternativa de guardar o texto na organização.
 - Adicionar o campo no editor de planos do super admin (`/admin/plans`).
 
-### 8. Slug no editor
-- Nova seção "Configurações" no detalhe do formulário mostrando o slug e a URL pública.
+### 8. Slug dentro do editor
+- Sem aba nova: seção recolhível **"Configurações do Formulário"** no final do painel direito do `UzFormEditor.tsx`, mostrando o slug e a URL pública (com botão de copiar).
 - Editável apenas se o plano tiver `limits.uz_forms_allow_custom_slug === true`; caso contrário aparece somente leitura com aviso de upgrade.
 - Adicionar essa chave também no editor de planos do super admin.
 
-### 9. Botão "Iniciar Conversa" em colunas de telefone
-- Em `UzFormResponses.tsx`, colunas cujo `key_name` contenha `whatsapp`, `celular`, `telefone` ou `phone` ganham um botão ao lado do valor que normaliza o número (só dígitos, prefixo 55) e navega para `/crm?new_conversation_phone=...`, igual ao comportamento de `LeadsTable.tsx`.
-
-### 10. ViaCEP
 - Limpar o CEP (só dígitos) antes de medir e consultar; disparar exatamente com 8 dígitos.
 - Spinner no campo durante a consulta; preencher Rua/Bairro/Cidade/Estado; erro inline "CEP não encontrado" quando a API retornar `erro: true`.
 
