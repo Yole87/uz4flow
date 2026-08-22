@@ -132,9 +132,24 @@ export default function PublicForm() {
   const totalSteps = steps.length;
   const currentStep = steps[currentStepIndex];
 
-  // Watermark comes from the organization's PLAN (super admin controlled), not from form settings.
-  const watermarkText = form.watermark_text || "";
-  const successMessage = (form.settings as any)?.success_message || "Obrigado! Suas respostas foram enviadas com sucesso.";
+  // Watermark comes from the organization's PLAN (super admin controlled).
+  const formSettings = (form.settings ?? {}) as Record<string, string | undefined>;
+  const watermarkMode = form.watermark_mode || "platform";
+  const watermarkText =
+    watermarkMode === "custom"
+      ? form.watermark_text || "Feito com Uz4Flow"
+      : watermarkMode === "tenant_choice"
+        ? formSettings.watermark_text || ""
+        : "Feito com Uz4Flow";
+
+  const endingType = formSettings.ending_type || "thank_you";
+  const endingMessage =
+    formSettings.ending_message ||
+    formSettings.success_message ||
+    "Obrigado! Suas respostas foram enviadas com sucesso.";
+  const endingWhatsappNumber = (formSettings.ending_whatsapp_number || "").replace(/\D/g, "");
+  const endingWhatsappMessage = formSettings.ending_whatsapp_message || "";
+
 
   // ─── Format Address String ──────────────────────────────────────────────────
 
