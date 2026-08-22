@@ -13,12 +13,16 @@ Antes de tudo: verifiquei o código e dois pontos do pedido estão diagnosticado
 - Nenhuma política ampla de leitura anônima nas tabelas (mantém isolamento entre clientes).
 
 ### 2. Buckets de arquivos
-- Migração criando os buckets públicos `form-images` (imagens das etapas, upload pelo tenant) e `form-uploads` (arquivos enviados por quem responde), com políticas: leitura pública, escrita do tenant em `form-images`, escrita anônima permitida apenas em `form-uploads`.
-- Remover a tentativa de `createBucket` no cliente em `UzFormEditor.tsx`.
+- Criar os buckets públicos `form-images` (imagens das etapas, upload pelo tenant) e `form-uploads` (arquivos de quem responde) pela ferramenta de storage da plataforma, com limite de 10 MB por arquivo em `form-uploads`.
+- Políticas em `storage.objects`: leitura pública nos dois; escrita do tenant em `form-images`; escrita anônima permitida apenas em `form-uploads`, com verificação de tamanho máximo de 10 MB na política.
+- Fallback no código: helper `uploadToBucket()` em `uzFormService.ts` que, ao receber erro de bucket inexistente (`NoSuchBucket` / status 404), tenta `supabase.storage.createBucket()` dentro de try/catch (ignorando "already exists") e refaz o upload uma vez.
+- `UzFormEditor.tsx` e `PublicForm.tsx` passam a usar esse helper em vez de chamar o storage direto.
 
 ### 3. Upload de arquivo na resposta
-- `PublicForm.tsx`: campo `file_upload` passa a subir o arquivo para `form-uploads` (com barra de progresso/spinner) e grava a **URL pública** em `response_data`.
+- `PublicForm.tsx`: campo `file_upload` passa a subir o arquivo para `form-uploads` (com spinner durante o envio) e grava a **URL pública** em `response_data`.
+- Comentário `// TODO:` no ponto do upload registrando que validação de tipo de arquivo fica para uma próxima iteração — por ora qualquer tipo é aceito (o limite de 10 MB continua valendo).
 - `UzFormResponses.tsx`: célula com valor iniciando em `https://` vira link "Baixar arquivo" abrindo em nova aba; no CSV vai a URL completa.
+
 
 ### 4. Máscara de CPF
 - Corrigir `maskCPF` para cortar em 11 dígitos (formato `000.000.000-00`), impedindo o 12º dígito.
