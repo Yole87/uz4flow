@@ -577,34 +577,53 @@ export default function PublicForm() {
                 </Select>
               );
 
-            case "file_upload":
+            case "file_upload": {
+              const uploading = !!uploadingFields[field.id];
+              const uploadedName = fileNames[field.id];
               return (
                 <div className="space-y-2">
                   <label
-                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-center ${
-                      error ? "border-destructive bg-destructive/5" : "border-border"
-                    }`}
+                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 transition-all text-center ${
+                      uploading ? "opacity-60 cursor-wait" : "cursor-pointer hover:border-primary/50 hover:bg-primary/5"
+                    } ${error ? "border-destructive bg-destructive/5" : "border-border"}`}
                   >
-                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    {uploading ? (
+                      <Loader2 className="h-8 w-8 text-primary mb-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    )}
                     <span className="text-sm font-medium text-foreground truncate max-w-full px-4">
-                      {value || "Clique para escolher o arquivo"}
+                      {uploading
+                        ? "Enviando arquivo..."
+                        : uploadedName || (value ? "Arquivo enviado" : "Clique para escolher o arquivo")}
                     </span>
                     <span className="text-xs text-muted-foreground mt-1">
-                      {value ? "Clique para alterar o arquivo" : "Nenhum arquivo selecionado"}
+                      {value ? "Clique para alterar o arquivo" : "Tamanho máximo: 10MB"}
                     </span>
                     <input
                       type="file"
                       className="hidden"
+                      disabled={uploading}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) {
-                          handleFieldChange(field.key_name, file.name);
-                        }
+                        if (file) void handleFileUpload(field, file);
+                        e.target.value = "";
                       }}
                     />
                   </label>
+                  {value && !uploading && (
+                    <a
+                      href={value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary underline block truncate"
+                    >
+                      Ver arquivo enviado
+                    </a>
+                  )}
                 </div>
               );
+            }
 
             case "address": {
               const addr = addressResponses[field.id] || {
