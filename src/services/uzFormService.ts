@@ -18,6 +18,7 @@ import type {
   UzFormField,
   UzFormResponse,
   UzFormWithSteps,
+  PublicUzForm,
 } from "@/types/uzForm";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
