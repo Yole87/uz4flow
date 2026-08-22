@@ -104,10 +104,29 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [newOptionText, setNewOptionText] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEndingOpen, setIsEndingOpen] = useState(false);
   const [slugDraft, setSlugDraft] = useState(form.slug || "");
 
+  // Local drafts for text inputs (saved on blur, not on every keystroke)
+  const [stepDrafts, setStepDrafts] = useState<Record<string, Partial<UzFormStep>>>({});
+  const [fieldDrafts, setFieldDrafts] = useState<Record<string, Partial<UzFormField>>>({});
+
   const { hasFeature } = useOrganizationLimits();
-  const canCustomSlug = hasFeature("uz_forms_custom_slug") || hasFeature("uz_forms");
+  const { plan } = useOrganizationSubscription();
+  const planLimits = (plan?.limits ?? {}) as Record<string, unknown>;
+  const watermarkMode = (planLimits.uz_forms_watermark_mode as string) || "platform";
+  const canCustomSlug =
+    (planLimits.uz_forms_allow_custom_slug as boolean) ?? (hasFeature("uz_forms") || false);
+
+  const settings = (form.settings ?? {}) as Record<string, string | undefined>;
+  const [endingDraft, setEndingDraft] = useState({
+    ending_type: settings.ending_type || "thank_you",
+    ending_message:
+      settings.ending_message || "Obrigado! Suas respostas foram enviadas com sucesso.",
+    ending_whatsapp_number: settings.ending_whatsapp_number || "",
+    ending_whatsapp_message: settings.ending_whatsapp_message || "",
+    watermark_text: settings.watermark_text || "",
+  });
 
   const updateFormMutation = useMutation({
     mutationFn: (slug: string) => updateForm(form.id, { slug }),
@@ -117,6 +136,24 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     },
     onError: () => toast.error("Não foi possível salvar o link. Ele pode já estar em uso."),
   });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: (patch: Record<string, unknown>) =>
+      updateForm(form.id, {
+        settings: { ...(form.settings ?? {}), ...patch } as Record<string, unknown>,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["uz-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["uz-form", form.id] });
+    },
+    onError: () => toast.error("Erro ao salvar configurações"),
+  });
+
+  const saveSetting = (key: string, value: string) => {
+    if ((settings[key] || "") === value) return;
+    updateSettingsMutation.mutate({ [key]: value });
+  };
+
 
   const { data: steps = [], isLoading } = useQuery({
     queryKey: ["uz-form-steps", form.id],
