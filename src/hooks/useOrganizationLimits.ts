@@ -15,6 +15,7 @@ export const ALL_FEATURES = [
   { key: "analytics", label: "Analytics e Relatórios", description: "Dashboard com métricas de desempenho e relatórios avançados", category: "Extras" },
   { key: "api_access", label: "Acesso API", description: "Integração programática via API REST e webhooks", category: "Extras" },
   { key: "mcp_gateway", label: "MCP Gateway", description: "Hub de conexões MCP com provedores externos como Google Drive", category: "Extras" },
+  { key: "uz_forms", label: "Formulários com URL", description: "Criação de formulários públicos com link e multi-etapas", category: "Extras" },
   { key: "whitelabel", label: "White Label", description: "Remoção da marca do sistema para uso com sua própria identidade", category: "Extras" },
   { key: "basic_support", label: "Suporte Básico", description: "Atendimento via e-mail e central de ajuda", category: "Suporte" },
   { key: "priority_support", label: "Suporte Prioritário", description: "Atendimento preferencial com tempo de resposta reduzido", category: "Suporte" },

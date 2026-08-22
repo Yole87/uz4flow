@@ -24,7 +24,23 @@ export async function getSources(organizationId: string): Promise<ProspectSource
     .from("prospect_sources" as any)
     .select("*")
     .eq("organization_id", organizationId)
+    .eq("is_deleted", false)
     .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as ProspectSource[];
+}
+
+/**
+ * List all soft-deleted webhook sources for an organization, ordered by deletion date.
+ */
+export async function getDeletedSources(organizationId: string): Promise<ProspectSource[]> {
+  const { data, error } = await supabase
+    .from("prospect_sources" as any)
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("is_deleted", true)
+    .order("deleted_at", { ascending: false });
 
   if (error) throw error;
   return (data ?? []) as unknown as ProspectSource[];
@@ -64,6 +80,51 @@ export async function updateSource(
 
   if (error) throw error;
   return data as unknown as ProspectSource;
+}
+
+/**
+ * Soft-delete a source by setting is_deleted = true.
+ */
+export async function softDeleteSource(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("prospect_sources" as any)
+    .update({
+      is_deleted: true,
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+/**
+ * Restore a soft-deleted source, setting is_deleted = false and is_active = false.
+ */
+export async function restoreSource(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("prospect_sources" as any)
+    .update({
+      is_deleted: false,
+      deleted_at: null,
+      is_active: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+/**
+ * Permanently delete a source from the database.
+ */
+export async function permanentDeleteSource(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("prospect_sources" as any)
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
 }
 
 /**

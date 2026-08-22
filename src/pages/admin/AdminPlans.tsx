@@ -32,7 +32,19 @@ interface Plan {
   price_semiannual: number | null;
   price_yearly: number | null;
   billing_cycle: string;
-  limits: { features: string[]; storage_limit_mb?: number; member_limit?: number; contact_limit?: number; data_retention_days?: number };
+  limits: {
+    features: string[];
+    storage_limit_mb?: number;
+    member_limit?: number;
+    contact_limit?: number;
+    data_retention_days?: number;
+    uz_forms_enabled?: boolean;
+    max_uz_forms?: number;
+    max_uz_form_responses_monthly?: number;
+    uz_forms_allow_media?: boolean;
+    uz_forms_allow_custom_slug?: boolean;
+    uz_forms_watermark_text?: string;
+  };
   is_public: boolean;
   is_active: boolean;
   is_free: boolean;
@@ -43,7 +55,19 @@ interface Plan {
   trial_days: number | null;
 }
 
-const defaultLimits = { features: [] as string[], storage_limit_mb: 500, member_limit: 1, contact_limit: 500, data_retention_days: 0 };
+const defaultLimits = {
+  features: [] as string[],
+  storage_limit_mb: 500,
+  member_limit: 1,
+  contact_limit: 500,
+  data_retention_days: 0,
+  uz_forms_enabled: false,
+  max_uz_forms: 5,
+  max_uz_form_responses_monthly: 100,
+  uz_forms_allow_media: false,
+  uz_forms_allow_custom_slug: false,
+  uz_forms_watermark_text: "",
+};
 
 export default function AdminPlans() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -91,6 +115,12 @@ export default function AdminPlans() {
           member_limit: ((p.limits as Record<string, unknown>)?.member_limit as number) ?? 1,
           contact_limit: ((p.limits as Record<string, unknown>)?.contact_limit as number) ?? 500,
           data_retention_days: ((p.limits as Record<string, unknown>)?.data_retention_days as number) ?? 0,
+          uz_forms_enabled: ((p.limits as Record<string, unknown>)?.uz_forms_enabled as boolean) ?? false,
+          max_uz_forms: ((p.limits as Record<string, unknown>)?.max_uz_forms as number) ?? 5,
+          max_uz_form_responses_monthly: ((p.limits as Record<string, unknown>)?.max_uz_form_responses_monthly as number) ?? 100,
+          uz_forms_allow_media: ((p.limits as Record<string, unknown>)?.uz_forms_allow_media as boolean) ?? false,
+          uz_forms_allow_custom_slug: ((p.limits as Record<string, unknown>)?.uz_forms_allow_custom_slug as boolean) ?? false,
+          uz_forms_watermark_text: ((p.limits as Record<string, unknown>)?.uz_forms_watermark_text as string) ?? "",
         }
       })));
     } catch (error) {
@@ -117,7 +147,19 @@ export default function AdminPlans() {
         is_popular: plan.is_popular,
         sort_order: plan.sort_order,
         highlight_label: plan.highlight_label || "",
-        limits: { features: plan.limits.features ?? [], storage_limit_mb: plan.limits.storage_limit_mb ?? 500, member_limit: plan.limits.member_limit ?? 1, contact_limit: plan.limits.contact_limit ?? 500, data_retention_days: plan.limits.data_retention_days ?? 0 },
+        limits: {
+          features: plan.limits.features ?? [],
+          storage_limit_mb: plan.limits.storage_limit_mb ?? 500,
+          member_limit: plan.limits.member_limit ?? 1,
+          contact_limit: plan.limits.contact_limit ?? 500,
+          data_retention_days: plan.limits.data_retention_days ?? 0,
+          uz_forms_enabled: plan.limits.uz_forms_enabled ?? false,
+          max_uz_forms: plan.limits.max_uz_forms ?? 5,
+          max_uz_form_responses_monthly: plan.limits.max_uz_form_responses_monthly ?? 100,
+          uz_forms_allow_media: plan.limits.uz_forms_allow_media ?? false,
+          uz_forms_allow_custom_slug: plan.limits.uz_forms_allow_custom_slug ?? false,
+          uz_forms_watermark_text: plan.limits.uz_forms_watermark_text ?? "",
+        },
         trial_days: plan.trial_days,
       });
     } else {
@@ -160,7 +202,19 @@ export default function AdminPlans() {
         is_popular: formData.is_popular,
         sort_order: formData.sort_order,
         highlight_label: formData.highlight_label || null,
-        limits: { features: formData.limits.features, storage_limit_mb: formData.limits.storage_limit_mb ?? 500, member_limit: formData.limits.member_limit ?? 1, contact_limit: formData.limits.contact_limit ?? 500, data_retention_days: formData.limits.data_retention_days ?? 0 },
+        limits: {
+          features: formData.limits.features,
+          storage_limit_mb: formData.limits.storage_limit_mb ?? 500,
+          member_limit: formData.limits.member_limit ?? 1,
+          contact_limit: formData.limits.contact_limit ?? 500,
+          data_retention_days: formData.limits.data_retention_days ?? 0,
+          uz_forms_enabled: formData.limits.uz_forms_enabled ?? false,
+          max_uz_forms: formData.limits.max_uz_forms ?? 5,
+          max_uz_form_responses_monthly: formData.limits.max_uz_form_responses_monthly ?? 100,
+          uz_forms_allow_media: formData.limits.uz_forms_allow_media ?? false,
+          uz_forms_allow_custom_slug: formData.limits.uz_forms_allow_custom_slug ?? false,
+          uz_forms_watermark_text: formData.limits.uz_forms_watermark_text ?? "",
+        },
         trial_days: formData.is_free ? (formData.trial_days || null) : null,
       };
 
@@ -399,6 +453,120 @@ export default function AdminPlans() {
                       </div>
                       <p className="text-xs text-muted-foreground">Use -1 para limites ilimitados. Storage em MB, membros e contatos em quantidade.</p>
                     </div>
+
+                    <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-semibold">Formulários com URL habilitados</Label>
+                        <Switch
+                          id="uz_forms_enabled"
+                          checked={formData.limits.uz_forms_enabled || false}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              limits: { ...formData.limits, uz_forms_enabled: checked },
+                            })
+                          }
+                        />
+                      </div>
+
+                      {formData.limits.uz_forms_enabled && (
+                        <div className="space-y-4 pt-2 border-t border-border animate-in fade-in">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="max_uz_forms" className="text-xs">Máximo de formulários (-1 = ilimitado)</Label>
+                              <Input
+                                id="max_uz_forms"
+                                type="number"
+                                min={-1}
+                                value={formData.limits.max_uz_forms ?? 5}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    limits: {
+                                      ...formData.limits,
+                                      max_uz_forms: parseInt(e.target.value) || 1,
+                                    },
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="max_uz_form_responses_monthly" className="text-xs">Máximo de respostas/mês (-1 = ilimitado)</Label>
+                              <Input
+                                id="max_uz_form_responses_monthly"
+                                type="number"
+                                min={-1}
+                                value={formData.limits.max_uz_form_responses_monthly ?? 100}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    limits: {
+                                      ...formData.limits,
+                                      max_uz_form_responses_monthly: parseInt(e.target.value) || 1,
+                                    },
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-6 pt-2">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id="uz_forms_allow_media"
+                                checked={formData.limits.uz_forms_allow_media || false}
+                                onCheckedChange={(checked) =>
+                                  setFormData({
+                                    ...formData,
+                                    limits: { ...formData.limits, uz_forms_allow_media: checked },
+                                  })
+                                }
+                              />
+                              <Label htmlFor="uz_forms_allow_media" className="text-xs cursor-pointer">Permite imagem/vídeo</Label>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id="uz_forms_allow_custom_slug"
+                                checked={formData.limits.uz_forms_allow_custom_slug || false}
+                                onCheckedChange={(checked) =>
+                                  setFormData({
+                                    ...formData,
+                                    limits: {
+                                      ...formData.limits,
+                                      uz_forms_allow_custom_slug: checked,
+                                    },
+                                  })
+                                }
+                              />
+                              <Label htmlFor="uz_forms_allow_custom_slug" className="text-xs cursor-pointer">Permite slug personalizado</Label>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="uz_forms_watermark_text" className="text-xs">Texto de marca d'água</Label>
+                            <Input
+                              id="uz_forms_watermark_text"
+                              type="text"
+                              placeholder="Ex: Desenvolvido por UzFlow"
+                              value={formData.limits.uz_forms_watermark_text || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  limits: {
+                                    ...formData.limits,
+                                    uz_forms_watermark_text: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Deixe vazio para o texto padrão da plataforma.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </TabsContent>
 
                   {/* Aba RECURSOS */}
@@ -548,6 +716,16 @@ export default function AdminPlans() {
                       <Contact className="w-3 h-3 mr-1" />
                       {plan.limits.contact_limit === -1 ? "Ilimitado" : `${(plan.limits.contact_limit ?? 500).toLocaleString("pt-BR")} contatos`}
                     </Badge>
+                    {plan.limits.uz_forms_enabled && (
+                      <>
+                        <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+                          Formulários: {plan.limits.max_uz_forms === -1 ? "Ilimitados" : plan.limits.max_uz_forms}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+                          Respostas: {plan.limits.max_uz_form_responses_monthly === -1 ? "Ilimitadas" : `${plan.limits.max_uz_form_responses_monthly}/mês`}
+                        </Badge>
+                      </>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">

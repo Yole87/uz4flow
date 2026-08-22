@@ -54,6 +54,7 @@ const Team = lazy(() => import("./pages/Team"));
 const Queue = lazy(() => import("./pages/Queue"));
 const Prospection = lazy(() => import("./pages/Prospection"));
 const BaseFormularios = lazy(() => import("./pages/BaseFormularios"));
+const UzFormDetail = lazy(() => import("./pages/UzFormDetail"));
 const Docs = lazy(() => import("./pages/Docs"));
 const VoiceAI = lazy(() => import("./pages/VoiceAI"));
 const McpGateway = lazy(() => import("./pages/McpGateway"));
@@ -64,6 +65,7 @@ const Instagram = lazy(() => import("./pages/Instagram"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Reports = lazy(() => import("./pages/Reports"));
+const PublicForm = lazy(() => import("./pages/PublicForm"));
 
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -151,6 +153,7 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/privacidade" element={<PrivacyPolicy />} />
       <Route path="/termos" element={<TermsOfService />} />
+      <Route path="/f/:token" element={<PublicForm />} />
       <Route path="/checkout" element={<Navigate to="/conheca#pricing" replace />} />
       <Route path="/checkout/:planId" element={<Checkout />} />
       <Route path="/subscription/callback" element={<ProtectedRoute><SubscriptionCallback /></ProtectedRoute>} />
@@ -166,6 +169,7 @@ function AppRoutes() {
       <Route path="/prospection" element={<SubscriptionGuard><PermissionGuard menu="prospection"><Prospection /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/base-formularios" element={<SubscriptionGuard><PermissionGuard menu="base_formularios"><BaseFormularios /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/base-formularios/:sourceId" element={<SubscriptionGuard><PermissionGuard menu="base_formularios"><BaseFormularios /></PermissionGuard></SubscriptionGuard>} />
+      <Route path="/base-formularios/form/:formId" element={<SubscriptionGuard><PermissionGuard menu="base_formularios"><UzFormDetail /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/flows" element={<SubscriptionGuard><PermissionGuard menu="automation"><Flows /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/flows/:id" element={<SubscriptionGuard><PermissionGuard menu="automation"><FlowEditor /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/flows/:id/results" element={<SubscriptionGuard><PermissionGuard menu="automation"><FlowResults /></PermissionGuard></SubscriptionGuard>} />
