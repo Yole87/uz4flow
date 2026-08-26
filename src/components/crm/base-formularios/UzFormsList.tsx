@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
@@ -58,7 +58,19 @@ function FormCard({
 
   const responsesCount = responsesResult?.count ?? 0;
 
-  const lastVisit = localStorage.getItem(`last_visit_form_${form.id}`) || "1970-01-01T00:00:00.000Z";
+  // Congela a marcação de "visto" no momento da montagem para o selo não piscar/voltar.
+  const [lastVisit] = useState(
+    () => localStorage.getItem(`last_visit_form_${form.id}`) || "1970-01-01T00:00:00.000Z",
+  );
+
+  // Após exibir o card, marca como visto e atualiza o selo do menu lateral.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.setItem(`last_visit_form_${form.id}`, new Date().toISOString());
+      queryClient.invalidateQueries({ queryKey: ["prospect-total-new-leads"] });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [form.id, queryClient]);
 
   // Fetch count of new responses since last visit
   const { data: newResponsesCount = 0 } = useQuery({
