@@ -947,9 +947,26 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                   </TableCell>
                   {orderedFields.map((field) => {
                     const value = res.response_data[field.key_name];
+                    const text = value === undefined || value === null ? "" : String(value);
                     return (
-                      <TableCell key={field.id} className="text-sm">
-                        {value !== undefined && value !== "" ? value : <span className="text-muted-foreground/45">—</span>}
+                      <TableCell key={field.id} className="text-sm max-w-[220px]">
+                        {text === "" ? (
+                          <span className="text-muted-foreground/45">—</span>
+                        ) : isUrlValue(text) ? (
+                          <a
+                            href={text}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            Ver arquivo
+                          </a>
+                        ) : (
+                          <span className="block truncate" title={text}>
+                            {text}
+                          </span>
+                        )}
                       </TableCell>
                     );
                   })}
