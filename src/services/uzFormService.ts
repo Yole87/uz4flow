@@ -475,6 +475,7 @@ export async function getAllFormResponses(formId: string): Promise<UzFormRespons
   if (error) throw error;
   return (data ?? []) as unknown as UzFormResponse[];
 }
+
 /**
  * Delete specified form responses.
  */
@@ -501,8 +502,3 @@ export async function getNewFormResponsesCount(formId: string, lastVisit: string
   return count ?? 0;
 }
 
-
-// ─── Public Endpoint Methods ──────────────────────────────────────────────────
-
-/**
- * Fetch a public active form with all its steps and fields.
