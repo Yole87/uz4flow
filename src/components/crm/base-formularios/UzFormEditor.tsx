@@ -131,7 +131,14 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
 
   const updateFormMutation = useMutation({
     mutationFn: (slug: string) => updateForm(form.id, { slug }),
-    onSuccess: () => {
+    onSuccess: (updated) => {
+      const newSlug = updated?.slug ?? slugDraft.trim();
+      setSlugDraft(newSlug);
+      // Reflete o novo slug imediatamente (link alternativo) sem recarregar.
+      queryClient.setQueryData(["uz-form", form.id], (old: UzForm | undefined) =>
+        old ? { ...old, slug: newSlug } : old,
+      );
+      queryClient.invalidateQueries({ queryKey: ["uz-form", form.id] });
       queryClient.invalidateQueries({ queryKey: ["uz-forms"] });
       toast.success("Link personalizado salvo!");
     },
