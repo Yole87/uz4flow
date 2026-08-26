@@ -42,3 +42,20 @@ Correção:
 - Abrir o formulário público no celular com opções longas e conferir texto completo no menu e no campo selecionado.
 - Receber uma resposta nova, ver o selo aparecer, abrir a lista e confirmar que o selo some e não retorna ao navegar.
 - Abrir a tabela de respostas com coluna de upload e confirmar cabeçalho estável e botão "Ver arquivo".
+
+## Recursos da lista de respostas solicitados — verificação
+
+Conferi arquivo por arquivo: os recursos citados **já estão presentes** no código atual (não foram perdidos no sync). Nada será reescrito, apenas mantido e validado no build:
+
+- `UzFormResponses.tsx`: seleção em massa com checkbox (linhas ~800-930), barra de ações "Desmarcar todas" / "Exportar selecionadas" / "Excluir selecionadas" com AlertDialog, busca global "Buscar em todos os campos...", ordenação por coluna (ASC/DESC/nenhuma, "Enviado em" via banco e colunas dinâmicas no cliente), popovers de filtro por coluna, selo "Novo" com `seen_form_responses_[formId]`, e botão "Conversa" navegando para `/crm?new_conversation_phone=...`.
+- `uzFormService.ts`: `deleteFormResponses(ids)`, `getNewFormResponsesCount(formId, lastVisit)` e `getFormResponses(..., sortOrder?)` já existem.
+- `UzFormsList.tsx`: já exibe "X respostas · Y novas" usando `getNewFormResponsesCount` + `last_visit_form_[formId]`.
+- `AppSidebar.tsx`: o selo de "Base e Formulários" já soma novas respostas de formulário + novos leads de webhook.
+
+Se algum comportamento acima não estiver aparecendo na sua tela, é efeito do bug do contador (Anexo 2) e/ou de cache do PWA — ambos tratados nesta correção.
+
+## Execução
+
+1. Aplicar as correções dos Anexos 1, 2 e 3 em uma única operação.
+2. Rodar o build e corrigir eventuais erros.
+3. Listar ao final todos os arquivos modificados.
