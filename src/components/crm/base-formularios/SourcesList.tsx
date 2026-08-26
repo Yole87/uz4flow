@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getLeads, updateSource, getNewLeadsCount, softDeleteSource } from "@/services/prospectSourceService";
 import type { ProspectSource } from "@/types/prospect";
@@ -46,7 +46,19 @@ function SourceCard({
     staleTime: 1000 * 60 * 2,
   });
 
-  const lastVisit = localStorage.getItem(`last_visit_${source.id}`) || "1970-01-01T00:00:00.000Z";
+  // Congela a marcação de "visto" no momento da montagem para o selo não piscar/voltar.
+  const [lastVisit] = useState(
+    () => localStorage.getItem(`last_visit_${source.id}`) || "1970-01-01T00:00:00.000Z",
+  );
+
+  // Após exibir o card, marca como visto e atualiza o selo do menu lateral.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.setItem(`last_visit_${source.id}`, new Date().toISOString());
+      queryClient.invalidateQueries({ queryKey: ["prospect-total-new-leads"] });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [source.id, queryClient]);
 
   // Fetch count of new leads
   const { data: newLeadsCount = 0 } = useQuery({

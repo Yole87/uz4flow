@@ -585,15 +585,19 @@ export default function PublicForm() {
               return (
                 <Select value={value} onValueChange={(val) => handleFieldChange(field.key_name, val)}>
                   <SelectTrigger
-                    className={`w-full bg-background border-2 text-foreground h-12 rounded-xl text-base ${
+                    className={`w-full bg-background border-2 text-foreground h-auto min-h-12 py-2 rounded-xl text-base items-start text-left [&>span]:whitespace-normal [&>span]:break-words [&>span]:text-left [&>span]:leading-snug ${
                       error ? "border-destructive" : "border-border"
                     }`}
                   >
                     <SelectValue placeholder="Selecione uma opção..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
+                  <SelectContent className="bg-card border-border w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
                     {(field.options || []).map((opt) => (
-                      <SelectItem key={opt} value={opt} className="text-base py-3 cursor-pointer">
+                      <SelectItem
+                        key={opt}
+                        value={opt}
+                        className="text-base py-3 cursor-pointer whitespace-normal break-words leading-snug pr-2"
+                      >
                         {opt}
                       </SelectItem>
                     ))}
