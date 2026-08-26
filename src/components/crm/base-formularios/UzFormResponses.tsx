@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Download, Inbox, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Filter } from "lucide-react";
+import { Loader2, Download, Inbox, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Filter, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface UzFormResponsesProps {
@@ -38,6 +38,11 @@ interface UzFormResponsesProps {
 }
 
 const PAGE_SIZE = 50;
+
+/** Detecta valores que são links (ex.: arquivos enviados no formulário). */
+function isUrlValue(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
 
 function formatDateBR(iso: string): string {
   const d = new Date(iso);
