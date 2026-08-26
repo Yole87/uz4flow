@@ -804,13 +804,15 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                 <TableHead className="w-12 text-center p-2">
                   <Checkbox
                     checked={
-                      filteredResponses.length > 0 &&
-                      (filteredResponses.every((res) => selectedIds.includes(res.id))
-                        ? true
-                        : filteredResponses.some((res) => selectedIds.includes(res.id))
-                        ? "indeterminate"
-                        : false)
+                      filteredResponses.length > 0
+                        ? filteredResponses.every((res) => selectedIds.includes(res.id))
+                          ? true
+                          : filteredResponses.some((res) => selectedIds.includes(res.id))
+                          ? "indeterminate"
+                          : false
+                        : false
                     }
+
                     onCheckedChange={(checked) => {
                       if (checked) {
                         setSelectedIds((prev) => {
