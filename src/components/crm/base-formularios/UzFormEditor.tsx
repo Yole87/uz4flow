@@ -760,9 +760,30 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                     {(field.options || []).map((option, oIdx) => (
                                       <div
                                         key={oIdx}
-                                        className="flex items-center justify-between bg-card border border-border p-2 rounded-md"
+                                        className="flex items-center justify-between gap-2 bg-card border border-border p-2 rounded-md"
                                       >
-                                        <span className="text-xs font-medium text-foreground">{option}</span>
+                                        <Input
+                                          key={`${field.id}-${oIdx}-${option}`}
+                                          defaultValue={option}
+                                          className="h-7 text-xs bg-background border-border flex-1"
+                                          onBlur={(e) => {
+                                            const next = e.target.value.trim();
+                                            if (!next || next === option) {
+                                              e.target.value = option;
+                                              return;
+                                            }
+                                            const updatedOpts = [...field.options];
+                                            updatedOpts[oIdx] = next;
+                                            updateFieldMutation.mutate({
+                                              id: field.id,
+                                              data: { options: updatedOpts },
+                                            });
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") e.currentTarget.blur();
+                                          }}
+                                        />
+
                                         <div className="flex items-center gap-1">
                                           <Button
                                             variant="ghost"
