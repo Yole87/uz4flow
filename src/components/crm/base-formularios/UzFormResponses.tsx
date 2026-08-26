@@ -114,7 +114,9 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
   // Update last visit timestamp when viewing
   useEffect(() => {
     localStorage.setItem(`last_visit_form_${formId}`, new Date().toISOString());
-  }, [formId]);
+    queryClient.invalidateQueries({ queryKey: ["uz-form-new-responses-count"] });
+    queryClient.invalidateQueries({ queryKey: ["prospect-total-new-leads"] });
+  }, [formId, queryClient]);
 
   // 1. Fetch form steps and fields to dynamically generate columns
   const { data: steps = [], isLoading: isLoadingSteps } = useQuery({
