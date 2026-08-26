@@ -395,6 +395,7 @@ export async function getFormResponses(
   formId: string,
   page: number,
   pageSize: number,
+  sortOrder?: "asc" | "desc",
 ): Promise<{ data: UzFormResponse[]; count: number }> {
   const from = page * pageSize;
   const to = from + pageSize - 1;
@@ -403,7 +404,7 @@ export async function getFormResponses(
     .from("uz_form_responses" as any)
     .select("*", { count: "exact" })
     .eq("form_id", formId)
-    .order("submitted_at", { ascending: false })
+    .order("submitted_at", { ascending: sortOrder === "asc" })
     .range(from, to);
 
   if (error) throw error;
