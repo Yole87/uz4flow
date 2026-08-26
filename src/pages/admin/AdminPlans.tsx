@@ -44,6 +44,7 @@ interface Plan {
     uz_forms_allow_media?: boolean;
     uz_forms_allow_custom_slug?: boolean;
     uz_forms_watermark_text?: string;
+    uz_forms_watermark_mode?: string;
   };
   is_public: boolean;
   is_active: boolean;
@@ -67,6 +68,7 @@ const defaultLimits = {
   uz_forms_allow_media: false,
   uz_forms_allow_custom_slug: false,
   uz_forms_watermark_text: "",
+  uz_forms_watermark_mode: "platform",
 };
 
 export default function AdminPlans() {
@@ -121,6 +123,7 @@ export default function AdminPlans() {
           uz_forms_allow_media: ((p.limits as Record<string, unknown>)?.uz_forms_allow_media as boolean) ?? false,
           uz_forms_allow_custom_slug: ((p.limits as Record<string, unknown>)?.uz_forms_allow_custom_slug as boolean) ?? false,
           uz_forms_watermark_text: ((p.limits as Record<string, unknown>)?.uz_forms_watermark_text as string) ?? "",
+          uz_forms_watermark_mode: ((p.limits as Record<string, unknown>)?.uz_forms_watermark_mode as string) ?? "platform",
         }
       })));
     } catch (error) {
@@ -159,6 +162,7 @@ export default function AdminPlans() {
           uz_forms_allow_media: plan.limits.uz_forms_allow_media ?? false,
           uz_forms_allow_custom_slug: plan.limits.uz_forms_allow_custom_slug ?? false,
           uz_forms_watermark_text: plan.limits.uz_forms_watermark_text ?? "",
+          uz_forms_watermark_mode: plan.limits.uz_forms_watermark_mode ?? "platform",
         },
         trial_days: plan.trial_days,
       });
@@ -214,6 +218,7 @@ export default function AdminPlans() {
           uz_forms_allow_media: formData.limits.uz_forms_allow_media ?? false,
           uz_forms_allow_custom_slug: formData.limits.uz_forms_allow_custom_slug ?? false,
           uz_forms_watermark_text: formData.limits.uz_forms_watermark_text ?? "",
+          uz_forms_watermark_mode: formData.limits.uz_forms_watermark_mode ?? "platform",
         },
         trial_days: formData.is_free ? (formData.trial_days || null) : null,
       };
@@ -544,26 +549,51 @@ export default function AdminPlans() {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="uz_forms_watermark_text" className="text-xs">Texto de marca d'água</Label>
-                            <Input
-                              id="uz_forms_watermark_text"
-                              type="text"
-                              placeholder="Ex: Desenvolvido por UzFlow"
-                              value={formData.limits.uz_forms_watermark_text || ""}
+                            <Label htmlFor="uz_forms_watermark_mode" className="text-xs">Modo da marca d'água</Label>
+                            <select
+                              id="uz_forms_watermark_mode"
+                              className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
+                              value={formData.limits.uz_forms_watermark_mode || "platform"}
                               onChange={(e) =>
                                 setFormData({
                                   ...formData,
                                   limits: {
                                     ...formData.limits,
-                                    uz_forms_watermark_text: e.target.value,
+                                    uz_forms_watermark_mode: e.target.value,
                                   },
                                 })
                               }
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              Deixe vazio para o texto padrão da plataforma.
-                            </p>
+                            >
+                              <option value="platform">Padrão da plataforma (Uz4Flow)</option>
+                              <option value="custom">Texto fixo definido aqui</option>
+                              <option value="tenant_choice">Cliente escolhe o texto</option>
+                            </select>
                           </div>
+
+                          {(formData.limits.uz_forms_watermark_mode || "platform") === "custom" && (
+                            <div className="space-y-2">
+                              <Label htmlFor="uz_forms_watermark_text" className="text-xs">Texto de marca d'água</Label>
+                              <Input
+                                id="uz_forms_watermark_text"
+                                type="text"
+                                placeholder="Ex: Desenvolvido por Uz4Flow"
+                                value={formData.limits.uz_forms_watermark_text || ""}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    limits: {
+                                      ...formData.limits,
+                                      uz_forms_watermark_text: e.target.value,
+                                    },
+                                  })
+                                }
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Deixe vazio para o texto padrão da plataforma.
+                              </p>
+                            </div>
+                          )}
+
                         </div>
                       )}
                     </div>
