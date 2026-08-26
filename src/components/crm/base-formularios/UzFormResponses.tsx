@@ -804,8 +804,9 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
 
       {/* Responses Data Table */}
       <div className="rounded-lg border border-border overflow-hidden bg-card">
-        <div className="overflow-x-auto max-h-[calc(100vh-320px)]">
-          <Table>
+        <div className="w-full max-w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)]">
+          <Table className="min-w-max">
+
             <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur z-10">
               <TableRow className="border-border hover:bg-muted/50">
                 <TableHead className="w-12 text-center p-2">
