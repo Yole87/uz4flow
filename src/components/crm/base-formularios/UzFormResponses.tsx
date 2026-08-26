@@ -873,13 +873,13 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                 {orderedFields.map((field) => (
                   <TableHead
                     key={field.id}
-                    className="text-muted-foreground text-xs whitespace-nowrap min-w-[140px]"
+                    className="text-muted-foreground text-xs align-top whitespace-normal break-words min-w-[140px] max-w-[220px]"
                   >
-                    <div className="flex items-center gap-1.5 justify-between font-semibold">
+                    <div className="flex items-start gap-1.5 justify-between font-semibold">
                       <button
                         type="button"
                         onClick={() => handleSort(field.key_name)}
-                        className="flex items-center gap-1 hover:text-foreground font-semibold"
+                        className="flex items-start gap-1 hover:text-foreground font-semibold text-left whitespace-normal break-words leading-snug line-clamp-2"
                       >
                         {field.label}
                         {sortColumn === field.key_name && (
