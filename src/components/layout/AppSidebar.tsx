@@ -38,6 +38,7 @@ import {
  import { useUserPermissions } from "@/hooks/useUserPermissions";
  import { useUserOrganization } from "@/hooks/useUserOrganization";
  import { getSources, getNewLeadsCount } from "@/services/prospectSourceService";
+ import { getForms, getNewFormResponsesCount } from "@/services/uzFormService";
  import {
    Sidebar,
    SidebarContent,
@@ -122,22 +123,50 @@ export function AppSidebar() {
     enabled: !!org?.id,
   });
 
-  // Query to get total new leads across all sources
+  // Fetch forms to get their IDs for new response count
+  const { data: sidebarForms } = useQuery({
+    queryKey: ["uz-forms-sidebar", org?.id],
+    queryFn: () => getForms(org!.id),
+    enabled: !!org?.id,
+  });
+
+  // Query to get total new leads across all sources and form responses
   const { data: totalNewLeads = 0 } = useQuery({
-    queryKey: ["prospect-total-new-leads", org?.id, location.pathname, sidebarSources?.map(s => s.id).join(",")],
+    queryKey: [
+      "prospect-total-new-leads",
+      org?.id,
+      location.pathname,
+      sidebarSources?.map((s) => s.id).join(","),
+      sidebarForms?.map((f) => f.id).join(","),
+    ],
     queryFn: async () => {
-      if (!org?.id || !sidebarSources || sidebarSources.length === 0) return 0;
-      
-      const counts = await Promise.all(
-        sidebarSources.map(async (source) => {
-          const lastVisit = localStorage.getItem(`last_visit_${source.id}`) || "1970-01-01T00:00:00.000Z";
-          return getNewLeadsCount(source.id, lastVisit);
-        })
-      );
-      
-      return counts.reduce((acc, val) => acc + val, 0);
+      if (!org?.id) return 0;
+
+      let leadsCount = 0;
+      if (sidebarSources && sidebarSources.length > 0) {
+        const counts = await Promise.all(
+          sidebarSources.map(async (source) => {
+            const lastVisit = localStorage.getItem(`last_visit_${source.id}`) || "1970-01-01T00:00:00.000Z";
+            return getNewLeadsCount(source.id, lastVisit);
+          })
+        );
+        leadsCount = counts.reduce((acc, val) => acc + val, 0);
+      }
+
+      let responsesCount = 0;
+      if (sidebarForms && sidebarForms.length > 0) {
+        const counts = await Promise.all(
+          sidebarForms.map(async (form) => {
+            const lastVisit = localStorage.getItem(`last_visit_form_${form.id}`) || "1970-01-01T00:00:00.000Z";
+            return getNewFormResponsesCount(form.id, lastVisit);
+          })
+        );
+        responsesCount = counts.reduce((acc, val) => acc + val, 0);
+      }
+
+      return leadsCount + responsesCount;
     },
-    enabled: !!org?.id && !!sidebarSources,
+    enabled: !!org?.id,
     staleTime: 1000 * 5, // keep relatively fresh
   });
 

@@ -338,6 +338,7 @@ export async function getFormResponses(
   formId: string,
   page: number,
   pageSize: number,
+  sortOrder?: "asc" | "desc",
 ): Promise<{ data: UzFormResponse[]; count: number }> {
   const from = page * pageSize;
   const to = from + pageSize - 1;
@@ -346,7 +347,7 @@ export async function getFormResponses(
     .from("uz_form_responses" as any)
     .select("*", { count: "exact" })
     .eq("form_id", formId)
-    .order("submitted_at", { ascending: false })
+    .order("submitted_at", { ascending: sortOrder === "asc" })
     .range(from, to);
 
   if (error) throw error;
@@ -355,6 +356,33 @@ export async function getFormResponses(
     count: count ?? 0,
   };
 }
+
+/**
+ * Delete specified form responses.
+ */
+export async function deleteFormResponses(ids: string[]): Promise<void> {
+  const { error } = await supabase
+    .from("uz_form_responses" as any)
+    .delete()
+    .in("id", ids);
+
+  if (error) throw error;
+}
+
+/**
+ * Get count of new form responses submitted since a last visit ISO string.
+ */
+export async function getNewFormResponsesCount(formId: string, lastVisit: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("uz_form_responses" as any)
+    .select("*", { count: "exact", head: true })
+    .eq("form_id", formId)
+    .gt("submitted_at", lastVisit);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 
 // ─── Public Endpoint Methods ──────────────────────────────────────────────────
 

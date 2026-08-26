@@ -10,6 +10,7 @@ import {
   restoreForm,
   permanentDeleteForm,
   getFormResponses,
+  getNewFormResponsesCount,
 } from "@/services/uzFormService";
 import type { UzForm } from "@/types/uzForm";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -56,11 +57,15 @@ function FormCard({
   });
 
   const responsesCount = responsesResult?.count ?? 0;
-  const latestResponse = responsesResult?.data?.[0];
 
-  const hasNewResponseInLast24h = latestResponse
-    ? new Date(latestResponse.submitted_at).getTime() > Date.now() - 24 * 60 * 60 * 1000
-    : false;
+  const lastVisit = localStorage.getItem(`last_visit_form_${form.id}`) || "1970-01-01T00:00:00.000Z";
+
+  // Fetch count of new responses since last visit
+  const { data: newResponsesCount = 0 } = useQuery({
+    queryKey: ["uz-form-new-responses-count", form.id, lastVisit],
+    queryFn: () => getNewFormResponsesCount(form.id, lastVisit),
+    staleTime: 1000 * 60 * 2,
+  });
 
   const toggleMutation = useMutation({
     mutationFn: (newActive: boolean) =>
@@ -213,11 +218,11 @@ function FormCard({
               <span>
                 {responsesCount} resposta{responsesCount !== 1 ? "s" : ""}
               </span>
-              {hasNewResponseInLast24h && (
+              {newResponsesCount > 0 && (
                 <>
                   <span className="text-muted-foreground/60">·</span>
                   <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-medium px-1.5 py-0.5 text-[11px] h-5">
-                    Novo
+                    {newResponsesCount} {newResponsesCount === 1 ? "nova" : "novas"}
                   </Badge>
                 </>
               )}
