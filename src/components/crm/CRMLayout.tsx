@@ -449,6 +449,8 @@ export function CRMLayout() {
               selectedContactId={selectedContactId}
               onSelectContact={handleSelectContact}
               instanceId={selectedInstanceId}
+              newConversationPhone={pendingNewPhone}
+              onNewConversationHandled={handleNewConversationHandled}
             />
           </div>
         </ResizablePanel>
