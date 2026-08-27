@@ -32,9 +32,12 @@ interface ContactsPaneProps {
   selectedContactId: string | null;
   onSelectContact: (contactId: string, conversationId?: string) => void;
   instanceId: string | null;
+  /** Telefone (somente dígitos) para abrir o diálogo de nova conversa pré-preenchido */
+  newConversationPhone?: string | null;
+  onNewConversationHandled?: () => void;
 }
 
-export function ContactsPane({ selectedContactId, onSelectContact, instanceId }: ContactsPaneProps) {
+export function ContactsPane({ selectedContactId, onSelectContact, instanceId, newConversationPhone, onNewConversationHandled }: ContactsPaneProps) {
   const { data: organization } = useUserOrganization();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,28 +50,13 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId }:
   const [showNewConversationDialog, setShowNewConversationDialog] = useState(false);
   const [prefilledPhone, setPrefilledPhone] = useState<string | undefined>(undefined);
 
+  // Abre o diálogo de nova conversa quando o CRMLayout sinaliza um telefone
+  // vindo de /crm?new_conversation_phone=... (Via Cadastros / Via Uz4Forms)
   useEffect(() => {
-    // 1. Check query parameter 'new_chat' (fallback)
-    const newChatPhone = searchParams.get("new_chat");
-    if (newChatPhone) {
-      setPrefilledPhone(newChatPhone);
-      setShowNewConversationDialog(true);
-      
-      const next = new URLSearchParams(searchParams);
-      next.delete("new_chat");
-      setSearchParams(next, { replace: true });
-      return;
-    }
-
-    // 2. Check location state (primary)
-    const state = location.state as { openNewConversation?: boolean; phone?: string } | null;
-    if (state?.openNewConversation) {
-      setPrefilledPhone(state.phone);
-      setShowNewConversationDialog(true);
-      // Clear location state using replace
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [searchParams, setSearchParams, location.state, location.pathname, navigate]);
+    if (!newConversationPhone) return;
+    setPrefilledPhone(newConversationPhone);
+    setShowNewConversationDialog(true);
+  }, [newConversationPhone]);
   const [showAllReminders, setShowAllReminders] = useState(false);
   const [showQuickReplyManager, setShowQuickReplyManager] = useState(false);
   const [channelFilter, setChannelFilter] = useState<"all" | "whatsapp" | "instagram">("all");
@@ -534,6 +522,7 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId }:
           setShowNewConversationDialog(open);
           if (!open) {
             setPrefilledPhone(undefined);
+            onNewConversationHandled?.();
           }
         }}
         initialPhone={prefilledPhone}

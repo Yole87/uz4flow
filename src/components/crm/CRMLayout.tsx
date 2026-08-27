@@ -146,6 +146,68 @@ export function CRMLayout() {
     }
   }, [searchParams, isMobile]);
 
+  // Deep link "Iniciar Conversa" vindo de Base e Formulários:
+  // /crm?new_conversation_phone=<digitos>
+  // Se o contato já existir, abre o chat; senão abre o diálogo de nova conversa.
+  const [pendingNewPhone, setPendingNewPhone] = useState<string | null>(null);
+  const handledPhoneRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const raw = searchParams.get("new_conversation_phone");
+    if (!raw || !organization?.id) return;
+
+    const digits = raw.replace(/\D/g, "");
+    if (!digits || handledPhoneRef.current === digits) return;
+    handledPhoneRef.current = digits;
+
+    // limpa o parâmetro sem afetar os demais
+    const next = new URLSearchParams(searchParams);
+    next.delete("new_conversation_phone");
+    setSearchParams(next, { replace: true });
+
+    const variants = new Set<string>([digits]);
+    // variações com/sem o 9º dígito (Brasil: 55 + DDD + número)
+    if (digits.startsWith("55") && digits.length === 13 && digits[4] === "9") {
+      variants.add(digits.slice(0, 4) + digits.slice(5));
+    }
+    if (digits.startsWith("55") && digits.length === 12) {
+      variants.add(digits.slice(0, 4) + "9" + digits.slice(4));
+    }
+
+    (async () => {
+      setActiveTab("conversations");
+      const { data: contact } = await supabase
+        .from("contacts")
+        .select("id")
+        .eq("organization_id", organization.id)
+        .in("phone", Array.from(variants))
+        .limit(1)
+        .maybeSingle();
+
+      if (contact?.id) {
+        const { data: conversation } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("contact_id", contact.id)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle();
+
+        setSelectedContactId(contact.id);
+        setSelectedConversationId(conversation?.id ?? null);
+        if (isMobile) setMobilePane("chat");
+        return;
+      }
+
+      setPendingNewPhone(digits);
+      if (isMobile) setMobilePane("contacts");
+    })();
+  }, [searchParams, setSearchParams, organization?.id, isMobile]);
+
+  const handleNewConversationHandled = useCallback(() => {
+    setPendingNewPhone(null);
+  }, []);
+
   // Fetch instances to check if any exist
   const { data: instances, isLoading: instancesLoading, error: instancesError } = useQuery({
     queryKey: ["crm-instances", organization?.id],
@@ -344,6 +406,8 @@ export function CRMLayout() {
           selectedContactId={selectedContactId}
           onSelectContact={handleMobileContactSelect}
           instanceId={selectedInstanceId}
+          newConversationPhone={pendingNewPhone}
+          onNewConversationHandled={handleNewConversationHandled}
         />
       )}
       
@@ -385,6 +449,8 @@ export function CRMLayout() {
               selectedContactId={selectedContactId}
               onSelectContact={handleSelectContact}
               instanceId={selectedInstanceId}
+              newConversationPhone={pendingNewPhone}
+              onNewConversationHandled={handleNewConversationHandled}
             />
           </div>
         </ResizablePanel>
