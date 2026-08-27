@@ -32,9 +32,12 @@ interface ContactsPaneProps {
   selectedContactId: string | null;
   onSelectContact: (contactId: string, conversationId?: string) => void;
   instanceId: string | null;
+  /** Telefone (somente dígitos) para abrir o diálogo de nova conversa pré-preenchido */
+  newConversationPhone?: string | null;
+  onNewConversationHandled?: () => void;
 }
 
-export function ContactsPane({ selectedContactId, onSelectContact, instanceId }: ContactsPaneProps) {
+export function ContactsPane({ selectedContactId, onSelectContact, instanceId, newConversationPhone, onNewConversationHandled }: ContactsPaneProps) {
   const { data: organization } = useUserOrganization();
   const navigate = useNavigate();
   const location = useLocation();
