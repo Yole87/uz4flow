@@ -336,7 +336,7 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
   const handleIniciarConversa = (res: UzFormResponse) => {
     const phone = getPhoneFromResponse(res, orderedFields);
     if (!phone) return;
-    navigate(`/crm?new_conversation_phone=${phone}`);
+    navigate(`/crm?new_conversation_phone=${String(phone).replace(/\D/g, "")}`);
   };
 
   const hasPhoneField = (res: UzFormResponse) =>
