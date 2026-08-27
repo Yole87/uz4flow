@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2 } from "lucide-react";
+import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Formatting & Masking Helpers ───────────────────────────────────────────
@@ -549,16 +549,30 @@ export default function PublicForm() {
                 />
               );
 
-            case "multiple_choice":
+            case "multiple_choice": {
+              const options = field.options || [];
+              const selected = value
+                ? value.split(",").map((v) => v.trim()).filter(Boolean)
+                : [];
+
+              const toggleOption = (opt: string) => {
+                const next = selected.includes(opt)
+                  ? selected.filter((s) => s !== opt)
+                  : options.filter((o) => selected.includes(o) || o === opt);
+                handleFieldChange(field.key_name, next.join(", "));
+              };
+
               return (
                 <div className="space-y-2">
-                  {(field.options || []).map((opt) => {
-                    const isSelected = value === opt;
+                  {options.map((opt) => {
+                    const isSelected = selected.includes(opt);
                     return (
                       <button
                         key={opt}
                         type="button"
-                        onClick={() => handleFieldChange(field.key_name, opt)}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        onClick={() => toggleOption(opt)}
                         className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center justify-between group ${
                           isSelected
                             ? "border-primary bg-primary/5 text-foreground font-semibold shadow-sm"
@@ -567,19 +581,20 @@ export default function PublicForm() {
                       >
                         <span className="text-base break-words flex-1 pr-2">{opt}</span>
                         <span
-                          className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
+                          className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors ${
                             isSelected
                               ? "border-primary bg-primary"
                               : "border-muted-foreground/40 group-hover:border-primary/60"
                           }`}
                         >
-                          {isSelected && <span className="w-2 h-2 rounded-full bg-background" />}
+                          {isSelected && <Check className="w-3.5 h-3.5 text-background" strokeWidth={3} />}
                         </span>
                       </button>
                     );
                   })}
                 </div>
               );
+            }
 
             case "select_list":
               return (
