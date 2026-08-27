@@ -56,8 +56,7 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId, n
     if (!newConversationPhone) return;
     setPrefilledPhone(newConversationPhone);
     setShowNewConversationDialog(true);
-    onNewConversationHandled?.();
-  }, [newConversationPhone, onNewConversationHandled]);
+  }, [newConversationPhone]);
   const [showAllReminders, setShowAllReminders] = useState(false);
   const [showQuickReplyManager, setShowQuickReplyManager] = useState(false);
   const [channelFilter, setChannelFilter] = useState<"all" | "whatsapp" | "instagram">("all");
