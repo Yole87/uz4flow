@@ -522,6 +522,7 @@ export function ContactsPane({ selectedContactId, onSelectContact, instanceId, n
           setShowNewConversationDialog(open);
           if (!open) {
             setPrefilledPhone(undefined);
+            onNewConversationHandled?.();
           }
         }}
         initialPhone={prefilledPhone}
