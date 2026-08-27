@@ -406,6 +406,8 @@ export function CRMLayout() {
           selectedContactId={selectedContactId}
           onSelectContact={handleMobileContactSelect}
           instanceId={selectedInstanceId}
+          newConversationPhone={pendingNewPhone}
+          onNewConversationHandled={handleNewConversationHandled}
         />
       )}
       
