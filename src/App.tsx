@@ -67,6 +67,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Reports = lazy(() => import("./pages/Reports"));
 const PublicForm = lazy(() => import("./pages/PublicForm"));
+const Agenda = lazy(() => import("./pages/Agenda"));
 
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -190,6 +191,7 @@ function AppRoutes() {
       <Route path="/tutorials" element={<SubscriptionGuard><PermissionGuard menu="tutorials"><Tutorials /></PermissionGuard></SubscriptionGuard>} />
       <Route path="/install" element={<SubscriptionGuard><Install /></SubscriptionGuard>} />
       <Route path="/instagram" element={<SubscriptionGuard><PermissionGuard menu="instagram"><Instagram /></PermissionGuard></SubscriptionGuard>} />
+      <Route path="/agenda" element={<SubscriptionGuard><PermissionGuard menu="agenda"><Agenda /></PermissionGuard></SubscriptionGuard>} />
       
       {/* Admin Routes - require authentication + admin_master role */}
       <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />

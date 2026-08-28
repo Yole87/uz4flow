@@ -30,7 +30,8 @@ import {
   Activity,
   Handshake,
   BarChart3,
-  Database
+  Database,
+  CalendarDays
 } from "lucide-react";
   import { Link, useLocation, useNavigate } from "react-router-dom";
  import { useAuth } from "@/lib/auth";
@@ -69,6 +70,7 @@ import { useIsAffiliateOnly } from "@/hooks/useIsAffiliateOnly";
    { title: "Base e Formulários", icon: Database, path: "/base-formularios", dataId: "base-formularios", permKey: "base_formularios" },
    { title: "MCP Gateway", icon: Server, path: "/mcp-gateway", dataId: "mcp-gateway", disabled: true, badge: "Em breve", permKey: "mcp_gateway" },
    { title: "Instagram", icon: Instagram, path: "/instagram", dataId: "instagram", permKey: "instagram" },
+   { title: "Agenda", icon: CalendarDays, path: "/agenda", dataId: "agenda", permKey: "agenda" },
 ];
 
  const crmItems = [

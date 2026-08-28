@@ -37,6 +37,9 @@ interface ScheduleEventDialogProps {
   onOpenChange: (open: boolean) => void;
   contactName: string;
   conversationId?: string;
+  existingEventId?: string;
+  existingStart?: string;
+  existingDescription?: string;
 }
 
 const DURATION_OPTIONS = [
@@ -115,15 +118,21 @@ export function ScheduleEventDialog({
   onOpenChange,
   contactName,
   conversationId,
+  existingEventId,
+  existingStart,
+  existingDescription,
 }: ScheduleEventDialogProps) {
-  const { isConnected, checkingConnection, connect, connecting, createEvent, creating } = useGoogleCalendar();
+  const { isConnected, checkingConnection, connect, connecting, createEvent, creating, updateEvent, updatingEvent } = useGoogleCalendar();
+  const isEditMode = !!existingEventId;
 
-  const [title, setTitle] = useState(`Reunião com ${contactName}`);
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState("09:00");
+  const [title, setTitle] = useState(isEditMode ? contactName : `Reunião com ${contactName}`);
+  const [date, setDate] = useState<Date | undefined>(existingStart ? new Date(existingStart) : undefined);
+  const [time, setTime] = useState(existingStart ? format(new Date(existingStart), "HH:mm") : "09:00");
   const [duration, setDuration] = useState("30");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(existingDescription ?? "");
   const [includeMeet, setIncludeMeet] = useState(true);
+
+  const submitting = isEditMode ? updatingEvent : creating;
 
   const handleSubmit = async () => {
     if (!title.trim() || !date || !time) return;
@@ -132,24 +141,37 @@ export function ScheduleEventDialog({
     const startDatetime = new Date(date);
     startDatetime.setHours(hours, minutes, 0, 0);
 
-    await createEvent({
-      title: title.trim(),
-      start_datetime: startDatetime.toISOString(),
-      duration_minutes: parseInt(duration),
-      description: description.trim() || undefined,
-      include_meet: includeMeet,
-      conversation_id: conversationId,
-      contact_name: contactName,
-    });
+    if (isEditMode) {
+      await updateEvent({
+        event_id: existingEventId!,
+        title: title.trim(),
+        start_datetime: startDatetime.toISOString(),
+        duration_minutes: parseInt(duration),
+        description: description.trim() || undefined,
+        include_meet: includeMeet,
+      });
+    } else {
+      await createEvent({
+        title: title.trim(),
+        start_datetime: startDatetime.toISOString(),
+        duration_minutes: parseInt(duration),
+        description: description.trim() || undefined,
+        include_meet: includeMeet,
+        conversation_id: conversationId,
+        contact_name: contactName,
+      });
+    }
 
     onOpenChange(false);
-    // Reset form
-    setTitle(`Reunião com ${contactName}`);
-    setDate(undefined);
-    setTime("09:00");
-    setDuration("30");
-    setDescription("");
-    setIncludeMeet(true);
+    if (!isEditMode) {
+      // Reset form
+      setTitle(`Reunião com ${contactName}`);
+      setDate(undefined);
+      setTime("09:00");
+      setDuration("30");
+      setDescription("");
+      setIncludeMeet(true);
+    }
   };
 
   return (
@@ -161,10 +183,12 @@ export function ScheduleEventDialog({
               <CalendarPlus className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <DialogTitle>Agendar Reunião</DialogTitle>
-              <DialogDescription>
-                com {contactName}
-              </DialogDescription>
+              <DialogTitle>{isEditMode ? "Editar Evento" : "Agendar Reunião"}</DialogTitle>
+              {!isEditMode && (
+                <DialogDescription>
+                  com {contactName}
+                </DialogDescription>
+              )}
             </div>
           </div>
         </DialogHeader>
@@ -275,16 +299,16 @@ export function ScheduleEventDialog({
             </div>
 
             <DialogFooter>
-              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={creating}>
+              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
                 Cancelar
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={creating || !title.trim() || !date || !time}
+                disabled={submitting || !title.trim() || !date || !time}
                 className="gap-2"
               >
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarPlus className="h-4 w-4" />}
-                {creating ? "Agendando..." : "Agendar"}
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarPlus className="h-4 w-4" />}
+                {submitting ? (isEditMode ? "Salvando..." : "Agendando...") : (isEditMode ? "Salvar" : "Agendar")}
               </Button>
             </DialogFooter>
           </>

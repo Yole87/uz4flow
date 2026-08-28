@@ -141,6 +141,11 @@ export const PERMISSION_TREE: MenuDef[] = [
     ],
   },
   {
+    key: "agenda",
+    label: "Agenda",
+    actions: [{ key: "view", label: "Visualizar" }],
+  },
+  {
     key: "automation",
     label: "Automação",
     actions: [{ key: "view", label: "Acessar Automação" }],

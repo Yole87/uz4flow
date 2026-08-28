@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserOrganization } from "./useUserOrganization";
 import { toast } from "sonner";
@@ -46,7 +46,7 @@ export function useGoogleCalendar() {
       sessionStorage.setItem("gcal_trace_ts", Date.now().toString());
 
       // Use sanitized short redirect — never send full URL with tokens
-      const redirectUrl = `${window.location.origin}/crm`;
+      const redirectUrl = `${window.location.origin}/agenda`;
 
       console.log(`[GCal-Connect] trace_id=${traceId} redirect_url=${redirectUrl}`);
 
@@ -80,6 +80,45 @@ export function useGoogleCalendar() {
     onError: (err: Error) => toast.error(err.message || "Erro ao criar evento"),
   });
 
+  const queryClient = useQueryClient();
+
+  const listEventsMutation = useMutation({
+    mutationFn: async (params: { start: string; end: string }) => {
+      if (!org?.id) throw new Error("No organization");
+      const { data, error } = await supabase.functions.invoke("google-calendar-list", {
+        body: { ...params, organization_id: org.id },
+      });
+      if (error) throw error;
+      return data?.items ?? [];
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (event_id: string) => {
+      if (!org?.id) throw new Error("No organization");
+      const { data, error } = await supabase.functions.invoke("google-calendar-delete", {
+        body: { event_id, organization_id: org.id },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => toast.success("Evento excluído"),
+    onError: (err: Error) => toast.error(err.message || "Erro ao excluir evento"),
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: async (params: { event_id: string } & CreateEventParams) => {
+      if (!org?.id) throw new Error("No organization");
+      const { data, error } = await supabase.functions.invoke("google-calendar-update", {
+        body: { ...params, organization_id: org.id },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => toast.success("Evento atualizado"),
+    onError: (err: Error) => toast.error(err.message || "Erro ao atualizar evento"),
+  });
+
   return {
     isConnected: !!isConnected,
     checkingConnection,
@@ -87,5 +126,11 @@ export function useGoogleCalendar() {
     connecting: connectMutation.isPending,
     createEvent: createEventMutation.mutateAsync,
     creating: createEventMutation.isPending,
+    listEvents: listEventsMutation.mutateAsync,
+    listingEvents: listEventsMutation.isPending,
+    deleteEvent: deleteEventMutation.mutateAsync,
+    deletingEvent: deleteEventMutation.isPending,
+    updateEvent: updateEventMutation.mutateAsync,
+    updatingEvent: updateEventMutation.isPending,
   };
 }
