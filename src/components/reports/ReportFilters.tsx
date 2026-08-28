@@ -72,7 +72,7 @@ export function ReportFilters({
   const dateRange: DateRange = { from: period.start, to: period.end };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 min-w-0">
       <Select
         value={period.preset}
         onValueChange={(v) => {
@@ -101,7 +101,7 @@ export function ReportFilters({
             <Button
               variant="outline"
               size="sm"
-              className={cn("h-9 gap-1.5 text-xs", !dateRange.from && "text-muted-foreground")}
+              className={cn("h-9 gap-1.5 text-xs sm:text-sm", !dateRange.from && "text-muted-foreground")}
             >
               <CalendarIcon className="h-3.5 w-3.5" />
               {dateRange.from && dateRange.to

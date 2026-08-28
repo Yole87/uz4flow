@@ -64,7 +64,7 @@ export function FunnelTab({ organizationId, period, instanceId }: FunnelTabProps
     <div className="space-y-4">
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
         <Card>
-          <CardContent className="pt-5 pb-4 px-4">
+          <CardContent className="pt-5 pb-4 px-3 sm:px-4">
             <span className="text-xs font-medium text-muted-foreground">Total no funil</span>
             <div className="text-2xl font-bold tracking-tight">{data.totalContacts}</div>
             <p className="text-xs text-muted-foreground mt-1.5">contatos cadastrados</p>
@@ -111,22 +111,24 @@ export function FunnelTab({ organizationId, period, instanceId }: FunnelTabProps
       {data.pipelines.map((pipeline) => (
         <Card key={pipeline.id}>
           <CardContent className="pt-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <Kanban className="h-4 w-4 text-primary" />
-                {pipeline.name}
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2 min-w-0">
+                <Kanban className="h-4 w-4 text-primary shrink-0" />
+                <span className="truncate">{pipeline.name}</span>
               </h3>
-              <ExportButton
-                fileName={funnelFile}
-                rows={allStages}
-                columns={[
-                  { key: "pipeline", label: "Funil" },
-                  { key: "stage", label: "Estágio" },
-                  { key: "count", label: "Quantidade" },
-                  { key: "conversion", label: "Conversão" },
-                  { key: "bottleneck", label: "Gargalo" },
-                ]}
-              />
+              <div className="shrink-0">
+                <ExportButton
+                  fileName={funnelFile}
+                  rows={allStages}
+                  columns={[
+                    { key: "pipeline", label: "Funil" },
+                    { key: "stage", label: "Estágio" },
+                    { key: "count", label: "Quantidade" },
+                    { key: "conversion", label: "Conversão" },
+                    { key: "bottleneck", label: "Gargalo" },
+                  ]}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -178,25 +180,27 @@ export function FunnelTab({ organizationId, period, instanceId }: FunnelTabProps
 
       <Card>
         <CardContent className="pt-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              Leads estagnados (mais de 7 dias sem movimento)
-              <Badge variant="outline" className="text-xs">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
+              <span className="truncate">Leads estagnados (mais de 7 dias sem movimento)</span>
+              <Badge variant="outline" className="text-xs shrink-0">
                 {data.stagnant.length}
               </Badge>
             </h3>
-            <ExportButton
-              fileName={stagnantFile}
-              rows={data.stagnant}
-              columns={[
-                { key: "name", label: "Contato" },
-                { key: "stage", label: "Estágio" },
-                { key: "assignedTo", label: "Responsável" },
-                { key: "daysStagnant", label: "Dias parado" },
-                { key: "updatedAt", label: "Última atualização" },
-              ]}
-            />
+            <div className="shrink-0">
+              <ExportButton
+                fileName={stagnantFile}
+                rows={data.stagnant}
+                columns={[
+                  { key: "name", label: "Contato" },
+                  { key: "stage", label: "Estágio" },
+                  { key: "assignedTo", label: "Responsável" },
+                  { key: "daysStagnant", label: "Dias parado" },
+                  { key: "updatedAt", label: "Última atualização" },
+                ]}
+              />
+            </div>
           </div>
 
           {data.stagnant.length === 0 ? (

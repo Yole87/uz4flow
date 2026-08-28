@@ -378,7 +378,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
         </div>
 
         {/* Right Panel - Step Details & Fields */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="md:col-span-2 space-y-6 min-w-0">
           {activeStep ? (
             <div className="space-y-6">
               {/* Step Meta Settings */}
@@ -387,7 +387,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                   Configurações do Passo
                 </h3>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
                   <div className="space-y-1.5">
                     <Label htmlFor="step-title">Título do passo</Label>
                     <Input
@@ -427,7 +427,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 min-w-0">
                     <div className="space-y-1.5">
                       <Label>Tipo de mídia</Label>
                       <Select

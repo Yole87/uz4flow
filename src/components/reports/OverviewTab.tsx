@@ -74,7 +74,7 @@ export function OverviewTab({ organizationId, period, instanceId }: OverviewTabP
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-24" />
           ))}
@@ -154,7 +154,7 @@ export function OverviewTab({ organizationId, period, instanceId }: OverviewTabP
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {cards.map((c) => (
           <Card key={c.label}>
             <CardContent className="pt-5 pb-4 px-4">
