@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -4320,8 +4320,10 @@ export type Database = {
       prospect_sources: {
         Row: {
           created_at: string
+          deleted_at: string | null
           id: string
           is_active: boolean
+          is_deleted: boolean
           name: string
           organization_id: string
           updated_at: string
@@ -4329,8 +4331,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_active?: boolean
+          is_deleted?: boolean
           name: string
           organization_id: string
           updated_at?: string
@@ -4338,8 +4342,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_active?: boolean
+          is_deleted?: boolean
           name?: string
           organization_id?: string
           updated_at?: string
@@ -5455,6 +5461,182 @@ export type Database = {
         }
         Relationships: []
       }
+      uz_form_fields: {
+        Row: {
+          created_at: string
+          field_order: number
+          field_type: string
+          id: string
+          is_required: boolean
+          key_name: string
+          label: string
+          options: Json
+          step_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_order?: number
+          field_type: string
+          id?: string
+          is_required?: boolean
+          key_name: string
+          label: string
+          options?: Json
+          step_id: string
+        }
+        Update: {
+          created_at?: string
+          field_order?: number
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          key_name?: string
+          label?: string
+          options?: Json
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uz_form_fields_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "uz_form_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uz_form_responses: {
+        Row: {
+          form_id: string
+          id: string
+          ip_address: string | null
+          organization_id: string
+          response_data: Json
+          submitted_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          form_id: string
+          id?: string
+          ip_address?: string | null
+          organization_id: string
+          response_data?: Json
+          submitted_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          form_id?: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string
+          response_data?: Json
+          submitted_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uz_form_responses_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "uz_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uz_form_steps: {
+        Row: {
+          created_at: string
+          description: string | null
+          form_id: string
+          id: string
+          media_type: string
+          media_url: string | null
+          step_order: number
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          form_id: string
+          id?: string
+          media_type?: string
+          media_url?: string | null
+          step_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          form_id?: string
+          id?: string
+          media_type?: string
+          media_url?: string | null
+          step_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uz_form_steps_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "uz_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uz_forms: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          is_deleted: boolean
+          name: string
+          organization_id: string
+          settings: Json
+          slug: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name: string
+          organization_id: string
+          settings?: Json
+          slug: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name?: string
+          organization_id?: string
+          settings?: Json
+          slug?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uz_forms_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visual_scrape_sessions: {
         Row: {
           completed_at: string | null
@@ -6041,6 +6223,7 @@ export type Database = {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       generate_affiliate_code: { Args: never; Returns: string }
       get_cron_secret: { Args: never; Returns: string }
+      get_public_form: { Args: { p_token: string }; Returns: Json }
       get_user_id_by_email: { Args: { p_email: string }; Returns: string }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_organization_ids: {

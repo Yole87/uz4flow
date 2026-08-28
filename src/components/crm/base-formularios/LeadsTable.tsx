@@ -607,7 +607,7 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
     }
     const phone = getPhoneFromLead(lead);
     if (!phone) return;
-    navigate("/crm", { state: { openNewConversation: true, phone } });
+    navigate(`/crm?new_conversation_phone=${String(phone).replace(/\D/g, "")}`);
   };
 
   const hasPhoneField = (lead: ProspectLead) =>
@@ -794,15 +794,17 @@ export function LeadsTable({ source, columns }: LeadsTableProps) {
                 <TableHeader className="sticky top-0 bg-muted/80 z-10">
                   <TableRow className="border-border hover:bg-muted/50">
                     <TableHead className="w-12 text-center p-2">
-                      <Checkbox
-                        checked={
-                          filteredLeads.length > 0 &&
-                          (filteredLeads.every((lead) => selectedIds.includes(lead.id))
+                    <Checkbox
+                      checked={
+                        filteredLeads.length > 0
+                          ? filteredLeads.every((lead) => selectedIds.includes(lead.id))
                             ? true
                             : filteredLeads.some((lead) => selectedIds.includes(lead.id))
                             ? "indeterminate"
-                            : false)
-                        }
+                            : false
+                          : false
+                      }
+
                         onCheckedChange={(checked) => {
                           if (checked) {
                             setSelectedIds((prev) => {

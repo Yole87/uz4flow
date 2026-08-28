@@ -158,11 +158,11 @@ export function BaseFormulariosLayout() {
         <TabsList className="bg-background border border-border/50">
           <TabsTrigger value="webhooks" className="gap-2">
             <Globe className="h-4 w-4" />
-            Webhooks
+            Via Cadastros
           </TabsTrigger>
           <TabsTrigger value="formularios" className="gap-2">
             <FileText className="h-4 w-4" />
-            Formulários
+            Via Uz4Forms
           </TabsTrigger>
         </TabsList>
 

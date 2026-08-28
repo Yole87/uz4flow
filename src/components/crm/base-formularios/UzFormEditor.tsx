@@ -10,10 +10,15 @@ import {
   updateField,
   deleteField,
   reorderFields,
+  updateForm,
+  uploadToBucket,
 } from "@/services/uzFormService";
 import { supabase } from "@/integrations/supabase/client";
 import type { UzForm, UzFormStep, UzFormField, UzFormFieldType, UzFormMediaType } from "@/types/uzForm";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
+import { useOrganizationLimits } from "@/hooks/useOrganizationLimits";
+import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,16 +69,16 @@ interface UzFormEditorProps {
 }
 
 const FIELD_TYPES = [
-  { type: "name", label: "Nome completo", icon: User },
+  { type: "name", label: "Nome Completo", icon: User },
   { type: "email", label: "E-mail", icon: Mail },
   { type: "phone", label: "Celular / WhatsApp", icon: Phone },
-  { type: "short_text", label: "Texto curto", icon: AlignLeft },
-  { type: "long_text", label: "Texto longo", icon: FileText },
+  { type: "short_text", label: "Texto Curto", icon: AlignLeft },
+  { type: "long_text", label: "Texto Longo", icon: FileText },
   { type: "date", label: "Data", icon: Calendar },
-  { type: "multiple_choice", label: "Múltipla escolha (Radio)", icon: CheckSquare },
-  { type: "select_list", label: "Lista de seleção (Dropdown)", icon: List },
-  { type: "file_upload", label: "Upload de arquivo", icon: Upload },
-  { type: "address", label: "Endereço completo", icon: MapPin },
+  { type: "multiple_choice", label: "Múltipla Escolha", icon: CheckSquare },
+  { type: "select_list", label: "Seleção", icon: List },
+  { type: "file_upload", label: "Upload de Arquivo", icon: Upload },
+  { type: "address", label: "Endereço", icon: MapPin },
   { type: "cpf", label: "CPF", icon: CreditCard },
   { type: "cnpj", label: "CNPJ", icon: Building },
 ] as const;
@@ -82,6 +87,7 @@ function getFieldIcon(type: UzFormFieldType) {
   const match = FIELD_TYPES.find((f) => f.type === type);
   return match ? match.icon : AlignLeft;
 }
+
 
 function getYouTubeId(url: string): string | null {
   if (!url) return null;
@@ -98,6 +104,64 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [newOptionText, setNewOptionText] = useState("");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEndingOpen, setIsEndingOpen] = useState(false);
+  const [slugDraft, setSlugDraft] = useState(form.slug || "");
+
+  // Local drafts for text inputs (saved on blur, not on every keystroke)
+  const [stepDrafts, setStepDrafts] = useState<Record<string, Partial<UzFormStep>>>({});
+  const [fieldDrafts, setFieldDrafts] = useState<Record<string, Partial<UzFormField>>>({});
+
+  const { hasFeature } = useOrganizationLimits();
+  const { plan } = useOrganizationSubscription();
+  const planLimits = (plan?.limits ?? {}) as Record<string, unknown>;
+  const watermarkMode = (planLimits.uz_forms_watermark_mode as string) || "platform";
+  const canCustomSlug =
+    (planLimits.uz_forms_allow_custom_slug as boolean) ?? (hasFeature("uz_forms") || false);
+
+  const settings = (form.settings ?? {}) as Record<string, string | undefined>;
+  const [endingDraft, setEndingDraft] = useState({
+    ending_type: settings.ending_type || "thank_you",
+    ending_message:
+      settings.ending_message || "Obrigado! Suas respostas foram enviadas com sucesso.",
+    ending_whatsapp_number: settings.ending_whatsapp_number || "",
+    ending_whatsapp_message: settings.ending_whatsapp_message || "",
+    watermark_text: settings.watermark_text || "",
+  });
+
+  const updateFormMutation = useMutation({
+    mutationFn: (slug: string) => updateForm(form.id, { slug }),
+    onSuccess: (updated) => {
+      const newSlug = updated?.slug ?? slugDraft.trim();
+      setSlugDraft(newSlug);
+      // Reflete o novo slug imediatamente (link alternativo) sem recarregar.
+      queryClient.setQueryData(["uz-form", form.id], (old: UzForm | undefined) =>
+        old ? { ...old, slug: newSlug } : old,
+      );
+      queryClient.invalidateQueries({ queryKey: ["uz-form", form.id] });
+      queryClient.invalidateQueries({ queryKey: ["uz-forms"] });
+      toast.success("Link personalizado salvo!");
+    },
+    onError: () => toast.error("Não foi possível salvar o link. Ele pode já estar em uso."),
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: (patch: Record<string, unknown>) =>
+      updateForm(form.id, {
+        settings: { ...(form.settings ?? {}), ...patch } as Record<string, unknown>,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["uz-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["uz-form", form.id] });
+    },
+    onError: () => toast.error("Erro ao salvar configurações"),
+  });
+
+  const saveSetting = (key: string, value: string) => {
+    if ((settings[key] || "") === value) return;
+    updateSettingsMutation.mutate({ [key]: value });
+  };
+
 
   const { data: steps = [], isLoading } = useQuery({
     queryKey: ["uz-form-steps", form.id],
@@ -181,7 +245,31 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     },
   });
 
+  // Draft helpers (type locally, persist on blur)
+  const setStepDraft = (id: string, patch: Partial<UzFormStep>) =>
+    setStepDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+
+  const commitStep = (step: UzFormStep, patch: Partial<UzFormStep>) => {
+    const changed = Object.entries(patch).some(
+      ([key, value]) => (step[key as keyof UzFormStep] ?? "") !== (value ?? ""),
+    );
+    if (!changed) return;
+    updateStepMutation.mutate({ id: step.id, data: patch });
+  };
+
+  const setFieldDraft = (id: string, patch: Partial<UzFormField>) =>
+    setFieldDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+
+  const commitField = (field: UzFormField, patch: Partial<UzFormField>) => {
+    const changed = Object.entries(patch).some(
+      ([key, value]) => (field[key as keyof UzFormField] ?? "") !== (value ?? ""),
+    );
+    if (!changed) return;
+    updateFieldMutation.mutate({ id: field.id, data: patch });
+  };
+
   // Reorder Handlers
+
   const moveStepHandler = async (index: number, direction: "up" | "down") => {
     const newIndex = direction === "up" ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= steps.length) return;
@@ -224,23 +312,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
       const fileExt = file.name.split(".").pop();
       const filePath = `${form.id}/${crypto.randomUUID()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("form-images")
-        .upload(filePath, file);
-
-      if (uploadError && (uploadError as any).message?.includes("bucket")) {
-        await supabase.storage.createBucket("form-images", { public: true });
-        const { error: retryError } = await supabase.storage
-          .from("form-images")
-          .upload(filePath, file);
-        if (retryError) throw retryError;
-      } else if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("form-images")
-        .getPublicUrl(filePath);
+      const publicUrl = await uploadToBucket("form-images", filePath, file);
 
       await updateStepMutation.mutateAsync({
         id: activeStep.id,
@@ -268,7 +340,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
       field: {
         step_id: activeStep.id,
         field_type: type,
-        label: `Campo de ${FIELD_TYPES.find((f) => f.type === type)?.label || type}`,
+        label: FIELD_TYPES.find((f) => f.type === type)?.label || type,
         key_name,
         is_required: false,
         options: [],
@@ -392,13 +464,9 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                     <Label htmlFor="step-title">Título do passo</Label>
                     <Input
                       id="step-title"
-                      value={activeStep.title || ""}
-                      onChange={(e) =>
-                        updateStepMutation.mutate({
-                          id: activeStep.id,
-                          data: { title: e.target.value },
-                        })
-                      }
+                      value={stepDrafts[activeStep.id]?.title ?? activeStep.title ?? ""}
+                      onChange={(e) => setStepDraft(activeStep.id, { title: e.target.value })}
+                      onBlur={(e) => commitStep(activeStep, { title: e.target.value })}
                       placeholder="Ex: Dados Pessoais"
                     />
                   </div>
@@ -406,17 +474,14 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                     <Label htmlFor="step-description">Descrição / Subtítulo</Label>
                     <Input
                       id="step-description"
-                      value={activeStep.description || ""}
-                      onChange={(e) =>
-                        updateStepMutation.mutate({
-                          id: activeStep.id,
-                          data: { description: e.target.value },
-                        })
-                      }
+                      value={stepDrafts[activeStep.id]?.description ?? activeStep.description ?? ""}
+                      onChange={(e) => setStepDraft(activeStep.id, { description: e.target.value })}
+                      onBlur={(e) => commitStep(activeStep, { description: e.target.value })}
                       placeholder="Ex: Preencha com seus dados de contato"
                     />
                   </div>
                 </div>
+
 
                 {/* Media Section */}
                 <div className="border-t border-border pt-4 space-y-4">
@@ -464,12 +529,15 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                             />
                             {isUploading && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
                           </div>
+                          <p className="text-xs text-muted-foreground">
+                            Recomendado: 1280×720px (proporção 16:9), máximo 2MB. A imagem será exibida na proporção 16:9.
+                          </p>
                           {activeStep.media_url && (
                             <div className="relative mt-2 border border-border rounded-lg overflow-hidden max-w-[200px]">
                               <img
                                 src={activeStep.media_url}
                                 alt="Mídia do Passo"
-                                className="w-full h-auto object-cover max-h-32"
+                                className="aspect-video w-full object-cover"
                               />
                             </div>
                           )}
@@ -481,15 +549,12 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                           <Label>Link do vídeo do YouTube</Label>
                           <Input
                             type="text"
-                            value={activeStep.media_url || ""}
-                            onChange={(e) =>
-                              updateStepMutation.mutate({
-                                id: activeStep.id,
-                                data: { media_url: e.target.value },
-                              })
-                            }
+                            value={stepDrafts[activeStep.id]?.media_url ?? activeStep.media_url ?? ""}
+                            onChange={(e) => setStepDraft(activeStep.id, { media_url: e.target.value })}
+                            onBlur={(e) => commitStep(activeStep, { media_url: e.target.value })}
                             placeholder="Ex: https://www.youtube.com/watch?v=..."
                           />
+
                           {activeStep.media_url && getYouTubeId(activeStep.media_url) && (
                             <div className="relative aspect-video rounded-lg overflow-hidden border border-border mt-2 max-w-[320px]">
                               <iframe
@@ -531,12 +596,15 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                             <Button
                               key={field.type}
                               variant="outline"
-                              className="flex flex-col gap-2 h-24 border-border hover:border-accent hover:bg-accent/5 justify-center items-center text-center p-2"
+                              className="flex flex-col gap-2 h-24 min-h-24 whitespace-normal border-border hover:border-accent hover:bg-accent/5 justify-center items-center p-2"
                               onClick={() => handleAddField(field.type)}
                             >
-                              <Icon className="h-5 w-5 text-accent" />
-                              <span className="text-xs font-medium text-foreground">{field.label}</span>
+                              <Icon className="h-5 w-5 text-accent shrink-0" />
+                              <span className="text-xs font-medium text-foreground text-center break-words leading-tight">
+                                {field.label}
+                              </span>
                             </Button>
+
                           );
                         })}
                       </div>
@@ -644,14 +712,11 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                 <div className="space-y-1.5">
                                   <Label>Rótulo (Label)</Label>
                                   <Input
-                                    value={field.label}
-                                    onChange={(e) =>
-                                      updateFieldMutation.mutate({
-                                        id: field.id,
-                                        data: { label: e.target.value },
-                                      })
-                                    }
+                                    value={fieldDrafts[field.id]?.label ?? field.label}
+                                    onChange={(e) => setFieldDraft(field.id, { label: e.target.value })}
+                                    onBlur={(e) => commitField(field, { label: e.target.value })}
                                   />
+
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -671,16 +736,19 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                     </TooltipProvider>
                                   </div>
                                   <Input
-                                    value={field.key_name}
+                                    value={fieldDrafts[field.id]?.key_name ?? field.key_name}
                                     onChange={(e) => {
                                       // enforce alphanumeric and underscore only
                                       const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
-                                      updateFieldMutation.mutate({
-                                        id: field.id,
-                                        data: { key_name: sanitized },
-                                      });
+                                      setFieldDraft(field.id, { key_name: sanitized });
+                                    }}
+                                    onBlur={(e) => {
+                                      const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                                      if (!sanitized) return;
+                                      commitField(field, { key_name: sanitized });
                                     }}
                                   />
+
                                 </div>
                               </div>
 
@@ -692,9 +760,30 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                     {(field.options || []).map((option, oIdx) => (
                                       <div
                                         key={oIdx}
-                                        className="flex items-center justify-between bg-card border border-border p-2 rounded-md"
+                                        className="flex items-center justify-between gap-2 bg-card border border-border p-2 rounded-md"
                                       >
-                                        <span className="text-xs font-medium text-foreground">{option}</span>
+                                        <Input
+                                          key={`${field.id}-${oIdx}-${option}`}
+                                          defaultValue={option}
+                                          className="h-7 text-xs bg-background border-border flex-1"
+                                          onBlur={(e) => {
+                                            const next = e.target.value.trim();
+                                            if (!next || next === option) {
+                                              e.target.value = option;
+                                              return;
+                                            }
+                                            const updatedOpts = [...field.options];
+                                            updatedOpts[oIdx] = next;
+                                            updateFieldMutation.mutate({
+                                              id: field.id,
+                                              data: { options: updatedOpts },
+                                            });
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") e.currentTarget.blur();
+                                          }}
+                                        />
+
                                         <div className="flex items-center gap-1">
                                           <Button
                                             variant="ghost"
@@ -800,6 +889,223 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
               </p>
             </div>
           )}
+
+          {/* Form Settings (slug) */}
+          <div className="border border-border rounded-lg bg-card">
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <h3 className="font-semibold text-foreground">Configurações do Formulário</h3>
+              {isSettingsOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {isSettingsOpen && (
+              <div className="px-4 pb-5 space-y-3 border-t border-border pt-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="form-slug">Link personalizado (slug)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground shrink-0">/f/</span>
+                    <Input
+                      id="form-slug"
+                      value={slugDraft}
+                      disabled={!canCustomSlug}
+                      placeholder="meu-formulario"
+                      onChange={(e) =>
+                        setSlugDraft(
+                          e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9-]/g, "-")
+                            .replace(/-+/g, "-"),
+                        )
+                      }
+                      className="bg-background border-border"
+                    />
+                    <Button
+                      size="sm"
+                      disabled={!canCustomSlug || updateFormMutation.isPending || !slugDraft.trim()}
+                      onClick={() => updateFormMutation.mutate(slugDraft.trim())}
+                    >
+                      {updateFormMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Salvar"
+                      )}
+                    </Button>
+                  </div>
+                  {!canCustomSlug ? (
+                    <p className="text-xs text-muted-foreground">
+                      Link personalizado disponível apenas em planos superiores.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Use apenas letras minúsculas, números e hífens.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Link principal (permanente)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      readOnly
+                      value={`${window.location.origin}/f/${form.token}`}
+                      className="bg-muted/40 border-border text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-border"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/f/${form.token}`);
+                        toast.success("Link copiado!");
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Este link nunca muda, mesmo que o slug seja alterado.
+                  </p>
+                </div>
+
+                {form.slug && (
+                  <div className="space-y-1.5">
+                    <Label>Link alternativo (slug)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        readOnly
+                        value={`${window.location.origin}/f/${form.slug}`}
+                        className="bg-muted/40 border-border text-xs"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-border"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/f/${form.slug}`);
+                          toast.success("Link copiado!");
+                        }}
+                      >
+                        Copiar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {watermarkMode === "tenant_choice" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="watermark-text">Marca d'água do formulário</Label>
+                    <Input
+                      id="watermark-text"
+                      value={endingDraft.watermark_text}
+                      placeholder="Ex: Feito por Minha Empresa"
+                      onChange={(e) =>
+                        setEndingDraft((d) => ({ ...d, watermark_text: e.target.value }))
+                      }
+                      onBlur={(e) => saveSetting("watermark_text", e.target.value)}
+                      className="bg-background border-border"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Deixe em branco para não exibir nenhuma marca d'água.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Ending screen */}
+          <div className="border border-border rounded-lg bg-card">
+            <button
+              type="button"
+              onClick={() => setIsEndingOpen((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <h3 className="font-semibold text-foreground">Tela Final</h3>
+              {isEndingOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {isEndingOpen && (
+              <div className="px-4 pb-5 space-y-3 border-t border-border pt-4">
+                <div className="space-y-1.5">
+                  <Label>O que acontece após o envio?</Label>
+                  <Select
+                    value={endingDraft.ending_type}
+                    onValueChange={(v) => {
+                      setEndingDraft((d) => ({ ...d, ending_type: v }));
+                      saveSetting("ending_type", v);
+                    }}
+                  >
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="thank_you">Mensagem de agradecimento</SelectItem>
+                      <SelectItem value="whatsapp">Botão de WhatsApp</SelectItem>
+                      <SelectItem value="both">Mensagem + botão de WhatsApp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(endingDraft.ending_type === "thank_you" || endingDraft.ending_type === "both") && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ending-message">Mensagem de agradecimento</Label>
+                    <Input
+                      id="ending-message"
+                      value={endingDraft.ending_message}
+                      onChange={(e) =>
+                        setEndingDraft((d) => ({ ...d, ending_message: e.target.value }))
+                      }
+                      onBlur={(e) => saveSetting("ending_message", e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                )}
+
+                {(endingDraft.ending_type === "whatsapp" || endingDraft.ending_type === "both") && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ending-wa">Número de WhatsApp</Label>
+                      <Input
+                        id="ending-wa"
+                        value={endingDraft.ending_whatsapp_number}
+                        placeholder="+55 11 91234-5678"
+                        onChange={(e) =>
+                          setEndingDraft((d) => ({ ...d, ending_whatsapp_number: e.target.value }))
+                        }
+                        onBlur={(e) => saveSetting("ending_whatsapp_number", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ending-wa-msg">Mensagem pré-preenchida</Label>
+                      <Input
+                        id="ending-wa-msg"
+                        value={endingDraft.ending_whatsapp_message}
+                        placeholder="Olá! Acabei de preencher o formulário."
+                        onChange={(e) =>
+                          setEndingDraft((d) => ({ ...d, ending_whatsapp_message: e.target.value }))
+                        }
+                        onBlur={(e) => saveSetting("ending_whatsapp_message", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

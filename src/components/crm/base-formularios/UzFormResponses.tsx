@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Download, Inbox, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Filter } from "lucide-react";
+import { Loader2, Download, Inbox, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Filter, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface UzFormResponsesProps {
@@ -38,6 +38,11 @@ interface UzFormResponsesProps {
 }
 
 const PAGE_SIZE = 50;
+
+/** Detecta valores que são links (ex.: arquivos enviados no formulário). */
+function isUrlValue(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
 
 function formatDateBR(iso: string): string {
   const d = new Date(iso);
@@ -109,7 +114,9 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
   // Update last visit timestamp when viewing
   useEffect(() => {
     localStorage.setItem(`last_visit_form_${formId}`, new Date().toISOString());
-  }, [formId]);
+    queryClient.invalidateQueries({ queryKey: ["uz-form-new-responses-count"] });
+    queryClient.invalidateQueries({ queryKey: ["prospect-total-new-leads"] });
+  }, [formId, queryClient]);
 
   // 1. Fetch form steps and fields to dynamically generate columns
   const { data: steps = [], isLoading: isLoadingSteps } = useQuery({
@@ -329,7 +336,7 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
   const handleIniciarConversa = (res: UzFormResponse) => {
     const phone = getPhoneFromResponse(res, orderedFields);
     if (!phone) return;
-    navigate(`/crm?new_conversation_phone=${phone}`);
+    navigate(`/crm?new_conversation_phone=${String(phone).replace(/\D/g, "")}`);
   };
 
   const hasPhoneField = (res: UzFormResponse) =>
@@ -797,20 +804,23 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
 
       {/* Responses Data Table */}
       <div className="rounded-lg border border-border overflow-hidden bg-card">
-        <div className="overflow-x-auto max-h-[calc(100vh-320px)]">
-          <Table>
+        <div className="w-full max-w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)]">
+          <Table className="min-w-max">
+
             <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur z-10">
               <TableRow className="border-border hover:bg-muted/50">
                 <TableHead className="w-12 text-center p-2">
                   <Checkbox
                     checked={
-                      filteredResponses.length > 0 &&
-                      (filteredResponses.every((res) => selectedIds.includes(res.id))
-                        ? true
-                        : filteredResponses.some((res) => selectedIds.includes(res.id))
-                        ? "indeterminate"
-                        : false)
+                      filteredResponses.length > 0
+                        ? filteredResponses.every((res) => selectedIds.includes(res.id))
+                          ? true
+                          : filteredResponses.some((res) => selectedIds.includes(res.id))
+                          ? "indeterminate"
+                          : false
+                        : false
                     }
+
                     onCheckedChange={(checked) => {
                       if (checked) {
                         setSelectedIds((prev) => {
@@ -871,13 +881,13 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                 {orderedFields.map((field) => (
                   <TableHead
                     key={field.id}
-                    className="text-muted-foreground text-xs whitespace-nowrap min-w-[140px]"
+                    className="text-muted-foreground text-xs align-top whitespace-normal break-words min-w-[140px] max-w-[220px]"
                   >
-                    <div className="flex items-center gap-1.5 justify-between font-semibold">
+                    <div className="flex items-start gap-1.5 justify-between font-semibold">
                       <button
                         type="button"
                         onClick={() => handleSort(field.key_name)}
-                        className="flex items-center gap-1 hover:text-foreground font-semibold"
+                        className="flex items-start gap-1 hover:text-foreground font-semibold text-left whitespace-normal break-words leading-snug line-clamp-2"
                       >
                         {field.label}
                         {sortColumn === field.key_name && (
@@ -945,9 +955,26 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                   </TableCell>
                   {orderedFields.map((field) => {
                     const value = res.response_data[field.key_name];
+                    const text = value === undefined || value === null ? "" : String(value);
                     return (
-                      <TableCell key={field.id} className="text-sm">
-                        {value !== undefined && value !== "" ? value : <span className="text-muted-foreground/45">—</span>}
+                      <TableCell key={field.id} className="text-sm max-w-[220px]">
+                        {text === "" ? (
+                          <span className="text-muted-foreground/45">—</span>
+                        ) : isUrlValue(text) ? (
+                          <a
+                            href={text}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            Ver arquivo
+                          </a>
+                        ) : (
+                          <span className="block truncate" title={text}>
+                            {text}
+                          </span>
+                        )}
                       </TableCell>
                     );
                   })}
