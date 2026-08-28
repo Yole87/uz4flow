@@ -135,7 +135,7 @@ export function FunnelTab({ organizationId, period, instanceId }: FunnelTabProps
                 const widthPct = (stage.count / max) * 100;
                 return (
                   <div key={stage.id} className="flex items-center gap-3">
-                    <div className="w-32 text-xs font-medium truncate flex items-center gap-1.5">
+                    <div className="w-24 sm:w-32 text-xs font-medium truncate flex items-center gap-1.5">
                       <span
                         className="h-2 w-2 rounded-full shrink-0"
                         style={{ background: stage.color || "hsl(var(--primary))" }}
@@ -152,7 +152,7 @@ export function FunnelTab({ organizationId, period, instanceId }: FunnelTabProps
                         <span className="text-xs font-bold text-foreground">{stage.count}</span>
                       </div>
                     </div>
-                    <div className="w-24 flex items-center gap-1 justify-end text-xs">
+                    <div className="w-16 sm:w-24 flex items-center gap-1 justify-end text-xs">
                       {stage.conversionPct !== null ? (
                         <>
                           <span className={stage.isBottleneck ? "text-destructive font-semibold" : "text-muted-foreground"}>
@@ -204,7 +204,8 @@ export function FunnelTab({ organizationId, period, instanceId }: FunnelTabProps
               Nenhum lead estagnado. Equipe está em dia! 🎉
             </p>
           ) : (
-            <div className="border border-border/50 rounded-md overflow-hidden">
+            <div className="overflow-x-auto">
+          <div className="border border-border/50 rounded-md overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -239,6 +240,7 @@ export function FunnelTab({ organizationId, period, instanceId }: FunnelTabProps
                 </p>
               )}
             </div>
+          </div>
           )}
         </CardContent>
       </Card>

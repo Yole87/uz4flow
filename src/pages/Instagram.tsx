@@ -106,11 +106,13 @@ export default function InstagramPage() {
             </TabsTrigger>
             <TabsTrigger value="templates" className="gap-1.5 shrink-0 text-xs sm:text-sm">
               <FileText className="h-3.5 w-3.5" />
-              Templates
+              <span className="hidden sm:inline">Templates</span>
+              <span className="sm:hidden">Templ.</span>
             </TabsTrigger>
             <TabsTrigger value="insights" className="gap-1.5 shrink-0 text-xs sm:text-sm">
               <BarChart3 className="h-3.5 w-3.5" />
-              Insights
+              <span className="hidden sm:inline">Insights</span>
+              <span className="sm:hidden">Insight</span>
             </TabsTrigger>
             <TabsTrigger value="logs" className="gap-1.5 shrink-0 text-xs sm:text-sm">
               <ListChecks className="h-3.5 w-3.5" />

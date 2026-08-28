@@ -124,17 +124,17 @@ export function BaseFormulariosLayout() {
   return (
     <div className="space-y-6">
       {/* Header row */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">Base e Formulários</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
+      <div className="flex items-center justify-between gap-x-4">
+        <div className="min-w-0">
+          <h2 className="text-xl font-semibold text-foreground truncate">Base e Formulários</h2>
+          <p className="text-sm text-muted-foreground mt-0.5 truncate">
             Gerencie fontes de webhooks e crie formulários multi-etapa personalizados.
           </p>
         </div>
         {activeTab === "webhooks" ? (
           <Button
             onClick={() => setCreateOpen(true)}
-            className="gradient-primary hover:opacity-90 text-primary-foreground"
+            className="gradient-primary hover:opacity-90 text-primary-foreground shrink-0 whitespace-nowrap"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nova Fonte
@@ -142,7 +142,7 @@ export function BaseFormulariosLayout() {
         ) : (
           <Button
             onClick={handleCreateFormClick}
-            className="gradient-primary hover:opacity-90 text-primary-foreground"
+            className="gradient-primary hover:opacity-90 text-primary-foreground shrink-0 whitespace-nowrap"
           >
             <Plus className="h-4 w-4 mr-2" />
             Novo Formulário

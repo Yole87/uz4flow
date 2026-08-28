@@ -511,11 +511,11 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
 
               {/* Fields Section */}
               <div className="border border-border rounded-lg p-5 bg-card space-y-4">
-                <div className="flex items-center justify-between border-b border-border pb-2">
+                <div className="flex items-center justify-between border-b border-border pb-2 min-w-0">
                   <h3 className="font-semibold text-foreground">Campos do Passo</h3>
                   <Dialog open={isAddFieldOpen} onOpenChange={setIsAddFieldOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" className="gradient-primary text-primary-foreground">
+                      <Button size="sm" className="gradient-primary text-primary-foreground shrink-0">
                         <Plus className="h-4 w-4 mr-1.5" />
                         Adicionar campo
                       </Button>
@@ -573,7 +573,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                               <span className="font-medium text-sm text-foreground truncate">
                                 {field.label}
                               </span>
-                              <span className="text-xs text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded border border-border">
+                              <span className="hidden sm:inline-flex text-xs text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded border border-border">
                                 {field.key_name}
                               </span>
                             </div>

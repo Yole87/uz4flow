@@ -280,6 +280,16 @@ export function CRMLayout() {
             </Button>
           </DropdownMenuTrigger>
            <DropdownMenuContent align="end" className="bg-card border-border">
+            <DropdownMenuItem
+              onClick={() => setSoundEnabled(!soundEnabled)}
+            >
+              {soundEnabled ? <Bell className="h-4 w-4 mr-2" /> : <BellOff className="h-4 w-4 mr-2 opacity-60" />}
+              {soundEnabled ? "Desativar notificações" : "Ativar notificações"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => testSound()}>
+              <Volume2 className="h-4 w-4 mr-2" />
+              Testar som
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

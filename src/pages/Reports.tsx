@@ -62,11 +62,23 @@ export default function Reports() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap quantum-scrollbar">
+          <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap quantum-scrollbar pb-px">
             {tabs.map((t) => (
               <TabsTrigger key={t.id} value={t.id} className="gap-1.5 text-xs sm:text-sm shrink-0">
                 <t.icon className="h-3.5 w-3.5" />
-                <span>{t.label}</span>
+                {t.id === "funnel" ? (
+                  <>
+                    <span className="hidden sm:inline">Funil Kanban</span>
+                    <span className="sm:hidden">Funil</span>
+                  </>
+                ) : t.id === "overview" ? (
+                  <>
+                    <span className="hidden sm:inline">Visão Geral</span>
+                    <span className="sm:hidden">Visão</span>
+                  </>
+                ) : (
+                  <span>{t.label}</span>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
