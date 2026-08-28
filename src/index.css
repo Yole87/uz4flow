@@ -74,59 +74,68 @@
     --gradient-holographic: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
   }
 
-  /* Dark class kept for compatibility - identical to :root */
-  .dark {
-    --background: 240 67% 2%;
-    --foreground: 0 0% 96%;
+  .light {
+    /* Light backgrounds */
+    --background: 0 0% 97%;
+    --foreground: 240 10% 10%;
 
-    --card: 240 14% 14%;
-    --card-foreground: 0 0% 96%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
 
-    --popover: 240 14% 10%;
-    --popover-foreground: 0 0% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
 
-    --primary: 338 100% 53%;
+    /* Primary — Neon Pink, slightly deepened for light bg contrast */
+    --primary: 338 90% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 272 100% 50%;
+    /* Secondary — Electric Purple, darkened for contrast */
+    --secondary: 272 80% 42%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 10% 12%;
-    --muted-foreground: 240 5% 55%;
+    /* Muted */
+    --muted: 240 5% 91%;
+    --muted-foreground: 240 5% 42%;
 
-    --accent: 180 100% 50%;
-    --accent-foreground: 240 67% 2%;
+    /* Accent — Teal instead of Cyan (cyan #00ffff is near-invisible on white) */
+    --accent: 180 60% 32%;
+    --accent-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    /* Success / Warning / Destructive — unchanged, good contrast on both */
+    --success: 142 71% 38%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 92% 42%;
     --warning-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 20%;
-    --input: 240 6% 18%;
-    --ring: 338 100% 53%;
+    /* Borders & Inputs */
+    --border: 240 6% 82%;
+    --input: 240 6% 88%;
+    --ring: 338 90% 45%;
 
-    --sidebar-background: 240 67% 2%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 338 100% 53%;
+    /* Sidebar — light slate */
+    --sidebar-background: 240 10% 95%;
+    --sidebar-foreground: 240 10% 15%;
+    --sidebar-primary: 338 90% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 14% 10%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 240 6% 15%;
-    --sidebar-ring: 338 100% 53%;
+    --sidebar-accent: 240 5% 88%;
+    --sidebar-accent-foreground: 240 10% 15%;
+    --sidebar-border: 240 6% 82%;
+    --sidebar-ring: 338 90% 45%;
 
-    --neon-pink: 338 100% 53%;
-    --neon-cyan: 180 100% 50%;
-    --neon-purple: 272 100% 50%;
+    /* Neon Colors — toned down for light bg */
+    --neon-pink: 338 90% 45%;
+    --neon-cyan: 180 60% 32%;
+    --neon-purple: 272 80% 42%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(338 100% 53%), hsl(272 100% 50%));
-    --gradient-accent: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
-    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(0 84% 60%));
-    --gradient-holographic: linear-gradient(135deg, hsl(180 100% 50%), hsl(272 100% 50%));
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(338 90% 45%), hsl(272 80% 42%));
+    --gradient-accent: linear-gradient(135deg, hsl(180 60% 32%), hsl(272 80% 42%));
+    --gradient-warm: linear-gradient(135deg, hsl(38 92% 42%), hsl(0 84% 55%));
+    --gradient-holographic: linear-gradient(135deg, hsl(180 60% 32%), hsl(272 80% 42%));
   }
 }
 
@@ -197,7 +206,7 @@
   }
 
   /* Geometric grid overlay */
-  body::before {
+  .dark body::before {
     content: '';
     position: fixed;
     inset: 0;
@@ -208,6 +217,10 @@
     pointer-events: none;
     z-index: -1;
     animation: grid-move 20s linear infinite;
+  }
+
+  body::before {
+    display: none;
   }
 
   /* Ensure content sits above grid without creating an unnecessary stacking context */
@@ -258,16 +271,30 @@
 
   /* Quantum Glass - Advanced Glassmorphism */
   .quantum-glass {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .quantum-glass {
     background: rgba(30, 30, 40, 0.5);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow:
-      0 0 15px rgba(0, 0, 0, 0.3),
-      inset 0 0 15px rgba(255, 255, 255, 0.02);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.02);
   }
 
   .quantum-glass-strong {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .dark .quantum-glass-strong {
     background: rgba(20, 20, 30, 0.7);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
@@ -357,6 +384,14 @@
 
   /* Header with quantum glass + holographic bottom border */
   .header-quantum {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .header-quantum {
     background: rgba(20, 20, 30, 0.6);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);

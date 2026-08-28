@@ -9,6 +9,9 @@ import { ForcePasswordChangeDialog } from "./ForcePasswordChangeDialog";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Sun, Moon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -18,6 +21,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, title, description }: AppLayoutProps) {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { data: organization } = useUserOrganization();
   const [dismissed, setDismissed] = useState(false);
 
@@ -84,6 +88,17 @@ export function AppLayout({ children, title, description }: AppLayoutProps) {
                 )}
               </div>
             )}
+            <div className="ml-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                title={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </div>
           </header>
           <main className="flex-1 p-3 sm:p-6 bg-background min-w-0 overflow-x-hidden">{children}</main>
         </SidebarInset>
