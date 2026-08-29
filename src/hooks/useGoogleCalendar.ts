@@ -58,6 +58,10 @@ export function useGoogleCalendar() {
         },
       });
       if (error) throw error;
+      if (data?.error_code === "tenant_google_not_configured") {
+        toast.error("Configure as credenciais do Google Calendar em Agenda → Configurações antes de conectar.");
+        return;
+      }
       if (data?.url) {
         console.log(`[GCal-Connect] trace_id=${traceId} url_length=${data.url.length} state_length=${data.state_length ?? "?"}`);
         window.location.href = data.url;

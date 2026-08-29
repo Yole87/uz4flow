@@ -9,6 +9,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encrypt } from "../_shared/encryption.ts";
+import { getGCalCredentials } from "../_shared/gcal-credentials.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,8 +102,13 @@ Deno.serve(async (req) => {
     let clientSecret: string | undefined;
 
     if (provider === "google_calendar") {
-      clientId = (Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") || Deno.env.get("GOOGLE_CLIENT_ID"))?.trim();
-      clientSecret = (Deno.env.get("GOOGLE_CALENDAR_CLIENT_SECRET") || Deno.env.get("GOOGLE_CLIENT_SECRET"))?.trim();
+      const supabaseUrl2 = Deno.env.get("SUPABASE_URL")!;
+      const serviceRoleKey2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const creds = await getGCalCredentials(organizationId, supabaseUrl2, serviceRoleKey2);
+      if (creds) {
+        clientId = creds.clientId;
+        clientSecret = creds.clientSecret;
+      }
     } else {
       clientId = Deno.env.get("GOOGLE_CLIENT_ID")?.trim();
       clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")?.trim();

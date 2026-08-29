@@ -9,6 +9,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
+import { getGCalCredentials } from "../_shared/gcal-credentials.ts";
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -20,13 +21,11 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    
-    const clientId = (Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") || Deno.env.get("GOOGLE_CLIENT_ID"))?.trim();
-    const clientIdSource = Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") ? "GOOGLE_CALENDAR_CLIENT_ID" : "GOOGLE_CLIENT_ID";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    if (!clientId || !supabaseUrl) {
-      console.error("[GCal-OAuth] Missing config - clientId:", !!clientId, "supabaseUrl:", !!supabaseUrl);
-      return new Response(JSON.stringify({ error: "Missing Google OAuth configuration" }), {
+    if (!supabaseUrl) {
+      console.error("[GCal-OAuth] Missing supabaseUrl config");
+      return new Response(JSON.stringify({ error: "Missing configuration" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -63,6 +62,16 @@ Deno.serve(async (req) => {
 
     const traceId = trace_id || "no-trace";
 
+    // Fetch per-tenant credentials (with env var fallback)
+    const creds = await getGCalCredentials(organization_id, supabaseUrl, serviceRoleKey);
+
+    if (!creds) {
+      return new Response(JSON.stringify({
+        error_code: "tenant_google_not_configured",
+        error: "Configure as credenciais do Google Calendar em Agenda > Configurações antes de conectar.",
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Sanitize redirect_url: only allow short internal paths
     let safeRedirect = redirect_url || "";
     // Strip any query params or tokens from the redirect
@@ -89,7 +98,7 @@ Deno.serve(async (req) => {
     const redirectUri = `${supabaseUrl}/functions/v1/gdrive-oauth-callback`;
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-    authUrl.searchParams.set("client_id", clientId);
+    authUrl.searchParams.set("client_id", creds.clientId);
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set("response_type", "code");
     authUrl.searchParams.set("scope", "https://www.googleapis.com/auth/calendar.events");
@@ -100,7 +109,7 @@ Deno.serve(async (req) => {
     const generatedUrl = authUrl.toString();
 
     // Structured diagnostic logging
-    console.log(`[GCal-OAuth] step=oauth_url_generated trace_id=${traceId} source=${clientIdSource} client_id_len=${clientId.length} client_id_prefix=${clientId.substring(0, 20)} state_length=${stateStr.length} url_length=${generatedUrl.length} redirect_uri=${redirectUri} duration_ms=${Date.now() - startMs}`);
+    console.log(`[GCal-OAuth] step=oauth_url_generated trace_id=${traceId} source=${creds.source} client_id_len=${creds.clientId.length} client_id_prefix=${creds.clientId.substring(0, 20)} state_length=${stateStr.length} url_length=${generatedUrl.length} redirect_uri=${redirectUri} duration_ms=${Date.now() - startMs}`);
 
     return new Response(JSON.stringify({ url: generatedUrl, state_length: stateStr.length, url_length: generatedUrl.length }), {
       status: 200,

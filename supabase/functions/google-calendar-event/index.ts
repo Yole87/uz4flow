@@ -8,18 +8,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { decrypt, encrypt } from "../_shared/encryption.ts";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
+import { getGCalCredentials } from "../_shared/gcal-credentials.ts";
 
 let _corsHeaders: Record<string, string> = {};
 
 async function refreshAccessToken(
   connectionId: string,
   refreshTokenEncrypted: string,
+  organizationId: string,
   supabaseUrl: string,
   serviceRoleKey: string
 ): Promise<string> {
-  const clientId = (Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") || Deno.env.get("GOOGLE_CLIENT_ID"))?.trim();
-  const clientSecret = (Deno.env.get("GOOGLE_CALENDAR_CLIENT_SECRET") || Deno.env.get("GOOGLE_CLIENT_SECRET"))?.trim();
-  if (!clientId || !clientSecret) throw new Error("Google OAuth credentials not configured");
+  const creds = await getGCalCredentials(organizationId, supabaseUrl, serviceRoleKey);
+  if (!creds) throw new Error("Google Calendar credentials not configured for this organization");
+  const clientId = creds.clientId;
+  const clientSecret = creds.clientSecret;
 
   const refreshToken = await decrypt(refreshTokenEncrypted);
   const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -123,7 +126,7 @@ Deno.serve(async (req) => {
 
     let accessToken: string;
     if (isExpired && connection.refresh_token) {
-      accessToken = await refreshAccessToken(connection.id, connection.refresh_token, supabaseUrl, serviceRoleKey);
+      accessToken = await refreshAccessToken(connection.id, connection.refresh_token, organization_id, supabaseUrl, serviceRoleKey);
     } else {
       accessToken = (await decrypt(connection.access_token)).trim();
     }
