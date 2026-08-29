@@ -20,6 +20,7 @@ import type {
   UzFormWithSteps,
   PublicUzForm,
 } from "@/types/uzForm";
+import { normalizeOptions } from "@/types/uzForm";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -234,10 +235,14 @@ export async function getFormSteps(formId: string): Promise<UzFormStep[]> {
 
   const steps = (data ?? []) as unknown as UzFormStep[];
 
-  // Sort fields by field_order inside each step
+  // Sort fields by field_order inside each step and normalize options format
   for (const step of steps) {
     if (step.fields) {
       step.fields.sort((a, b) => a.field_order - b.field_order);
+      step.fields = step.fields.map((f) => ({
+        ...f,
+        options: normalizeOptions(Array.isArray(f.options) ? f.options : []),
+      }));
     }
   }
 
@@ -434,6 +439,10 @@ export async function getPublicForm(token: string): Promise<PublicUzForm | null>
     for (const step of form.steps) {
       if (step.fields) {
         step.fields.sort((a, b) => a.field_order - b.field_order);
+        step.fields = step.fields.map((f) => ({
+          ...f,
+          options: normalizeOptions(Array.isArray(f.options) ? f.options : []),
+        }));
       }
     }
   }

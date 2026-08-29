@@ -28,6 +28,11 @@ export interface UzFormStep {
   fields?: UzFormField[];
 }
 
+export interface UzFormFieldOption {
+  label: string;
+  next_step_id?: string; // if set, selecting this option jumps to that step
+}
+
 export interface UzFormField {
   id: string;
   step_id: string;
@@ -35,7 +40,7 @@ export interface UzFormField {
   label: string;
   key_name: string;
   is_required: boolean;
-  options: string[];
+  options: UzFormFieldOption[];
   field_order: number;
   created_at: string;
 }
@@ -77,3 +82,9 @@ export interface PublicUzForm extends UzFormWithSteps {
   watermark_text: string;
 }
 
+/** Normalizes options from legacy string[] or new UzFormFieldOption[] format */
+export function normalizeOptions(raw: unknown[]): UzFormFieldOption[] {
+  return raw.map((o) =>
+    typeof o === "string" ? { label: o } : (o as UzFormFieldOption)
+  );
+}

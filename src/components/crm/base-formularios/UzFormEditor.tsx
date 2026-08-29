@@ -15,6 +15,7 @@ import {
 } from "@/services/uzFormService";
 import { supabase } from "@/integrations/supabase/client";
 import type { UzForm, UzFormStep, UzFormField, UzFormFieldType, UzFormMediaType } from "@/types/uzForm";
+import type { UzFormFieldOption } from "@/types/uzForm";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
 import { useOrganizationLimits } from "@/hooks/useOrganizationLimits";
 import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
@@ -760,20 +761,20 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                     {(field.options || []).map((option, oIdx) => (
                                       <div
                                         key={oIdx}
-                                        className="flex items-center justify-between gap-2 bg-card border border-border p-2 rounded-md"
+                                        className="flex items-center justify-between gap-2 bg-card border border-border p-2 rounded-md flex-wrap"
                                       >
                                         <Input
-                                          key={`${field.id}-${oIdx}-${option}`}
-                                          defaultValue={option}
-                                          className="h-7 text-xs bg-background border-border flex-1"
+                                          key={`${field.id}-${oIdx}-${option.label}`}
+                                          defaultValue={option.label}
+                                          className="h-7 text-xs bg-background border-border flex-1 min-w-24"
                                           onBlur={(e) => {
                                             const next = e.target.value.trim();
-                                            if (!next || next === option) {
-                                              e.target.value = option;
+                                            if (!next || next === option.label) {
+                                              e.target.value = option.label;
                                               return;
                                             }
                                             const updatedOpts = [...field.options];
-                                            updatedOpts[oIdx] = next;
+                                            updatedOpts[oIdx] = { ...updatedOpts[oIdx], label: next };
                                             updateFieldMutation.mutate({
                                               id: field.id,
                                               data: { options: updatedOpts },
@@ -783,6 +784,38 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                             if (e.key === "Enter") e.currentTarget.blur();
                                           }}
                                         />
+
+                                        {steps && steps.length > 1 && (
+                                          <Select
+                                            value={option.next_step_id ?? "__next__"}
+                                            onValueChange={(val) => {
+                                              const updatedOpts = [...field.options];
+                                              updatedOpts[oIdx] = {
+                                                ...updatedOpts[oIdx],
+                                                next_step_id: val === "__next__" ? undefined : val,
+                                              };
+                                              updateFieldMutation.mutate({ id: field.id, data: { options: updatedOpts } });
+                                            }}
+                                          >
+                                            <SelectTrigger className="h-7 text-xs w-40 bg-background border-border shrink-0">
+                                              <SelectValue placeholder="Próximo passo" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-card border-border">
+                                              <SelectItem value="__next__">
+                                                <span className="text-xs">→ Próximo passo</span>
+                                              </SelectItem>
+                                              {steps
+                                                .filter((s) => s.id !== activeStep?.id)
+                                                .map((s, sIdx) => (
+                                                  <SelectItem key={s.id} value={s.id}>
+                                                    <span className="text-xs">
+                                                      Passo {s.step_order + 1}{s.title ? `: ${s.title}` : ""}
+                                                    </span>
+                                                  </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                          </Select>
+                                        )}
 
                                         <div className="flex items-center gap-1">
                                           <Button
@@ -854,13 +887,13 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                         onClick={() => {
                                           const optText = newOptionText.trim();
                                           if (!optText) return;
-                                          if ((field.options || []).includes(optText)) {
+                                          if ((field.options || []).some((o) => o.label === optText)) {
                                             toast.warning("Esta opção já existe");
                                             return;
                                           }
                                           updateFieldMutation.mutate({
                                             id: field.id,
-                                            data: { options: [...(field.options || []), optText] },
+                                            data: { options: [...(field.options || []), { label: optText }] },
                                           });
                                           setNewOptionText("");
                                         }}

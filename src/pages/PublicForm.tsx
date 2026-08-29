@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getPublicForm, submitFormResponse, uploadToBucket } from "@/services/uzFormService";
 import type { PublicUzForm, UzFormField, UzFormStep } from "@/types/uzForm";
+import { normalizeOptions } from "@/types/uzForm";
 import { BrandLogo } from "@/components/branding/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -445,6 +446,33 @@ export default function PublicForm() {
   const handleNext = () => {
     if (!validateStep(currentStep)) return;
 
+    // Check if any field in this step has conditional branching
+    const fields = currentStep?.fields || [];
+    for (const field of fields) {
+      if (
+        field.field_type !== "multiple_choice" &&
+        field.field_type !== "select_list"
+      ) continue;
+
+      const selectedValue = responses[field.key_name];
+      if (!selectedValue) continue;
+
+      const options = normalizeOptions(field.options || []);
+      const matched = options.find(
+        (o) => o.label === selectedValue || selectedValue.includes(o.label)
+      );
+
+      if (matched?.next_step_id) {
+        const targetIndex = steps.findIndex((s) => s.id === matched.next_step_id);
+        if (targetIndex !== -1) {
+          setCurrentStepIndex(targetIndex);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+      }
+    }
+
+    // Default: go to next step
     if (currentStepIndex < totalSteps - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -601,7 +629,7 @@ export default function PublicForm() {
               );
 
             case "multiple_choice": {
-              const options = field.options || [];
+              const options = normalizeOptions(field.options || []);
               const selected = value
                 ? value.split(",").map((v) => v.trim()).filter(Boolean)
                 : [];
@@ -609,28 +637,30 @@ export default function PublicForm() {
               const toggleOption = (opt: string) => {
                 const next = selected.includes(opt)
                   ? selected.filter((s) => s !== opt)
-                  : options.filter((o) => selected.includes(o) || o === opt);
+                  : options
+                      .filter((o) => selected.includes(o.label) || o.label === opt)
+                      .map((o) => o.label);
                 handleFieldChange(field.key_name, next.join(", "));
               };
 
               return (
                 <div className="space-y-2">
-                  {options.map((opt) => {
-                    const isSelected = selected.includes(opt);
+                  {options.map((option) => {
+                    const isSelected = selected.includes(option.label);
                     return (
                       <button
-                        key={opt}
+                        key={option.label}
                         type="button"
                         role="checkbox"
                         aria-checked={isSelected}
-                        onClick={() => toggleOption(opt)}
+                        onClick={() => toggleOption(option.label)}
                         className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center justify-between group ${
                           isSelected
                             ? "border-primary bg-primary/5 text-foreground font-semibold shadow-sm"
                             : "border-border hover:border-primary/40 hover:bg-primary/5 text-foreground"
                         }`}
                       >
-                        <span className="text-base break-words flex-1 pr-2">{opt}</span>
+                        <span className="text-base break-words flex-1 pr-2">{option.label}</span>
                         <span
                           className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors ${
                             isSelected
@@ -647,7 +677,8 @@ export default function PublicForm() {
               );
             }
 
-            case "select_list":
+            case "select_list": {
+              const options = normalizeOptions(field.options || []);
               return (
                 <Select value={value} onValueChange={(val) => handleFieldChange(field.key_name, val)}>
                   <SelectTrigger
@@ -658,18 +689,19 @@ export default function PublicForm() {
                     <SelectValue placeholder="Selecione uma opção..." />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
-                    {(field.options || []).map((opt) => (
+                    {options.map((option) => (
                       <SelectItem
-                        key={opt}
-                        value={opt}
+                        key={option.label}
+                        value={option.label}
                         className="text-base py-3 cursor-pointer whitespace-normal break-words leading-snug pr-2"
                       >
-                        {opt}
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               );
+            }
 
             case "file_upload": {
               const uploading = !!uploadingFields[field.id];
