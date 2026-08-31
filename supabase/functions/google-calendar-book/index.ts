@@ -5,6 +5,13 @@ import { getGCalCredentials } from "../_shared/gcal-credentials.ts";
 
 let _corsHeaders: Record<string, string> = {};
 
+// Helper to format a Date as a Brazil-local ISO string with explicit offset
+function toBrazilISO(date: Date): string {
+  const offset = -3 * 60; // America/Sao_Paulo standard offset in minutes
+  const local = new Date(date.getTime() + offset * 60 * 1000);
+  return local.toISOString().replace("Z", "-03:00");
+}
+
 async function refreshAccessToken(
   connectionId: string,
   refreshTokenEncrypted: string,
