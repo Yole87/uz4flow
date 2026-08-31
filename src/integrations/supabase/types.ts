@@ -2497,6 +2497,41 @@ export type Database = {
           },
         ]
       }
+      google_calendar_credentials: {
+        Row: {
+          client_id: string
+          client_secret_encrypted: string
+          created_at: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          client_secret_encrypted: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          client_secret_encrypted?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_calendar_credentials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instagram_account_instances: {
         Row: {
           account_id: string
