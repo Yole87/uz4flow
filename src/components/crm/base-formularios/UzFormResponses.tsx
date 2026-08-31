@@ -495,18 +495,18 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
           ) : (
             <div className="max-h-40 overflow-y-auto space-y-2">
               {options.map((opt) => {
-                const isChecked = selected.includes(opt);
+                const isChecked = selected.includes(opt.label);
                 return (
-                  <div key={opt} className="flex items-center gap-2">
+                  <div key={opt.label} className="flex items-center gap-2">
                     <Checkbox
-                      id={`filter-${col.id}-${opt}`}
+                      id={`filter-${col.id}-${opt.label}`}
                       checked={isChecked}
                       onCheckedChange={(checked) => {
                         setFilters((prev) => {
                           const currentSelected = (prev[col.key_name] as string[]) || [];
                           const nextSelected = checked
-                            ? [...currentSelected, opt]
-                            : currentSelected.filter((l) => l !== opt);
+                            ? [...currentSelected, opt.label]
+                            : currentSelected.filter((l) => l !== opt.label);
                           return {
                             ...prev,
                             [col.key_name]: nextSelected,
@@ -515,10 +515,10 @@ export function UzFormResponses({ formId, formName }: UzFormResponsesProps) {
                       }}
                     />
                     <label
-                      htmlFor={`filter-${col.id}-${opt}`}
+                      htmlFor={`filter-${col.id}-${opt.label}`}
                       className="text-xs text-foreground cursor-pointer flex items-center gap-1.5 flex-1"
                     >
-                      <span className="truncate">{opt}</span>
+                      <span className="truncate">{opt.label}</span>
                     </label>
                   </div>
                 );
