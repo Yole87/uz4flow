@@ -5,6 +5,13 @@ import { getGCalCredentials } from "../_shared/gcal-credentials.ts";
 
 let _corsHeaders: Record<string, string> = {};
 
+// Helper to format a Date as a Brazil-local ISO string with explicit offset
+function toBrazilISO(date: Date): string {
+  const offset = -3 * 60; // America/Sao_Paulo standard offset in minutes
+  const local = new Date(date.getTime() + offset * 60 * 1000);
+  return local.toISOString().replace("Z", "-03:00");
+}
+
 async function refreshAccessToken(
   connectionId: string,
   refreshTokenEncrypted: string,
@@ -119,15 +126,15 @@ Deno.serve(async (req) => {
     }
 
     // Build end datetime
-    const endDatetime = new Date(
+    const endDatetimeDate = new Date(
       new Date(start_datetime).getTime() + safeDuration * 60000
-    ).toISOString();
+    );
 
     const eventBody: Record<string, unknown> = {
       summary: safeTitle,
       description: safeDescription,
-      start: { dateTime: start_datetime, timeZone: "America/Sao_Paulo" },
-      end: { dateTime: endDatetime, timeZone: "America/Sao_Paulo" },
+      start: { dateTime: toBrazilISO(parsedStart), timeZone: "America/Sao_Paulo" },
+      end: { dateTime: toBrazilISO(endDatetimeDate), timeZone: "America/Sao_Paulo" },
     };
 
     if (attendee_email) {

@@ -2,3 +2,9 @@ project_id = "yjynquqwhnorsgzsakep"
 
 [functions.prospect-webhook]
 verify_jwt = false
+
+[functions.google-calendar-slots]
+verify_jwt = false
+
+[functions.google-calendar-book]
+verify_jwt = false
