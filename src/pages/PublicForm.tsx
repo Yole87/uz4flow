@@ -1022,8 +1022,8 @@ export default function PublicForm() {
       );
     }
 
-    // Purchase page
-    if (endingType === "purchase") {
+    // Purchase page (only if products exist)
+    if (endingType === "purchase" && purchaseProducts.length > 0) {
       return (
         <PurchasePage
           title={purchaseTitle}

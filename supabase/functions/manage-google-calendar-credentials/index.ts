@@ -51,6 +51,21 @@ Deno.serve(async (req) => {
     // All DB operations use service_role
     const supabaseServiceRole = createClient(supabaseUrl, serviceRoleKey);
 
+    // Verify user belongs to the requested organization
+    const { data: member } = await supabaseServiceRole
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", organization_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!member) {
+      return new Response(JSON.stringify({ error: "Forbidden: user does not belong to organization" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "save") {
       if (!client_id || !client_secret) {
         return new Response(JSON.stringify({ error: "client_id and client_secret are required" }), {
@@ -85,6 +100,19 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (!data) {
+        // Fallback to env vars check for backward compatibility
+        const envClientId = (Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") || Deno.env.get("GOOGLE_CLIENT_ID"))?.trim();
+        if (envClientId) {
+          return new Response(JSON.stringify({
+            configured: true,
+            client_id_masked: "Ambiente (Padrão)",
+            source: "env",
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         return new Response(JSON.stringify({ configured: false }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -96,6 +124,7 @@ Deno.serve(async (req) => {
         configured: true,
         client_id_masked: data.client_id.substring(0, 20) + "...",
         updated_at: data.updated_at,
+        source: "tenant",
       }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

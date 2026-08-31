@@ -71,6 +71,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Validate start_datetime
+    const parsedStart = new Date(start_datetime);
+    if (isNaN(parsedStart.getTime())) {
+      return new Response(JSON.stringify({ error: "Invalid start_datetime" }), {
+        status: 400,
+        headers: { ..._corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Clamp duration (between 5 and 480 minutes) and sanitize text
+    const safeDuration = Math.min(Math.max(Number(duration_minutes) || 30, 5), 480);
+    const safeTitle = String(title).slice(0, 200);
+    const safeDescription = description ? String(description).slice(0, 2000) : "";
+
     // Get Google Calendar connection
     const { data: connection } = await supabase
       .from("mcp_connections")
@@ -106,12 +120,12 @@ Deno.serve(async (req) => {
 
     // Build end datetime
     const endDatetime = new Date(
-      new Date(start_datetime).getTime() + duration_minutes * 60000
+      new Date(start_datetime).getTime() + safeDuration * 60000
     ).toISOString();
 
     const eventBody: Record<string, unknown> = {
-      summary: title,
-      description: description || "",
+      summary: safeTitle,
+      description: safeDescription,
       start: { dateTime: start_datetime, timeZone: "America/Sao_Paulo" },
       end: { dateTime: endDatetime, timeZone: "America/Sao_Paulo" },
     };

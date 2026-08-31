@@ -115,9 +115,9 @@ Deno.serve(async (req) => {
       accessToken = (await decrypt(connection.access_token)).trim();
     }
 
-    // Build time range for the day
-    const dayStart = new Date(`${date}T${availability_start}:00`);
-    const dayEnd = new Date(`${date}T${availability_end}:00`);
+    // Build time range for the day (America/Sao_Paulo -03:00)
+    const dayStart = new Date(`${date}T${availability_start}:00-03:00`);
+    const dayEnd = new Date(`${date}T${availability_end}:00-03:00`);
 
     // Fetch busy events from Google Calendar
     const eventsResp = await fetch(
