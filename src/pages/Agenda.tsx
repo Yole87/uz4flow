@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,21 @@ export default function Agenda() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
+  const queryClient = useQueryClient();
+
+  // Refresh connection status right after the Google OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("oauth_status");
+    if (!status) return;
+    if (status === "success") {
+      queryClient.invalidateQueries({ queryKey: ["google-calendar-connection"] });
+      toast.success("Google Calendar conectado com sucesso!");
+    } else {
+      toast.error("Não foi possível conectar o Google Calendar. Tente novamente.");
+    }
+    window.history.replaceState({}, "", window.location.pathname);
+  }, [queryClient]);
 
   const weekStart = startOfWeek(currentWeek, { locale: ptBR });
   const weekEnd = endOfWeek(currentWeek, { locale: ptBR });
