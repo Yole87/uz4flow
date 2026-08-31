@@ -126,15 +126,15 @@ Deno.serve(async (req) => {
     }
 
     // Build end datetime
-    const endDatetime = new Date(
+    const endDatetimeDate = new Date(
       new Date(start_datetime).getTime() + safeDuration * 60000
-    ).toISOString();
+    );
 
     const eventBody: Record<string, unknown> = {
       summary: safeTitle,
       description: safeDescription,
-      start: { dateTime: start_datetime, timeZone: "America/Sao_Paulo" },
-      end: { dateTime: endDatetime, timeZone: "America/Sao_Paulo" },
+      start: { dateTime: toBrazilISO(parsedStart), timeZone: "America/Sao_Paulo" },
+      end: { dateTime: toBrazilISO(endDatetimeDate), timeZone: "America/Sao_Paulo" },
     };
 
     if (attendee_email) {
