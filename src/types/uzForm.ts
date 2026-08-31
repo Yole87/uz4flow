@@ -61,7 +61,20 @@ export interface UzFormWithSteps extends UzForm {
 
 export type UzFormWatermarkMode = 'platform' | 'custom' | 'tenant_choice';
 
-export type UzFormEndingType = 'thank_you' | 'whatsapp' | 'both';
+export type UzFormEndingType = 'thank_you' | 'whatsapp' | 'both' | 'purchase';
+
+export interface UzFormProduct {
+  id: string;              // UUID generated on creation
+  title: string;
+  subtitle?: string;
+  image_url?: string;
+  cta_text: string;        // button label
+  cta_link: string;        // button URL
+  price_from?: string;     // "De: R$X"
+  price_to?: string;       // "Por: R$Y"
+  is_highlighted?: boolean; // badge de destaque
+  badge_text?: string;     // text inside the badge
+}
 
 /** Keys stored inside `uz_forms.settings` (jsonb). */
 export interface UzFormSettings {
@@ -71,6 +84,12 @@ export interface UzFormSettings {
   ending_whatsapp_message?: string;
   /** Only used when the plan watermark mode is 'tenant_choice'. */
   watermark_text?: string;
+
+  // Purchase ending
+  purchase_products?: UzFormProduct[];
+  purchase_countdown_to?: string;
+  purchase_title?: string;
+  purchase_subtitle?: string;
 
   // Tracking
   meta_pixel_id?: string;

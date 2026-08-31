@@ -15,7 +15,7 @@ import {
 } from "@/services/uzFormService";
 import { supabase } from "@/integrations/supabase/client";
 import type { UzForm, UzFormStep, UzFormField, UzFormFieldType, UzFormMediaType } from "@/types/uzForm";
-import type { UzFormFieldOption } from "@/types/uzForm";
+import type { UzFormFieldOption, UzFormProduct } from "@/types/uzForm";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
 import { useOrganizationLimits } from "@/hooks/useOrganizationLimits";
 import { useOrganizationSubscription } from "@/hooks/useOrganizationSubscription";
@@ -122,6 +122,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     (planLimits.uz_forms_allow_custom_slug as boolean) ?? (hasFeature("uz_forms") || false);
 
   const settings = (form.settings ?? {}) as Record<string, string | undefined>;
+  const formSettingsRaw = (form.settings ?? {}) as Record<string, unknown>;
   const [endingDraft, setEndingDraft] = useState({
     ending_type: settings.ending_type || "thank_you",
     ending_message:
@@ -129,6 +130,10 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     ending_whatsapp_number: settings.ending_whatsapp_number || "",
     ending_whatsapp_message: settings.ending_whatsapp_message || "",
     watermark_text: settings.watermark_text || "",
+    purchase_title: settings.purchase_title || "",
+    purchase_subtitle: settings.purchase_subtitle || "",
+    purchase_products: (formSettingsRaw.purchase_products as UzFormProduct[]) || [],
+    purchase_countdown_to: settings.purchase_countdown_to || "",
   });
   const [trackingDraft, setTrackingDraft] = useState({
     meta_pixel_id: settings.meta_pixel_id || "",
@@ -166,8 +171,8 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     onError: () => toast.error("Erro ao salvar configurações"),
   });
 
-  const saveSetting = (key: string, value: string) => {
-    if ((settings[key] || "") === value) return;
+  const saveSetting = (key: string, value: unknown) => {
+    if (typeof value === "string" && (settings[key] || "") === value) return;
     updateSettingsMutation.mutate({ [key]: value });
   };
 
@@ -1211,6 +1216,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                       <SelectItem value="thank_you">Mensagem de agradecimento</SelectItem>
                       <SelectItem value="whatsapp">Botão de WhatsApp</SelectItem>
                       <SelectItem value="both">Mensagem + botão de WhatsApp</SelectItem>
+                      <SelectItem value="purchase">Página de compra</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1259,6 +1265,224 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                       />
                     </div>
                   </>
+                )}
+
+                {endingDraft.ending_type === "purchase" && (
+                  <div className="space-y-4">
+                    {/* Page title/subtitle */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="purchase-title">Título da página (opcional)</Label>
+                      <Input
+                        id="purchase-title"
+                        value={endingDraft.purchase_title}
+                        placeholder="Ex: Escolha seu plano"
+                        onChange={(e) => setEndingDraft((d) => ({ ...d, purchase_title: e.target.value }))}
+                        onBlur={(e) => saveSetting("purchase_title", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="purchase-subtitle">Subtítulo (opcional)</Label>
+                      <Input
+                        id="purchase-subtitle"
+                        value={endingDraft.purchase_subtitle}
+                        placeholder="Ex: Oferta por tempo limitado"
+                        onChange={(e) => setEndingDraft((d) => ({ ...d, purchase_subtitle: e.target.value }))}
+                        onBlur={(e) => saveSetting("purchase_subtitle", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                    </div>
+
+                    {/* Countdown timer */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="purchase-countdown">Contador regressivo até (opcional)</Label>
+                      <Input
+                        id="purchase-countdown"
+                        type="datetime-local"
+                        value={endingDraft.purchase_countdown_to
+                          ? new Date(endingDraft.purchase_countdown_to).toISOString().slice(0, 16)
+                          : ""}
+                        onChange={(e) => {
+                          const iso = e.target.value ? new Date(e.target.value).toISOString() : "";
+                          setEndingDraft((d) => ({ ...d, purchase_countdown_to: iso }));
+                          saveSetting("purchase_countdown_to", iso);
+                        }}
+                        className="bg-background border-border"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Deixe em branco para não exibir o contador.
+                      </p>
+                    </div>
+
+                    {/* Products */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-semibold">Produtos (até 3)</Label>
+                        {endingDraft.purchase_products.length < 3 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => {
+                              const newProduct: UzFormProduct = {
+                                id: crypto.randomUUID(),
+                                title: "",
+                                cta_text: "Comprar agora",
+                                cta_link: "",
+                              };
+                              const updated = [...endingDraft.purchase_products, newProduct];
+                              setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                              saveSetting("purchase_products", updated);
+                            }}
+                          >
+                            + Adicionar produto
+                          </Button>
+                        )}
+                      </div>
+
+                      {endingDraft.purchase_products.map((product, pIdx) => (
+                        <div key={product.id} className="border border-border rounded-lg p-3 space-y-2 bg-background">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-muted-foreground">Produto {pIdx + 1}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                const updated = endingDraft.purchase_products.filter((_, i) => i !== pIdx);
+                                setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                                saveSetting("purchase_products", updated);
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <Input
+                            placeholder="Título do produto"
+                            value={product.title}
+                            onChange={(e) => {
+                              const updated = endingDraft.purchase_products.map((p, i) =>
+                                i === pIdx ? { ...p, title: e.target.value } : p
+                              );
+                              setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                            }}
+                            onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                            className="bg-card border-border h-8 text-xs"
+                          />
+                          <Input
+                            placeholder="Subtítulo (opcional)"
+                            value={product.subtitle || ""}
+                            onChange={(e) => {
+                              const updated = endingDraft.purchase_products.map((p, i) =>
+                                i === pIdx ? { ...p, subtitle: e.target.value } : p
+                              );
+                              setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                            }}
+                            onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                            className="bg-card border-border h-8 text-xs"
+                          />
+                          <Input
+                            placeholder="URL da imagem (opcional)"
+                            value={product.image_url || ""}
+                            onChange={(e) => {
+                              const updated = endingDraft.purchase_products.map((p, i) =>
+                                i === pIdx ? { ...p, image_url: e.target.value } : p
+                              );
+                              setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                            }}
+                            onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                            className="bg-card border-border h-8 text-xs"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              placeholder="De: R$10,00"
+                              value={product.price_from || ""}
+                              onChange={(e) => {
+                                const updated = endingDraft.purchase_products.map((p, i) =>
+                                  i === pIdx ? { ...p, price_from: e.target.value } : p
+                                );
+                                setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                              }}
+                              onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                              className="bg-card border-border h-8 text-xs"
+                            />
+                            <Input
+                              placeholder="Por: R$5,00"
+                              value={product.price_to || ""}
+                              onChange={(e) => {
+                                const updated = endingDraft.purchase_products.map((p, i) =>
+                                  i === pIdx ? { ...p, price_to: e.target.value } : p
+                                );
+                                setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                              }}
+                              onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                              className="bg-card border-border h-8 text-xs"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              placeholder="Texto do botão"
+                              value={product.cta_text}
+                              onChange={(e) => {
+                                const updated = endingDraft.purchase_products.map((p, i) =>
+                                  i === pIdx ? { ...p, cta_text: e.target.value } : p
+                                );
+                                setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                              }}
+                              onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                              className="bg-card border-border h-8 text-xs"
+                            />
+                            <Input
+                              placeholder="Link do botão"
+                              value={product.cta_link}
+                              onChange={(e) => {
+                                const updated = endingDraft.purchase_products.map((p, i) =>
+                                  i === pIdx ? { ...p, cta_link: e.target.value } : p
+                                );
+                                setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                              }}
+                              onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                              className="bg-card border-border h-8 text-xs"
+                            />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id={`highlight-${product.id}`}
+                                checked={!!product.is_highlighted}
+                                onChange={(e) => {
+                                  const updated = endingDraft.purchase_products.map((p, i) =>
+                                    i === pIdx ? { ...p, is_highlighted: e.target.checked } : p
+                                  );
+                                  setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                                  saveSetting("purchase_products", updated);
+                                }}
+                                className="h-3.5 w-3.5"
+                              />
+                              <label htmlFor={`highlight-${product.id}`} className="text-xs text-muted-foreground">
+                                Destacar este produto
+                              </label>
+                            </div>
+                            {product.is_highlighted && (
+                              <Input
+                                placeholder="Texto do badge (ex: Mais popular)"
+                                value={product.badge_text || ""}
+                                onChange={(e) => {
+                                  const updated = endingDraft.purchase_products.map((p, i) =>
+                                    i === pIdx ? { ...p, badge_text: e.target.value } : p
+                                  );
+                                  setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                                }}
+                                onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
+                                className="bg-card border-border h-7 text-xs flex-1"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

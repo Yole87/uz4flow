@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getPublicForm, submitFormResponse, uploadToBucket } from "@/services/uzFormService";
-import type { PublicUzForm, UzFormField, UzFormStep } from "@/types/uzForm";
+import type { PublicUzForm, UzFormField, UzFormStep, UzFormProduct } from "@/types/uzForm";
 import { normalizeOptions } from "@/types/uzForm";
+import { PurchasePage } from "@/components/forms/PurchasePage";
 import { BrandLogo } from "@/components/branding/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,6 +202,12 @@ export default function PublicForm() {
     "Obrigado! Suas respostas foram enviadas com sucesso.";
   const endingWhatsappNumber = (formSettings.ending_whatsapp_number || "").replace(/\D/g, "");
   const endingWhatsappMessage = formSettings.ending_whatsapp_message || "";
+
+  const formSettingsRaw = (form.settings ?? {}) as Record<string, unknown>;
+  const purchaseProducts = (formSettingsRaw.purchase_products as UzFormProduct[]) || [];
+  const purchaseTitle = formSettingsRaw.purchase_title as string | undefined;
+  const purchaseSubtitle = formSettingsRaw.purchase_subtitle as string | undefined;
+  const purchaseCountdownTo = formSettingsRaw.purchase_countdown_to as string | undefined;
 
   const trackingSettings = (form.settings ?? {}) as Record<string, string>;
   const metaPixelId = trackingSettings.meta_pixel_id;
@@ -984,6 +991,20 @@ export default function PublicForm() {
   // ─── Success Screen ────────────────────────────────────────────────────────
 
   if (isSubmitted) {
+    // Purchase page takes over the entire screen
+    if (endingType === "purchase") {
+      return (
+        <PurchasePage
+          title={purchaseTitle}
+          subtitle={purchaseSubtitle}
+          products={purchaseProducts}
+          countdownTo={purchaseCountdownTo}
+          watermarkText={watermarkText}
+          brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
+        />
+      );
+    }
+
     const showThankYou = endingType === "thank_you" || endingType === "both";
     const showWhatsapp =
       (endingType === "whatsapp" || endingType === "both") && !!endingWhatsappNumber;
