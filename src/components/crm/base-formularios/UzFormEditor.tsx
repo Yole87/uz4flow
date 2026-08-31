@@ -134,6 +134,15 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     purchase_subtitle: settings.purchase_subtitle || "",
     purchase_products: (formSettingsRaw.purchase_products as UzFormProduct[]) || [],
     purchase_countdown_to: settings.purchase_countdown_to || "",
+    calendar_title: settings.calendar_title || "Agende seu horário",
+    calendar_availability_start: settings.calendar_availability_start || "09:00",
+    calendar_availability_end: settings.calendar_availability_end || "18:00",
+    calendar_available_days: (formSettingsRaw.calendar_available_days as number[]) || [1, 2, 3, 4, 5],
+    calendar_slot_duration: Number(settings.calendar_slot_duration) || 30,
+    calendar_advance_hours: Number(settings.calendar_advance_hours) || 0,
+    calendar_pre_fill_name_key: settings.calendar_pre_fill_name_key || "",
+    calendar_pre_fill_email_key: settings.calendar_pre_fill_email_key || "",
+    calendar_pre_fill_phone_key: settings.calendar_pre_fill_phone_key || "",
   });
   const [trackingDraft, setTrackingDraft] = useState({
     meta_pixel_id: settings.meta_pixel_id || "",
@@ -1217,6 +1226,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                       <SelectItem value="whatsapp">Botão de WhatsApp</SelectItem>
                       <SelectItem value="both">Mensagem + botão de WhatsApp</SelectItem>
                       <SelectItem value="purchase">Página de compra</SelectItem>
+                      <SelectItem value="calendar">Agendamento no Google Calendar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1479,6 +1489,150 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                               />
                             )}
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {endingDraft.ending_type === "calendar" && (
+                  <div className="space-y-4">
+                    <div className="rounded-lg bg-muted/50 border border-border p-3 text-xs text-muted-foreground space-y-1">
+                      <p className="font-medium text-foreground text-sm">Como funciona</p>
+                      <p>Após o envio, o visitante poderá escolher um horário disponível na sua agenda do Google Calendar.</p>
+                      <p className="text-amber-500">Certifique-se de que o Google Calendar está conectado em <strong>Agenda → Configurações</strong>.</p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Título da página de agendamento</Label>
+                      <Input
+                        value={endingDraft.calendar_title}
+                        onChange={(e) => setEndingDraft((d) => ({ ...d, calendar_title: e.target.value }))}
+                        onBlur={(e) => saveSetting("calendar_title", e.target.value)}
+                        placeholder="Agende seu horário"
+                        className="bg-background border-border"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Início do atendimento</Label>
+                        <Input
+                          type="time"
+                          value={endingDraft.calendar_availability_start}
+                          onChange={(e) => setEndingDraft((d) => ({ ...d, calendar_availability_start: e.target.value }))}
+                          onBlur={(e) => saveSetting("calendar_availability_start", e.target.value)}
+                          className="bg-background border-border"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Fim do atendimento</Label>
+                        <Input
+                          type="time"
+                          value={endingDraft.calendar_availability_end}
+                          onChange={(e) => setEndingDraft((d) => ({ ...d, calendar_availability_end: e.target.value }))}
+                          onBlur={(e) => saveSetting("calendar_availability_end", e.target.value)}
+                          className="bg-background border-border"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Duração de cada horário (minutos)</Label>
+                      <Select
+                        value={String(endingDraft.calendar_slot_duration)}
+                        onValueChange={(v) => {
+                          setEndingDraft((d) => ({ ...d, calendar_slot_duration: Number(v) }));
+                          saveSetting("calendar_slot_duration", Number(v));
+                        }}
+                      >
+                        <SelectTrigger className="bg-background border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[15, 20, 30, 45, 60, 90, 120].map((m) => (
+                            <SelectItem key={m} value={String(m)}>{m} minutos</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Antecedência mínima para agendamento (horas)</Label>
+                      <Select
+                        value={String(endingDraft.calendar_advance_hours)}
+                        onValueChange={(v) => {
+                          setEndingDraft((d) => ({ ...d, calendar_advance_hours: Number(v) }));
+                          saveSetting("calendar_advance_hours", Number(v));
+                        }}
+                      >
+                        <SelectTrigger className="bg-background border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[0, 1, 2, 4, 8, 12, 24, 48].map((h) => (
+                            <SelectItem key={h} value={String(h)}>
+                              {h === 0 ? "Sem restrição" : `${h}h antes`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Dias disponíveis</Label>
+                      <div className="flex gap-1 flex-wrap">
+                        {[
+                          { label: "Dom", value: 0 },
+                          { label: "Seg", value: 1 },
+                          { label: "Ter", value: 2 },
+                          { label: "Qua", value: 3 },
+                          { label: "Qui", value: 4 },
+                          { label: "Sex", value: 5 },
+                          { label: "Sáb", value: 6 },
+                        ].map(({ label, value }) => {
+                          const isActive = endingDraft.calendar_available_days.includes(value);
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => {
+                                const updated = isActive
+                                  ? endingDraft.calendar_available_days.filter((d) => d !== value)
+                                  : [...endingDraft.calendar_available_days, value].sort((a, b) => a - b);
+                                setEndingDraft((d) => ({ ...d, calendar_available_days: updated }));
+                                saveSetting("calendar_available_days", updated);
+                              }}
+                              className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+                                isActive
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-background text-muted-foreground border-border"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border pt-3 space-y-2">
+                      <Label className="text-xs font-semibold">Pré-preencher dados do formulário</Label>
+                      <p className="text-xs text-muted-foreground">Informe a chave (key_name) do campo correspondente no formulário:</p>
+                      {[
+                        { label: "Nome", key: "calendar_pre_fill_name_key", placeholder: "ex: nome" },
+                        { label: "E-mail", key: "calendar_pre_fill_email_key", placeholder: "ex: email" },
+                        { label: "WhatsApp", key: "calendar_pre_fill_phone_key", placeholder: "ex: whatsapp" },
+                      ].map(({ label, key, placeholder }) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <span className="text-xs w-16 shrink-0 text-muted-foreground">{label}</span>
+                          <Input
+                            value={(endingDraft as Record<string, unknown>)[key] as string || ""}
+                            placeholder={placeholder}
+                            onChange={(e) => setEndingDraft((d) => ({ ...d, [key]: e.target.value }))}
+                            onBlur={(e) => saveSetting(key, e.target.value)}
+                            className="bg-background border-border h-7 text-xs"
+                          />
                         </div>
                       ))}
                     </div>

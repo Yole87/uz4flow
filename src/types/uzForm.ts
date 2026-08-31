@@ -61,7 +61,7 @@ export interface UzFormWithSteps extends UzForm {
 
 export type UzFormWatermarkMode = 'platform' | 'custom' | 'tenant_choice';
 
-export type UzFormEndingType = 'thank_you' | 'whatsapp' | 'both' | 'purchase';
+export type UzFormEndingType = 'thank_you' | 'whatsapp' | 'both' | 'purchase' | 'calendar';
 
 export interface UzFormProduct {
   id: string;              // UUID generated on creation
@@ -90,6 +90,18 @@ export interface UzFormSettings {
   purchase_countdown_to?: string;
   purchase_title?: string;
   purchase_subtitle?: string;
+
+  // Calendar booking ending
+  calendar_organization_id?: string;
+  calendar_availability_start?: string; // "09:00"
+  calendar_availability_end?: string;   // "18:00"
+  calendar_available_days?: number[];   // [1,2,3,4,5] = Mon-Fri
+  calendar_slot_duration?: number;      // minutes
+  calendar_advance_hours?: number;      // minimum hours in advance
+  calendar_title?: string;
+  calendar_pre_fill_name_key?: string;
+  calendar_pre_fill_email_key?: string;
+  calendar_pre_fill_phone_key?: string;
 
   // Tracking
   meta_pixel_id?: string;

@@ -4,6 +4,7 @@ import { getPublicForm, submitFormResponse, uploadToBucket } from "@/services/uz
 import type { PublicUzForm, UzFormField, UzFormStep, UzFormProduct } from "@/types/uzForm";
 import { normalizeOptions } from "@/types/uzForm";
 import { PurchasePage } from "@/components/forms/PurchasePage";
+import { BookingPage } from "@/components/forms/BookingPage";
 import { BrandLogo } from "@/components/branding/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,6 +209,16 @@ export default function PublicForm() {
   const purchaseTitle = formSettingsRaw.purchase_title as string | undefined;
   const purchaseSubtitle = formSettingsRaw.purchase_subtitle as string | undefined;
   const purchaseCountdownTo = formSettingsRaw.purchase_countdown_to as string | undefined;
+
+  const calendarTitle = formSettingsRaw.calendar_title as string | undefined;
+  const calendarSlotDuration = Number(formSettingsRaw.calendar_slot_duration) || 30;
+  const calendarStart = (formSettingsRaw.calendar_availability_start as string) || "09:00";
+  const calendarEnd = (formSettingsRaw.calendar_availability_end as string) || "18:00";
+  const calendarDays = (formSettingsRaw.calendar_available_days as number[]) || [1, 2, 3, 4, 5];
+  const calendarAdvance = Number(formSettingsRaw.calendar_advance_hours) || 0;
+  const calendarNameKey = (formSettingsRaw.calendar_pre_fill_name_key as string) || "";
+  const calendarEmailKey = (formSettingsRaw.calendar_pre_fill_email_key as string) || "";
+  const calendarPhoneKey = (formSettingsRaw.calendar_pre_fill_phone_key as string) || "";
 
   const trackingSettings = (form.settings ?? {}) as Record<string, string>;
   const metaPixelId = trackingSettings.meta_pixel_id;
@@ -991,7 +1002,27 @@ export default function PublicForm() {
   // ─── Success Screen ────────────────────────────────────────────────────────
 
   if (isSubmitted) {
-    // Purchase page takes over the entire screen
+    // Calendar booking page
+    if (endingType === "calendar") {
+      return (
+        <BookingPage
+          organizationId={form.organization_id}
+          title={calendarTitle}
+          slotDuration={calendarSlotDuration}
+          availabilityStart={calendarStart}
+          availabilityEnd={calendarEnd}
+          availableDays={calendarDays}
+          advanceHours={calendarAdvance}
+          preFillName={calendarNameKey ? (responses[calendarNameKey] || "") : ""}
+          preFillEmail={calendarEmailKey ? (responses[calendarEmailKey] || "") : ""}
+          preFillPhone={calendarPhoneKey ? (responses[calendarPhoneKey] || "") : ""}
+          watermarkText={watermarkText}
+          brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
+        />
+      );
+    }
+
+    // Purchase page
     if (endingType === "purchase") {
       return (
         <PurchasePage
