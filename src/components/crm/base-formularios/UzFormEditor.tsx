@@ -106,6 +106,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [newOptionText, setNewOptionText] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const [isEndingOpen, setIsEndingOpen] = useState(false);
   const [slugDraft, setSlugDraft] = useState(form.slug || "");
 
@@ -128,6 +129,13 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     ending_whatsapp_number: settings.ending_whatsapp_number || "",
     ending_whatsapp_message: settings.ending_whatsapp_message || "",
     watermark_text: settings.watermark_text || "",
+  });
+  const [trackingDraft, setTrackingDraft] = useState({
+    meta_pixel_id: settings.meta_pixel_id || "",
+    meta_pixel_event: (settings.meta_pixel_event as string) || "Lead",
+    gtag_conversion_id: settings.gtag_conversion_id || "",
+    gtag_conversion_label: settings.gtag_conversion_label || "",
+    gtag_event: (settings.gtag_event as string) || "generate_lead",
   });
 
   const updateFormMutation = useMutation({
@@ -1049,6 +1057,123 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                     </p>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Tracking */}
+          <div className="border border-border rounded-lg bg-card">
+            <button
+              type="button"
+              onClick={() => setIsTrackingOpen((v) => !v)}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-foreground">Rastreamento</h3>
+                {(trackingDraft.meta_pixel_id || trackingDraft.gtag_conversion_id) && (
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Ativo</span>
+                )}
+              </div>
+              {isTrackingOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {isTrackingOpen && (
+              <div className="px-4 pb-5 space-y-5 border-t border-border pt-4">
+
+                {/* Meta Pixel */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Meta Pixel</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="meta-pixel-id" className="text-xs">Pixel ID</Label>
+                    <Input
+                      id="meta-pixel-id"
+                      value={trackingDraft.meta_pixel_id}
+                      placeholder="Ex: 1234567890123456"
+                      onChange={(e) =>
+                        setTrackingDraft((d) => ({ ...d, meta_pixel_id: e.target.value.trim() }))
+                      }
+                      onBlur={(e) => saveSetting("meta_pixel_id", e.target.value.trim())}
+                      className="bg-background border-border font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Evento disparado no envio</Label>
+                    <Select
+                      value={trackingDraft.meta_pixel_event}
+                      onValueChange={(v) => {
+                        setTrackingDraft((d) => ({ ...d, meta_pixel_event: v }));
+                        saveSetting("meta_pixel_event", v);
+                      }}
+                    >
+                      <SelectTrigger className="bg-background border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Lead">Lead — captação de contato</SelectItem>
+                        <SelectItem value="InitiateCheckout">InitiateCheckout — intenção de compra</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Use "Lead" para formulários de captação. Use "InitiateCheckout" quando o formulário antecede uma venda.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-border" />
+
+                {/* Google Ads */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Google Ads</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="gtag-id" className="text-xs">Conversion ID</Label>
+                    <Input
+                      id="gtag-id"
+                      value={trackingDraft.gtag_conversion_id}
+                      placeholder="Ex: AW-123456789"
+                      onChange={(e) =>
+                        setTrackingDraft((d) => ({ ...d, gtag_conversion_id: e.target.value.trim() }))
+                      }
+                      onBlur={(e) => saveSetting("gtag_conversion_id", e.target.value.trim())}
+                      className="bg-background border-border font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gtag-label" className="text-xs">Conversion Label</Label>
+                    <Input
+                      id="gtag-label"
+                      value={trackingDraft.gtag_conversion_label}
+                      placeholder="Ex: AbCdEfGhIjKlMn"
+                      onChange={(e) =>
+                        setTrackingDraft((d) => ({ ...d, gtag_conversion_label: e.target.value.trim() }))
+                      }
+                      onBlur={(e) => saveSetting("gtag_conversion_label", e.target.value.trim())}
+                      className="bg-background border-border font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Evento disparado no envio</Label>
+                    <Select
+                      value={trackingDraft.gtag_event}
+                      onValueChange={(v) => {
+                        setTrackingDraft((d) => ({ ...d, gtag_event: v }));
+                        saveSetting("gtag_event", v);
+                      }}
+                    >
+                      <SelectTrigger className="bg-background border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="generate_lead">generate_lead — captação de contato</SelectItem>
+                        <SelectItem value="begin_checkout">begin_checkout — intenção de compra</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
               </div>
             )}
           </div>

@@ -71,6 +71,14 @@ export interface UzFormSettings {
   ending_whatsapp_message?: string;
   /** Only used when the plan watermark mode is 'tenant_choice'. */
   watermark_text?: string;
+
+  // Tracking
+  meta_pixel_id?: string;
+  meta_pixel_event?: "Lead" | "InitiateCheckout";
+  gtag_conversion_id?: string;    // e.g. "AW-123456789"
+  gtag_conversion_label?: string; // e.g. "AbCdEfGhIjKlMn"
+  gtag_event?: "generate_lead" | "begin_checkout";
+
   [key: string]: unknown;
 }
 

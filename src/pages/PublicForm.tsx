@@ -202,6 +202,72 @@ export default function PublicForm() {
   const endingWhatsappNumber = (formSettings.ending_whatsapp_number || "").replace(/\D/g, "");
   const endingWhatsappMessage = formSettings.ending_whatsapp_message || "";
 
+  const trackingSettings = (form.settings ?? {}) as Record<string, string>;
+  const metaPixelId = trackingSettings.meta_pixel_id;
+  const metaPixelEvent = (trackingSettings.meta_pixel_event as "Lead" | "InitiateCheckout") || "Lead";
+  const gtagConversionId = trackingSettings.gtag_conversion_id;
+  const gtagConversionLabel = trackingSettings.gtag_conversion_label;
+  const gtagEvent = (trackingSettings.gtag_event as "generate_lead" | "begin_checkout") || "generate_lead";
+
+  // ─── Meta Pixel injection ────────────────────────────────────────────────────
+
+  // NOTE: useEffect must be called unconditionally (Rules of Hooks).
+  // We gate the actual side-effect with early returns inside the callback.
+  useEffect(() => {
+    if (!metaPixelId) return;
+    if (document.getElementById("meta-pixel-base")) return;
+
+    const script = document.createElement("script");
+    script.id = "meta-pixel-base";
+    script.innerHTML = `
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '${metaPixelId}');
+      fbq('track', 'PageView');
+    `;
+    document.head.appendChild(script);
+
+    return () => {
+      const el = document.getElementById("meta-pixel-base");
+      if (el) el.remove();
+    };
+  }, [metaPixelId]);
+
+  // ─── Google Ads injection ────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!gtagConversionId) return;
+    if (document.getElementById("gtag-base")) return;
+
+    const gtagSrc = document.createElement("script");
+    gtagSrc.id = "gtag-base";
+    gtagSrc.async = true;
+    gtagSrc.src = `https://www.googletagmanager.com/gtag/js?id=${gtagConversionId}`;
+    document.head.appendChild(gtagSrc);
+
+    const gtagInit = document.createElement("script");
+    gtagInit.id = "gtag-init";
+    gtagInit.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${gtagConversionId}');
+    `;
+    document.head.appendChild(gtagInit);
+
+    return () => {
+      ["gtag-base", "gtag-init"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+      });
+    };
+  }, [gtagConversionId]);
 
   // ─── Format Address String ──────────────────────────────────────────────────
 
@@ -510,6 +576,21 @@ export default function PublicForm() {
 
       await submitFormResponse(form.id, form.organization_id, finalResponses);
       setIsSubmitted(true);
+
+      // Fire Meta Pixel conversion event
+      if (metaPixelId && typeof (window as any).fbq === "function") {
+        (window as any).fbq("track", metaPixelEvent);
+      }
+
+      // Fire Google Ads conversion event
+      if (gtagConversionId && gtagConversionLabel && typeof (window as any).gtag === "function") {
+        (window as any).gtag("event", "conversion", {
+          send_to: `${gtagConversionId}/${gtagConversionLabel}`,
+          event_callback: () => {},
+        });
+      } else if (gtagConversionId && typeof (window as any).gtag === "function") {
+        (window as any).gtag("event", gtagEvent);
+      }
     } catch (err) {
       console.error("Erro ao enviar respostas:", err);
       toast.error("Erro ao enviar respostas. Tente novamente.");
