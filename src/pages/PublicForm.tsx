@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check } from "lucide-react";
+import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Formatting & Masking Helpers ───────────────────────────────────────────
@@ -84,11 +84,18 @@ export default function PublicForm() {
   const [searchParams] = useSearchParams();
   const urlTema = searchParams.get("tema"); // "dark" | "light"
   const urlCor = searchParams.get("cor");   // hex color e.g. "#e91e8c"
+  const [formTheme, setFormTheme] = useState<"dark" | "light">(
+    urlTema === "light" ? "light" : "dark"
+  );
+
+  useEffect(() => {
+    setFormTheme(urlTema === "light" ? "light" : "dark");
+  }, [urlTema]);
 
   useEffect(() => {
     const root = document.documentElement;
     // Apply theme
-    if (urlTema === "light") {
+    if (formTheme === "light") {
       root.classList.remove("dark");
       root.classList.add("light");
     } else {
@@ -131,7 +138,7 @@ export default function PublicForm() {
       root.classList.remove("light", "dark");
       root.classList.add(savedTheme);
     };
-  }, [urlTema, urlCor]);
+  }, [formTheme, urlCor]);
   
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, string>>({});
@@ -1108,9 +1115,19 @@ export default function PublicForm() {
         </div>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between text-xs text-muted-foreground font-medium">
           <span>{form.name}</span>
-          <span>
-            Passo {currentStepIndex + 1} de {totalSteps}
-          </span>
+          <div className="flex items-center gap-2">
+            <span>
+              Passo {currentStepIndex + 1} de {totalSteps}
+            </span>
+            <button
+              type="button"
+              onClick={() => setFormTheme((t) => (t === "dark" ? "light" : "dark"))}
+              aria-label={formTheme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+              className="rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {formTheme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            </button>
+          </div>
         </div>
       </div>
 
