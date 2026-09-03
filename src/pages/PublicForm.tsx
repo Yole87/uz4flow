@@ -84,11 +84,18 @@ export default function PublicForm() {
   const [searchParams] = useSearchParams();
   const urlTema = searchParams.get("tema"); // "dark" | "light"
   const urlCor = searchParams.get("cor");   // hex color e.g. "#e91e8c"
+  const [formTheme, setFormTheme] = useState<"dark" | "light">(
+    urlTema === "light" ? "light" : "dark"
+  );
+
+  useEffect(() => {
+    setFormTheme(urlTema === "light" ? "light" : "dark");
+  }, [urlTema]);
 
   useEffect(() => {
     const root = document.documentElement;
     // Apply theme
-    if (urlTema === "light") {
+    if (formTheme === "light") {
       root.classList.remove("dark");
       root.classList.add("light");
     } else {
