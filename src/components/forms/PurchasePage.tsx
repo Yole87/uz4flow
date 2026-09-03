@@ -1,23 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { UzFormProduct } from "@/types/uzForm";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Star } from "lucide-react";
 
 interface PurchasePageProps {
   title?: string;
   subtitle?: string;
   products: UzFormProduct[];
-  countdownTo?: string;
+  countdownHours?: number;
   watermarkText?: string;
   brandLogo?: React.ReactNode;
 }
 
-function useCountdown(targetIso?: string) {
+function useCountdown(hours?: number) {
   const [timeLeft, setTimeLeft] = useState<{ h: number; m: number; s: number } | null>(null);
 
+  // Fix the target once, at mount, so it doesn't shift on re-renders
+  const target = useMemo(
+    () => (hours && hours > 0 ? Date.now() + hours * 3600 * 1000 : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   useEffect(() => {
-    if (!targetIso) return;
-    const target = new Date(targetIso).getTime();
+    if (!target) return;
 
     const tick = () => {
       const diff = target - Date.now();
@@ -34,7 +40,7 @@ function useCountdown(targetIso?: string) {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [targetIso]);
+  }, [target]);
 
   return timeLeft;
 }
@@ -47,12 +53,12 @@ export function PurchasePage({
   title,
   subtitle,
   products,
-  countdownTo,
+  countdownHours,
   watermarkText,
   brandLogo,
 }: PurchasePageProps) {
-  const timeLeft = useCountdown(countdownTo);
-  const hasCountdown = !!countdownTo && timeLeft !== null;
+  const timeLeft = useCountdown(countdownHours);
+  const hasCountdown = !!countdownHours && countdownHours > 0 && timeLeft !== null;
   const isSingle = products.length === 1;
 
   return (
@@ -99,16 +105,17 @@ export function PurchasePage({
         {products.map((product) => (
           <div
             key={product.id}
-            className={`relative flex flex-col rounded-2xl border-2 bg-card overflow-hidden transition-shadow hover:shadow-lg ${
+            className={`relative flex flex-col rounded-2xl bg-card overflow-hidden transition-shadow hover:shadow-lg ${
               product.is_highlighted
-                ? "border-primary shadow-md shadow-primary/20"
-                : "border-border"
+                ? "border-[3px] border-primary shadow-lg shadow-primary/30"
+                : "border-2 border-border"
             }`}
           >
             {/* Highlight badge */}
             {product.is_highlighted && product.badge_text && (
               <div className="absolute top-0 left-0 right-0 flex justify-center">
-                <span className="bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-b-lg">
+                <span className="bg-primary text-primary-foreground text-sm font-extrabold uppercase tracking-wide px-6 py-1.5 rounded-b-lg shadow-lg">
+                  <Star className="h-3.5 w-3.5 inline mr-1 fill-current" />
                   {product.badge_text}
                 </span>
               </div>
@@ -143,12 +150,12 @@ export function PurchasePage({
                 <div className="space-y-0.5">
                   {product.price_from && (
                     <p className="text-sm text-muted-foreground line-through">
-                      De: {product.price_from}
+                      {product.price_from}
                     </p>
                   )}
                   {product.price_to && (
                     <p className="text-xl font-extrabold text-foreground">
-                      Por: {product.price_to}
+                      {product.price_to}
                     </p>
                   )}
                 </div>
