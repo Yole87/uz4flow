@@ -1,27 +1,27 @@
-# Diagnóstico: agendamento confirmado na tela, mas sem evento no Google Calendar
+# Diagnóstico: agendamento confirmado na tela, mas "sem evento" no Google Calendar
 
-## O que foi verificado (somente leitura)
+## Resultados dos testes (nada foi alterado)
 
-1. **Logs da função `google-calendar-book`**: nenhum log retornado. Já a função `google-calendar-slots` mostra boots recentes (hoje 20:27 UTC). O histórico de logs analíticos (`function_edge_logs` / `edge_logs`) está retornando vazio no projeto, então o log não é prova definitiva — mas indica que a `book` não registrou execução recente.
-2. **A função está publicada e responde**: chamada de teste sem corpo retornou `400 {"error":"Missing required fields"}` — ou seja, deploy e `verify_jwt = false` estão corretos.
-3. **`organization_id`**: o formulário público passa `form.organization_id` para `BookingPage`, que reenvia no corpo. Existe um único formulário com final "calendar" (`Teste Calendar`, org `cb045d9e…`).
-4. **Conexão em `mcp_connections`**: existe 1 conexão `google_calendar` ativa para essa mesma organização, com token renovado hoje às 20:27 UTC (`token_expiry` 21:27). Isso comprova que o fluxo de token funciona — foi a chamada de `slots` que renovou.
-5. **Chamada à Google API**: sem log/resposta capturada, não é possível afirmar se retornou sucesso ou erro.
+1. **Função publicada e funcionando**: `google-calendar-book` responde (teste sem corpo → `400 Missing required fields`), com `verify_jwt = false` correto no config.
+2. **Logs**: a ferramenta de logs não retorna histórico neste projeto (`function_edge_logs` / `edge_logs` vazios), então logs não servem como prova aqui.
+3. **Conexão do tenant**: existe 1 conexão `google_calendar` ativa para a org `cb045d9e-…`, com token renovado hoje 20:27 UTC — token e refresh funcionam.
+4. **`organization_id`**: o formulário público passa `form.organization_id`; o único form com final "calendar" (`Teste Calendar`) pertence exatamente a essa org. Correto.
+5. **Teste de leitura da agenda conectada** (via `google-calendar-slots`, que consulta o freebusy da conta autorizada):
+   - 03/09: nenhum horário futuro ocupado
+   - **04/09: horário ocupado às 12:30Z = 09:30 (horário de Brasília)**
+   - 05/09 e 08/09: nada ocupado
 
-## Diagnóstico (não confirmado — precisa de 1 teste)
+## Diagnóstico
 
-Os dados descartam as três causas mais óbvias: função não publicada, `organization_id` ausente e conexão/token inválidos. Restam duas hipóteses:
+O bloqueio de 04/09 às 09:30 BRT indica que **existe sim um evento na agenda primária da conta Google autorizada** — ou seja, a `google-calendar-book` muito provavelmente executou com sucesso e criou o evento. O cálculo de fuso (`toBrazilISO`) confere: o horário gravado corresponde exatamente ao slot escolhido, sem deslocamento de 3h.
 
-- **A) A chamada `google-calendar-book` nunca chegou a executar** e a tela mostrou "Agendamento confirmado" mesmo assim. Isso é possível porque `BookingPage.handleBook` só marca `booked = true` após `invoke` sem erro — mas o `catch` apenas faz `console.error`, sem mostrar nada ao usuário. Qualquer falha silenciosa fica invisível, e um retorno 2xx com corpo de erro também passaria como sucesso.
-- **B) O evento foi criado, porém em outra conta/agenda** — a conexão OAuth pertence a uma conta Google diferente da que o tenant está olhando (o evento vai sempre para `calendars/primary` da conta autorizada).
+Isso aponta para o cenário B: o evento está na conta Google conectada via OAuth, que **não é a conta/agenda que o tenant está olhando** (a função sempre grava em `calendars/primary` da conta autorizada).
 
-## Próximo passo para confirmar (sem alterar comportamento)
+Falta um dado seu para fechar: **em que dia e horário foi feito o agendamento de teste?** Se foi 04/09 às 09:30, está confirmado.
 
-1. Refazer um agendamento no formulário público com o console do navegador aberto e capturar: status da chamada `google-calendar-book`, corpo da resposta e eventual `Booking error` no console.
-2. Em paralelo, listar os eventos do dia via a conexão do tenant (`google-calendar-list`) para saber se o evento existe na conta autorizada.
+## Correções propostas (após sua confirmação)
 
-Com esses dois dados, o caso cai em A ou B e a correção correspondente é aplicada:
-- Se A: tratar a resposta da função em `BookingPage` (verificar `data.error`, exibir mensagem de falha em vez de tela de confirmação) e adicionar logs na `google-calendar-book`.
-- Se B: reconectar o Google Calendar com a conta correta e/ou permitir escolher o calendário de destino em vez de fixar `primary`.
-
-Nada foi alterado no código ou no banco.
+1. **Escolha do calendário de destino**: hoje `primary` é fixo em `google-calendar-book`, `-slots`, `-event`, `-list`, `-update` e `-delete`. Adicionar seleção de calendário na tela da Agenda (salva na conexão) e usar esse ID em todas as funções.
+2. **Mostrar a conta conectada** na página Agenda (e-mail da conta Google), para o tenant saber em qual conta os eventos caem.
+3. **Feedback de erro no formulário público**: `BookingPage.handleBook` hoje só faz `console.error` no catch e nunca avisa o visitante. Verificar também `data?.error` e exibir mensagem de falha em vez da tela de confirmação.
+4. **Logs úteis** em `google-calendar-book` (org, slot, status da API do Google) para diagnóstico futuro.
