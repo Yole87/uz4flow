@@ -277,7 +277,7 @@ export default function PublicForm() {
   const purchaseProducts = (formSettingsRaw.purchase_products as UzFormProduct[]) || [];
   const purchaseTitle = formSettingsRaw.purchase_title as string | undefined;
   const purchaseSubtitle = formSettingsRaw.purchase_subtitle as string | undefined;
-  const purchaseCountdownTo = formSettingsRaw.purchase_countdown_to as string | undefined;
+  const purchaseCountdownHours = Number(formSettingsRaw.purchase_countdown_hours) || 0;
 
   const calendarTitle = formSettingsRaw.calendar_title as string | undefined;
   const calendarSlotDuration = Number(formSettingsRaw.calendar_slot_duration) || 30;
@@ -1038,7 +1038,7 @@ export default function PublicForm() {
           title={purchaseTitle}
           subtitle={purchaseSubtitle}
           products={purchaseProducts}
-          countdownTo={purchaseCountdownTo}
+          countdownHours={purchaseCountdownHours}
           watermarkText={watermarkText}
           brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
         />

@@ -87,7 +87,7 @@ export interface UzFormSettings {
 
   // Purchase ending
   purchase_products?: UzFormProduct[];
-  purchase_countdown_to?: string;
+  purchase_countdown_hours?: number;
   purchase_title?: string;
   purchase_subtitle?: string;
 
