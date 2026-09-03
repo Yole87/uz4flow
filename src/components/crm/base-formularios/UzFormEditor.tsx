@@ -103,6 +103,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadingProductIdx, setUploadingProductIdx] = useState<number | null>(null);
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [newOptionText, setNewOptionText] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -133,7 +134,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     purchase_title: settings.purchase_title || "",
     purchase_subtitle: settings.purchase_subtitle || "",
     purchase_products: (formSettingsRaw.purchase_products as UzFormProduct[]) || [],
-    purchase_countdown_to: settings.purchase_countdown_to || "",
+    purchase_countdown_hours: Number(settings.purchase_countdown_hours) || 0,
     calendar_title: settings.calendar_title || "Agende seu horário",
     calendar_availability_start: settings.calendar_availability_start || "09:00",
     calendar_availability_end: settings.calendar_availability_end || "18:00",
@@ -347,6 +348,40 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
       toast.error("Erro ao enviar imagem");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // Product image upload (purchase page)
+  const handleProductImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    pIdx: number
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setUploadingProductIdx(pIdx);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${form.id}/${crypto.randomUUID()}.${fileExt}`;
+      const publicUrl = await uploadToBucket("form-images", filePath, file);
+
+      const updated = endingDraft.purchase_products.map((p, i) =>
+        i === pIdx ? { ...p, image_url: publicUrl } : p
+      );
+      setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+      saveSetting("purchase_products", updated);
+      toast.success("Imagem enviada com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploadingProductIdx(null);
+      e.target.value = "";
     }
   };
 
@@ -1303,24 +1338,29 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                       />
                     </div>
 
-                    {/* Countdown timer */}
+                    {/* Countdown duration */}
                     <div className="space-y-1.5">
-                      <Label htmlFor="purchase-countdown">Contador regressivo até (opcional)</Label>
+                      <Label htmlFor="purchase-countdown">Duração da oferta (horas)</Label>
                       <Input
                         id="purchase-countdown"
-                        type="datetime-local"
-                        value={endingDraft.purchase_countdown_to
-                          ? new Date(endingDraft.purchase_countdown_to).toISOString().slice(0, 16)
-                          : ""}
+                        type="number"
+                        min={1}
+                        max={300}
+                        step={1}
+                        placeholder="Ex: 24"
+                        value={endingDraft.purchase_countdown_hours || ""}
                         onChange={(e) => {
-                          const iso = e.target.value ? new Date(e.target.value).toISOString() : "";
-                          setEndingDraft((d) => ({ ...d, purchase_countdown_to: iso }));
-                          saveSetting("purchase_countdown_to", iso);
+                          const val = e.target.value === "" ? 0 : Number(e.target.value);
+                          setEndingDraft((d) => ({ ...d, purchase_countdown_hours: val }));
+                        }}
+                        onBlur={(e) => {
+                          const val = e.target.value === "" ? 0 : Number(e.target.value);
+                          saveSetting("purchase_countdown_hours", val);
                         }}
                         className="bg-background border-border"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Deixe em branco para não exibir o contador.
+                        O contador começa quando o visitante abre a página de compra. Deixe em branco para não exibir o contador.
                       </p>
                     </div>
 
@@ -1391,21 +1431,51 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                             onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
                             className="bg-card border-border h-8 text-xs"
                           />
-                          <Input
-                            placeholder="URL da imagem (opcional)"
-                            value={product.image_url || ""}
-                            onChange={(e) => {
-                              const updated = endingDraft.purchase_products.map((p, i) =>
-                                i === pIdx ? { ...p, image_url: e.target.value } : p
-                              );
-                              setEndingDraft((d) => ({ ...d, purchase_products: updated }));
-                            }}
-                            onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
-                            className="bg-card border-border h-8 text-xs"
-                          />
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">
+                              Imagem do produto (opcional, máx. 2MB)
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleProductImageUpload(e, pIdx)}
+                                disabled={uploadingProductIdx === pIdx}
+                                className="bg-card border-border h-8 text-xs cursor-pointer"
+                              />
+                              {uploadingProductIdx === pIdx && (
+                                <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                              )}
+                            </div>
+                            {product.image_url && (
+                              <div className="relative border border-border rounded-md overflow-hidden max-w-[160px]">
+                                <img
+                                  src={product.image_url}
+                                  alt={product.title || "Imagem do produto"}
+                                  className="aspect-video w-full object-cover"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute top-1 right-1 h-5 w-5 bg-background/80 hover:text-destructive"
+                                  onClick={() => {
+                                    const updated = endingDraft.purchase_products.map((p, i) =>
+                                      i === pIdx ? { ...p, image_url: "" } : p
+                                    );
+                                    setEndingDraft((d) => ({ ...d, purchase_products: updated }));
+                                    saveSetting("purchase_products", updated);
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                           <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Preço original (riscado)</Label>
                             <Input
-                              placeholder="De: R$10,00"
+                              placeholder="R$10,00 (preço original)"
                               value={product.price_from || ""}
                               onChange={(e) => {
                                 const updated = endingDraft.purchase_products.map((p, i) =>
@@ -1416,8 +1486,11 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                               onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
                               className="bg-card border-border h-8 text-xs"
                             />
+                            </div>
+                            <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Preço promocional</Label>
                             <Input
-                              placeholder="Por: R$5,00"
+                              placeholder="R$5,00 (preço com desconto)"
                               value={product.price_to || ""}
                               onChange={(e) => {
                                 const updated = endingDraft.purchase_products.map((p, i) =>
@@ -1428,6 +1501,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                               onBlur={() => saveSetting("purchase_products", endingDraft.purchase_products)}
                               className="bg-card border-border h-8 text-xs"
                             />
+                            </div>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <Input
