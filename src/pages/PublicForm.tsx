@@ -1115,9 +1115,19 @@ export default function PublicForm() {
         </div>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between text-xs text-muted-foreground font-medium">
           <span>{form.name}</span>
-          <span>
-            Passo {currentStepIndex + 1} de {totalSteps}
-          </span>
+          <div className="flex items-center gap-2">
+            <span>
+              Passo {currentStepIndex + 1} de {totalSteps}
+            </span>
+            <button
+              type="button"
+              onClick={() => setFormTheme((t) => (t === "dark" ? "light" : "dark"))}
+              aria-label={formTheme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+              className="rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {formTheme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            </button>
+          </div>
         </div>
       </div>
 
