@@ -138,7 +138,7 @@ export default function PublicForm() {
       root.classList.remove("light", "dark");
       root.classList.add(savedTheme);
     };
-  }, [urlTema, urlCor]);
+  }, [formTheme, urlCor]);
   
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, string>>({});
