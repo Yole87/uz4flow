@@ -807,7 +807,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                           }}
                                         />
 
-                                        {steps && steps.length > 1 && (
+                                        {steps && steps.length > 1 && field.field_type === "select_list" && (
                                           <Select
                                             value={option.next_step_id ?? "__next__"}
                                             onValueChange={(val) => {

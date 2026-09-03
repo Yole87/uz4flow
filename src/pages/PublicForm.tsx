@@ -537,20 +537,16 @@ export default function PublicForm() {
     if (!validateStep(currentStep)) return;
 
     // Check if any field in this step has conditional branching
+    // (branching is only supported on single-select fields)
     const fields = currentStep?.fields || [];
     for (const field of fields) {
-      if (
-        field.field_type !== "multiple_choice" &&
-        field.field_type !== "select_list"
-      ) continue;
+      if (field.field_type !== "select_list") continue;
 
       const selectedValue = responses[field.key_name];
       if (!selectedValue) continue;
 
       const options = normalizeOptions(field.options || []);
-      const matched = options.find(
-        (o) => o.label === selectedValue || selectedValue.includes(o.label)
-      );
+      const matched = options.find((o) => o.label === selectedValue);
 
       if (matched?.next_step_id) {
         const targetIndex = steps.findIndex((s) => s.id === matched.next_step_id);
