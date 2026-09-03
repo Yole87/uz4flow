@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check } from "lucide-react";
+import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Formatting & Masking Helpers ───────────────────────────────────────────
