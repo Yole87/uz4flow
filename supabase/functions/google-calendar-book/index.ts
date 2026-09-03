@@ -69,7 +69,11 @@ Deno.serve(async (req) => {
       title,
       description,
       attendee_email,
+      observations,
+      include_meet,
     } = body;
+
+    console.log("[GCal-Book] org:", organization_id, "slot:", start_datetime, "duration:", duration_minutes);
 
     if (!organization_id || !start_datetime || !duration_minutes || !title) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -90,7 +94,12 @@ Deno.serve(async (req) => {
     // Clamp duration (between 5 and 480 minutes) and sanitize text
     const safeDuration = Math.min(Math.max(Number(duration_minutes) || 30, 5), 480);
     const safeTitle = String(title).slice(0, 200);
-    const safeDescription = description ? String(description).slice(0, 2000) : "";
+    const safeObservations = observations ? String(observations).slice(0, 1000) : "";
+    const baseDescription = description ? String(description).slice(0, 2000) : "";
+    const safeDescription = safeObservations
+      ? `${baseDescription}${baseDescription ? "\n" : ""}Observações: ${safeObservations}`
+      : baseDescription;
+    const wantsMeet = include_meet === true;
 
     // Get Google Calendar connection
     const { data: connection } = await supabase
@@ -100,6 +109,8 @@ Deno.serve(async (req) => {
       .eq("provider", "google_calendar")
       .eq("is_active", true)
       .maybeSingle();
+
+    console.log("[GCal-Book] connection found:", !!connection);
 
     if (!connection) {
       return new Response(JSON.stringify({ error: "Google Calendar not connected" }), {
@@ -141,8 +152,19 @@ Deno.serve(async (req) => {
       eventBody.attendees = [{ email: attendee_email }];
     }
 
+    if (wantsMeet) {
+      eventBody.conferenceData = {
+        createRequest: {
+          requestId: crypto.randomUUID(),
+          conferenceSolutionKey: { type: "hangoutsMeet" },
+        },
+      };
+    }
+
     const createResp = await fetch(
-      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+      wantsMeet
+        ? "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
+        : "https://www.googleapis.com/calendar/v3/calendars/primary/events",
       {
         method: "POST",
         headers: {
@@ -154,6 +176,8 @@ Deno.serve(async (req) => {
     );
     const created = await createResp.json();
 
+    console.log("[GCal-Book] API status:", createResp.status, "event_id:", created?.id);
+
     if (!createResp.ok) {
       console.error("[GCal-Book] API error:", created);
       return new Response(JSON.stringify({ error: "Failed to create event", details: created }), {
@@ -163,7 +187,14 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ event_id: created.id, html_link: created.htmlLink }),
+      JSON.stringify({
+        event_id: created.id,
+        html_link: created.htmlLink,
+        meet_url:
+          created.conferenceData?.entryPoints?.find(
+            (ep: { entryPointType?: string; uri?: string }) => ep.entryPointType === "video"
+          )?.uri ?? null,
+      }),
       {
         status: 200,
         headers: { ..._corsHeaders, "Content-Type": "application/json" },

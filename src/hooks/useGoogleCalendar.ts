@@ -123,9 +123,24 @@ export function useGoogleCalendar() {
     onError: (err: Error) => toast.error(err.message || "Erro ao atualizar evento"),
   });
 
+  const { data: account } = useQuery({
+    queryKey: ["google-calendar-account", org?.id],
+    queryFn: async () => {
+      if (!org?.id) return null;
+      const { data, error } = await supabase.functions.invoke("google-calendar-account", {
+        body: { organization_id: org.id },
+      });
+      if (error || data?.error) return null;
+      return (data ?? null) as { email: string | null; name: string | null; picture: string | null } | null;
+    },
+    enabled: !!org?.id && !!isConnected,
+    staleTime: 5 * 60 * 1000,
+  });
+
   return {
     isConnected: !!isConnected,
     checkingConnection,
+    accountEmail: account?.email ?? null,
     connect: connectMutation.mutate,
     connecting: connectMutation.isPending,
     createEvent: createEventMutation.mutateAsync,

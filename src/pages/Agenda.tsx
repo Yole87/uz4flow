@@ -29,7 +29,7 @@ interface CalendarEvent {
 
 export default function Agenda() {
   const {
-    isConnected, checkingConnection, connect, connecting,
+    isConnected, checkingConnection, connect, connecting, accountEmail,
     listEvents, listingEvents, deleteEvent, deletingEvent,
   } = useGoogleCalendar();
 
@@ -110,6 +110,11 @@ export default function Agenda() {
             </Button>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {isConnected && accountEmail && (
+              <span className="hidden md:inline text-xs text-muted-foreground truncate max-w-[220px]">
+                Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
+              </span>
+            )}
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="gap-2">
               <Settings2 className="h-4 w-4" />
               <span className="hidden sm:inline">Configurações</span>
