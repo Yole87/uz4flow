@@ -46,7 +46,7 @@ interface GoogleCalendarSettingsProps {
 export function GoogleCalendarSettings({ open, onOpenChange }: GoogleCalendarSettingsProps) {
   const { data: org } = useUserOrganization();
   const queryClient = useQueryClient();
-  const { isConnected, checkingConnection, connect, connecting } = useGoogleCalendar();
+  const { isConnected, checkingConnection, connect, connecting, accountEmail } = useGoogleCalendar();
   const { status, loading: loadingCreds, saving, deleting, saveCredentials, deleteCredentials } = useGoogleCalendarCredentials();
 
   // Credential form state
@@ -263,9 +263,16 @@ export function GoogleCalendarSettings({ open, onOpenChange }: GoogleCalendarSet
                   {checkingConnection ? (
                     <p className="text-xs text-muted-foreground">Verificando...</p>
                   ) : isConnected ? (
-                    <Badge variant="outline" className="gap-1 text-xs mt-1 border-green-500/30 text-green-500">
-                      <CheckCircle2 className="h-3 w-3" /> Conectado
-                    </Badge>
+                    <>
+                      <Badge variant="outline" className="gap-1 text-xs mt-1 border-green-500/30 text-green-500">
+                        <CheckCircle2 className="h-3 w-3" /> Conectado
+                      </Badge>
+                      {accountEmail && (
+                        <p className="text-xs text-muted-foreground mt-1 break-all">
+                          Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <Badge variant="outline" className="text-xs mt-1 text-muted-foreground">
                       Desconectado
