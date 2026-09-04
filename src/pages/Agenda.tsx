@@ -12,7 +12,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CalendarPlus, CalendarIcon, ChevronLeft, ChevronRight,
-  Trash2, Pencil, Loader2, Video, Settings2 } from "lucide-react";
+  Trash2, Pencil, Loader2, Video, Settings2, Copy } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScheduleEventDialog } from "@/components/crm/ScheduleEventDialog";
