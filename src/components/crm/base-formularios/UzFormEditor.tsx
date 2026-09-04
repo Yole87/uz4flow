@@ -1654,6 +1654,22 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                       </Select>
                     </div>
 
+                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Google Meet</p>
+                        <p className="text-xs text-muted-foreground">
+                          Criar link de videoconferência em todos os agendamentos
+                        </p>
+                      </div>
+                      <Switch
+                        checked={!!endingDraft.calendar_include_meet}
+                        onCheckedChange={(v) => {
+                          setEndingDraft((d) => ({ ...d, calendar_include_meet: v }));
+                          saveSetting("calendar_include_meet", v);
+                        }}
+                      />
+                    </div>
+
                     <div className="space-y-1.5">
                       <Label className="text-xs">Dias disponíveis</Label>
                       <div className="flex gap-1 flex-wrap">
