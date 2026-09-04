@@ -441,16 +441,6 @@ export function BookingPage({
               />
             </div>
 
-            <div className="flex items-center justify-between rounded-xl border border-border p-3">
-              <div className="flex items-center gap-2">
-                <Video className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Incluir Google Meet</p>
-                  <p className="text-xs text-muted-foreground">Criar link de videoconferência</p>
-                </div>
-              </div>
-              <Switch checked={includeMeet} onCheckedChange={setIncludeMeet} />
-            </div>
 
             <p className="text-xs text-muted-foreground text-center">
               Horário selecionado:{" "}
