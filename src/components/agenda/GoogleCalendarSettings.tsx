@@ -267,11 +267,15 @@ export function GoogleCalendarSettings({ open, onOpenChange }: GoogleCalendarSet
                       <Badge variant="outline" className="gap-1 text-xs mt-1 border-green-500/30 text-green-500">
                         <CheckCircle2 className="h-3 w-3" /> Conectado
                       </Badge>
-                      {accountEmail && (
-                        <p className="text-xs text-muted-foreground mt-1 break-all">
-                          Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground mt-1 break-all">
+                        {accountEmail ? (
+                          <>
+                            Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
+                          </>
+                        ) : (
+                          "Conta conectada"
+                        )}
+                      </p>
                     </>
                   ) : (
                     <Badge variant="outline" className="text-xs mt-1 text-muted-foreground">
