@@ -188,6 +188,30 @@ export default function Agenda() {
                     {event.description && (
                       <p className="text-xs text-muted-foreground truncate mt-0.5">{event.description}</p>
                     )}
+                    {event.hangoutLink && (
+                      <div className="flex items-center gap-1 mt-1 min-w-0">
+                        <a
+                          href={event.hangoutLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline truncate"
+                        >
+                          {event.hangoutLink}
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          title="Copiar link do Meet"
+                          onClick={() => {
+                            navigator.clipboard.writeText(event.hangoutLink!);
+                            toast.success("Link do Meet copiado!");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditEvent(event)}>
