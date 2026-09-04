@@ -110,9 +110,15 @@ export default function Agenda() {
             </Button>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {isConnected && accountEmail && (
+            {isConnected && (
               <span className="hidden md:inline text-xs text-muted-foreground truncate max-w-[220px]">
-                Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
+                {accountEmail ? (
+                  <>
+                    Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
+                  </>
+                ) : (
+                  "Conta conectada"
+                )}
               </span>
             )}
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="gap-2">
