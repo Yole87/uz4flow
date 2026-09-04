@@ -93,6 +93,7 @@ export function BookingPage({
   preFillName = "",
   preFillEmail = "",
   preFillPhone = "",
+  includeMeet = false,
   watermarkText,
   brandLogo,
 }: BookingPageProps) {
