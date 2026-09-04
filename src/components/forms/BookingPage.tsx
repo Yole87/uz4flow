@@ -46,11 +46,41 @@ interface BookingPageProps {
   preFillName?: string;
   preFillEmail?: string;
   preFillPhone?: string;
+  includeMeet?: boolean;
   watermarkText?: string;
   brandLogo?: React.ReactNode;
 }
 
 const WEEKDAY_LABELS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
+
+const COUNTRIES = [
+  { flag: "🇧🇷", name: "Brasil", ddi: "+55" },
+  { flag: "🇺🇸", name: "Estados Unidos", ddi: "+1" },
+  { flag: "🇵🇹", name: "Portugal", ddi: "+351" },
+  { flag: "🇦🇷", name: "Argentina", ddi: "+54" },
+  { flag: "🇨🇱", name: "Chile", ddi: "+56" },
+  { flag: "🇨🇴", name: "Colômbia", ddi: "+57" },
+  { flag: "🇲🇽", name: "México", ddi: "+52" },
+  { flag: "🇺🇾", name: "Uruguai", ddi: "+598" },
+  { flag: "🇵🇾", name: "Paraguai", ddi: "+595" },
+  { flag: "🇧🇴", name: "Bolívia", ddi: "+591" },
+  { flag: "🇵🇪", name: "Peru", ddi: "+51" },
+  { flag: "🇪🇸", name: "Espanha", ddi: "+34" },
+  { flag: "🇬🇧", name: "Reino Unido", ddi: "+44" },
+  { flag: "🇩🇪", name: "Alemanha", ddi: "+49" },
+  { flag: "🇮🇹", name: "Itália", ddi: "+39" },
+  { flag: "🇫🇷", name: "França", ddi: "+33" },
+];
+
+/** Splits a pre-filled phone into country DDI + local number. */
+function splitPhone(raw: string) {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (!digits) return { country: COUNTRIES[0], number: "" };
+  const sorted = [...COUNTRIES].sort((a, b) => b.ddi.length - a.ddi.length);
+  const match = sorted.find((c) => digits.startsWith(c.ddi.slice(1)));
+  if (match) return { country: match, number: digits.slice(match.ddi.length - 1) };
+  return { country: COUNTRIES[0], number: digits };
+}
 
 export function BookingPage({
   organizationId,
