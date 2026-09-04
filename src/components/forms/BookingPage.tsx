@@ -161,7 +161,8 @@ export function BookingPage({
       const descParts: string[] = [];
       if (visitorName) descParts.push(`Nome: ${visitorName}`);
       if (visitorEmail) descParts.push(`E-mail: ${visitorEmail}`);
-      if (visitorPhone) descParts.push(`WhatsApp: ${visitorPhone}`);
+      const fullPhone = visitorPhone ? `${country.ddi}${visitorPhone.replace(/\D/g, "")}` : "";
+      if (fullPhone) descParts.push(`WhatsApp: ${fullPhone}`);
 
       const { data, error } = await supabase.functions.invoke("google-calendar-book", {
         body: {
