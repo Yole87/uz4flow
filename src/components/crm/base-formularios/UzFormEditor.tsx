@@ -144,6 +144,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     calendar_pre_fill_name_key: settings.calendar_pre_fill_name_key || "",
     calendar_pre_fill_email_key: settings.calendar_pre_fill_email_key || "",
     calendar_pre_fill_phone_key: settings.calendar_pre_fill_phone_key || "",
+    calendar_include_meet: !!settings.calendar_include_meet,
   });
   const [trackingDraft, setTrackingDraft] = useState({
     meta_pixel_id: settings.meta_pixel_id || "",
