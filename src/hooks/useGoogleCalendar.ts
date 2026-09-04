@@ -130,7 +130,10 @@ export function useGoogleCalendar() {
       const { data, error } = await supabase.functions.invoke("google-calendar-account", {
         body: { organization_id: org.id },
       });
-      if (error || data?.error) return null;
+      if (error || data?.error) {
+        console.error("[useGoogleCalendar] google-calendar-account failed:", error ?? data?.error);
+        return null;
+      }
       return (data ?? null) as { email: string | null; name: string | null; picture: string | null } | null;
     },
     enabled: !!org?.id && !!isConnected,
