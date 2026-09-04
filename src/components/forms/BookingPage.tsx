@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Loader2,
   CalendarIcon,
   Clock,
-  Video,
+  Search,
 } from "lucide-react";
 import {
   format,
