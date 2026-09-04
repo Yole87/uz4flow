@@ -102,6 +102,7 @@ export interface UzFormSettings {
   calendar_pre_fill_name_key?: string;
   calendar_pre_fill_email_key?: string;
   calendar_pre_fill_phone_key?: string;
+  calendar_include_meet?: boolean;
 
   // Tracking
   meta_pixel_id?: string;
