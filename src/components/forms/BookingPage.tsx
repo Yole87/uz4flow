@@ -355,7 +355,6 @@ export function BookingPage({
                 [
                   { label: "Nome", value: visitorName, setter: setVisitorName, type: "text", placeholder: "Seu nome" },
                   { label: "E-mail", value: visitorEmail, setter: setVisitorEmail, type: "email", placeholder: "seu@email.com" },
-                  { label: "WhatsApp", value: visitorPhone, setter: setVisitorPhone, type: "tel", placeholder: "+55 11 91234-5678" },
                 ] as const
               ).map(({ label, value, setter, type, placeholder }) => (
                 <div key={label} className="space-y-1">
@@ -369,6 +368,67 @@ export function BookingPage({
                   />
                 </div>
               ))}
+
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">WhatsApp</label>
+                <div className="flex gap-2">
+                  <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="h-10 shrink-0 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground flex items-center gap-1 hover:bg-muted/50"
+                        aria-label="Selecionar país"
+                      >
+                        <span className="text-base leading-none">{country.flag}</span>
+                        <span className="text-xs font-medium">{country.ddi}</span>
+                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-64 p-0">
+                      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                        <Search className="h-3.5 w-3.5 text-muted-foreground" />
+                        <input
+                          autoFocus
+                          value={countrySearch}
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                          placeholder="Buscar país ou DDI"
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                        />
+                      </div>
+                      <div className="max-h-60 overflow-y-auto quantum-scrollbar py-1">
+                        {COUNTRIES.filter((c) => {
+                          const q = countrySearch.trim().toLowerCase();
+                          if (!q) return true;
+                          return c.name.toLowerCase().includes(q) || c.ddi.includes(q.replace("+", ""));
+                        }).map((c) => (
+                          <button
+                            key={c.ddi + c.name}
+                            type="button"
+                            onClick={() => {
+                              setCountry(c);
+                              setCountryOpen(false);
+                              setCountrySearch("");
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted text-left"
+                          >
+                            <span className="text-base leading-none">{c.flag}</span>
+                            <span className="flex-1 truncate">{c.name}</span>
+                            <span className="text-xs text-muted-foreground">{c.ddi}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <input
+                    type="tel"
+                    value={visitorPhone}
+                    onChange={(e) => setVisitorPhone(e.target.value.replace(/\D/g, ""))}
+                    placeholder="11983226145"
+                    className="w-full min-w-0 h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-1">
