@@ -1026,6 +1026,7 @@ export default function PublicForm() {
           preFillName={calendarNameKey ? (responses[calendarNameKey] || "") : ""}
           preFillEmail={calendarEmailKey ? (responses[calendarEmailKey] || "") : ""}
           preFillPhone={calendarPhoneKey ? (responses[calendarPhoneKey] || "") : ""}
+          includeMeet={calendarIncludeMeet}
           watermarkText={watermarkText}
           brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
         />
