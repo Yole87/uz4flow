@@ -111,28 +111,60 @@ Deno.serve(async (req) => {
       ? new Date(connection.token_expiry).getTime() - Date.now() < 5 * 60 * 1000
       : false;
 
-    const accessToken = isExpired && connection.refresh_token
+    let accessToken = isExpired && connection.refresh_token
       ? await refreshAccessToken(connection.id, connection.refresh_token, organizationId, supabaseUrl, serviceRoleKey)
       : (await decrypt(connection.access_token)).trim();
 
-    const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    const fetchUserinfo = (token: string) =>
+      fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!resp.ok) {
-      const detail = await resp.text();
-      console.error("[GCal-Account] userinfo failed:", resp.status, detail);
+    let resp = await fetchUserinfo(accessToken);
+
+    // 401 can mean a stale/invalid token even when token_expiry looks fine — force refresh and retry once
+    if (resp.status === 401 && connection.refresh_token) {
+      console.warn("[GCal-Account] userinfo 401 — forcing token refresh and retrying");
+      accessToken = await refreshAccessToken(connection.id, connection.refresh_token, organizationId, supabaseUrl, serviceRoleKey);
+      resp = await fetchUserinfo(accessToken);
+    }
+
+    if (resp.ok) {
+      const info = await resp.json();
+      console.log("[GCal-Account] resolved account for org:", organizationId);
+      return json({
+        email: info.email ?? null,
+        name: info.name ?? null,
+        picture: info.picture ?? null,
+      });
+    }
+
+    // Fallback: tokens granted before identity scopes existed can't call userinfo.
+    // The calendar list works with calendar scopes and the primary calendar id is the account email.
+    console.warn("[GCal-Account] userinfo failed:", resp.status, "— trying calendarList fallback");
+    const listResp = await fetch(
+      "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=10",
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    if (!listResp.ok) {
+      const detail = await listResp.text();
+      console.error("[GCal-Account] calendarList fallback failed:", listResp.status, detail);
       return json({ error: "Não foi possível obter a conta Google conectada." }, 200);
     }
 
-    const info = await resp.json();
-    console.log("[GCal-Account] resolved account for org:", organizationId);
+    const listData = await listResp.json();
+    const items: Array<{ id?: string; primary?: boolean }> = listData?.items ?? [];
+    const primary = items.find((c) => c.primary) ?? items[0];
+    const email = primary?.id && primary.id.includes("@") ? primary.id : null;
 
-    return json({
-      email: info.email ?? null,
-      name: info.name ?? null,
-      picture: info.picture ?? null,
-    });
+    if (!email) {
+      console.error("[GCal-Account] calendarList fallback returned no email-like id");
+      return json({ error: "Não foi possível obter a conta Google conectada." }, 200);
+    }
+
+    console.log("[GCal-Account] resolved account via calendarList fallback for org:", organizationId);
+    return json({ email, name: null, picture: null });
   } catch (err) {
     console.error("[GCal-Account] Error:", err);
     return json({ error: "Erro interno. Tente novamente." }, 200);
