@@ -288,6 +288,7 @@ export default function PublicForm() {
   const calendarNameKey = (formSettingsRaw.calendar_pre_fill_name_key as string) || "";
   const calendarEmailKey = (formSettingsRaw.calendar_pre_fill_email_key as string) || "";
   const calendarPhoneKey = (formSettingsRaw.calendar_pre_fill_phone_key as string) || "";
+  const calendarIncludeMeet = !!formSettingsRaw.calendar_include_meet;
 
   const trackingSettings = (form.settings ?? {}) as Record<string, string>;
   const metaPixelId = trackingSettings.meta_pixel_id;
@@ -1025,6 +1026,7 @@ export default function PublicForm() {
           preFillName={calendarNameKey ? (responses[calendarNameKey] || "") : ""}
           preFillEmail={calendarEmailKey ? (responses[calendarEmailKey] || "") : ""}
           preFillPhone={calendarPhoneKey ? (responses[calendarPhoneKey] || "") : ""}
+          includeMeet={calendarIncludeMeet}
           watermarkText={watermarkText}
           brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
         />

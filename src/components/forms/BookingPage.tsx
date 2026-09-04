@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Loader2,
   CalendarIcon,
   Clock,
-  Video,
+  Search,
 } from "lucide-react";
 import {
   format,
@@ -45,11 +46,41 @@ interface BookingPageProps {
   preFillName?: string;
   preFillEmail?: string;
   preFillPhone?: string;
+  includeMeet?: boolean;
   watermarkText?: string;
   brandLogo?: React.ReactNode;
 }
 
 const WEEKDAY_LABELS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
+
+const COUNTRIES = [
+  { flag: "🇧🇷", name: "Brasil", ddi: "+55" },
+  { flag: "🇺🇸", name: "Estados Unidos", ddi: "+1" },
+  { flag: "🇵🇹", name: "Portugal", ddi: "+351" },
+  { flag: "🇦🇷", name: "Argentina", ddi: "+54" },
+  { flag: "🇨🇱", name: "Chile", ddi: "+56" },
+  { flag: "🇨🇴", name: "Colômbia", ddi: "+57" },
+  { flag: "🇲🇽", name: "México", ddi: "+52" },
+  { flag: "🇺🇾", name: "Uruguai", ddi: "+598" },
+  { flag: "🇵🇾", name: "Paraguai", ddi: "+595" },
+  { flag: "🇧🇴", name: "Bolívia", ddi: "+591" },
+  { flag: "🇵🇪", name: "Peru", ddi: "+51" },
+  { flag: "🇪🇸", name: "Espanha", ddi: "+34" },
+  { flag: "🇬🇧", name: "Reino Unido", ddi: "+44" },
+  { flag: "🇩🇪", name: "Alemanha", ddi: "+49" },
+  { flag: "🇮🇹", name: "Itália", ddi: "+39" },
+  { flag: "🇫🇷", name: "França", ddi: "+33" },
+];
+
+/** Splits a pre-filled phone into country DDI + local number. */
+function splitPhone(raw: string) {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (!digits) return { country: COUNTRIES[0], number: "" };
+  const sorted = [...COUNTRIES].sort((a, b) => b.ddi.length - a.ddi.length);
+  const match = sorted.find((c) => digits.startsWith(c.ddi.slice(1)));
+  if (match) return { country: match, number: digits.slice(match.ddi.length - 1) };
+  return { country: COUNTRIES[0], number: digits };
+}
 
 export function BookingPage({
   organizationId,
@@ -62,6 +93,7 @@ export function BookingPage({
   preFillName = "",
   preFillEmail = "",
   preFillPhone = "",
+  includeMeet = false,
   watermarkText,
   brandLogo,
 }: BookingPageProps) {
@@ -72,9 +104,12 @@ export function BookingPage({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [visitorName, setVisitorName] = useState(preFillName);
   const [visitorEmail, setVisitorEmail] = useState(preFillEmail);
-  const [visitorPhone, setVisitorPhone] = useState(preFillPhone);
+  const initialPhone = useMemo(() => splitPhone(preFillPhone), [preFillPhone]);
+  const [country, setCountry] = useState(initialPhone.country);
+  const [visitorPhone, setVisitorPhone] = useState(initialPhone.number);
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
   const [observations, setObservations] = useState("");
-  const [includeMeet, setIncludeMeet] = useState(false);
   const [booking, setBooking] = useState(false);
   const [booked, setBooked] = useState(false);
   const [bookedSlot, setBookedSlot] = useState<string | null>(null);
@@ -126,7 +161,8 @@ export function BookingPage({
       const descParts: string[] = [];
       if (visitorName) descParts.push(`Nome: ${visitorName}`);
       if (visitorEmail) descParts.push(`E-mail: ${visitorEmail}`);
-      if (visitorPhone) descParts.push(`WhatsApp: ${visitorPhone}`);
+      const fullPhone = visitorPhone ? `${country.ddi}${visitorPhone.replace(/\D/g, "")}` : "";
+      if (fullPhone) descParts.push(`WhatsApp: ${fullPhone}`);
 
       const { data, error } = await supabase.functions.invoke("google-calendar-book", {
         body: {
@@ -320,7 +356,6 @@ export function BookingPage({
                 [
                   { label: "Nome", value: visitorName, setter: setVisitorName, type: "text", placeholder: "Seu nome" },
                   { label: "E-mail", value: visitorEmail, setter: setVisitorEmail, type: "email", placeholder: "seu@email.com" },
-                  { label: "WhatsApp", value: visitorPhone, setter: setVisitorPhone, type: "tel", placeholder: "+55 11 91234-5678" },
                 ] as const
               ).map(({ label, value, setter, type, placeholder }) => (
                 <div key={label} className="space-y-1">
@@ -334,6 +369,67 @@ export function BookingPage({
                   />
                 </div>
               ))}
+
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">WhatsApp</label>
+                <div className="flex gap-2">
+                  <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="h-10 shrink-0 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground flex items-center gap-1 hover:bg-muted/50"
+                        aria-label="Selecionar país"
+                      >
+                        <span className="text-base leading-none">{country.flag}</span>
+                        <span className="text-xs font-medium">{country.ddi}</span>
+                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-64 p-0">
+                      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                        <Search className="h-3.5 w-3.5 text-muted-foreground" />
+                        <input
+                          autoFocus
+                          value={countrySearch}
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                          placeholder="Buscar país ou DDI"
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                        />
+                      </div>
+                      <div className="max-h-60 overflow-y-auto quantum-scrollbar py-1">
+                        {COUNTRIES.filter((c) => {
+                          const q = countrySearch.trim().toLowerCase();
+                          if (!q) return true;
+                          return c.name.toLowerCase().includes(q) || c.ddi.includes(q.replace("+", ""));
+                        }).map((c) => (
+                          <button
+                            key={c.ddi + c.name}
+                            type="button"
+                            onClick={() => {
+                              setCountry(c);
+                              setCountryOpen(false);
+                              setCountrySearch("");
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted text-left"
+                          >
+                            <span className="text-base leading-none">{c.flag}</span>
+                            <span className="flex-1 truncate">{c.name}</span>
+                            <span className="text-xs text-muted-foreground">{c.ddi}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <input
+                    type="tel"
+                    value={visitorPhone}
+                    onChange={(e) => setVisitorPhone(e.target.value.replace(/\D/g, ""))}
+                    placeholder="11983226145"
+                    className="w-full min-w-0 h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -346,16 +442,6 @@ export function BookingPage({
               />
             </div>
 
-            <div className="flex items-center justify-between rounded-xl border border-border p-3">
-              <div className="flex items-center gap-2">
-                <Video className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Incluir Google Meet</p>
-                  <p className="text-xs text-muted-foreground">Criar link de videoconferência</p>
-                </div>
-              </div>
-              <Switch checked={includeMeet} onCheckedChange={setIncludeMeet} />
-            </div>
 
             <p className="text-xs text-muted-foreground text-center">
               Horário selecionado:{" "}

@@ -12,7 +12,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CalendarPlus, CalendarIcon, ChevronLeft, ChevronRight,
-  Trash2, Pencil, Loader2, Video, Settings2 } from "lucide-react";
+  Trash2, Pencil, Loader2, Video, Settings2, Copy } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScheduleEventDialog } from "@/components/crm/ScheduleEventDialog";
@@ -110,9 +110,15 @@ export default function Agenda() {
             </Button>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {isConnected && accountEmail && (
+            {isConnected && (
               <span className="hidden md:inline text-xs text-muted-foreground truncate max-w-[220px]">
-                Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
+                {accountEmail ? (
+                  <>
+                    Conectado como: <span className="font-medium text-foreground">{accountEmail}</span>
+                  </>
+                ) : (
+                  "Conta conectada"
+                )}
               </span>
             )}
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="gap-2">
@@ -181,6 +187,30 @@ export default function Agenda() {
                     </p>
                     {event.description && (
                       <p className="text-xs text-muted-foreground truncate mt-0.5">{event.description}</p>
+                    )}
+                    {event.hangoutLink && (
+                      <div className="flex items-center gap-1 mt-1 min-w-0">
+                        <a
+                          href={event.hangoutLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline truncate"
+                        >
+                          {event.hangoutLink}
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          title="Copiar link do Meet"
+                          onClick={() => {
+                            navigator.clipboard.writeText(event.hangoutLink!);
+                            toast.success("Link do Meet copiado!");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">

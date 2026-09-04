@@ -144,6 +144,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
     calendar_pre_fill_name_key: settings.calendar_pre_fill_name_key || "",
     calendar_pre_fill_email_key: settings.calendar_pre_fill_email_key || "",
     calendar_pre_fill_phone_key: settings.calendar_pre_fill_phone_key || "",
+    calendar_include_meet: !!settings.calendar_include_meet,
   });
   const [trackingDraft, setTrackingDraft] = useState({
     meta_pixel_id: settings.meta_pixel_id || "",
@@ -1651,6 +1652,22 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Google Meet</p>
+                        <p className="text-xs text-muted-foreground">
+                          Criar link de videoconferência em todos os agendamentos
+                        </p>
+                      </div>
+                      <Switch
+                        checked={!!endingDraft.calendar_include_meet}
+                        onCheckedChange={(v) => {
+                          setEndingDraft((d) => ({ ...d, calendar_include_meet: v }));
+                          saveSetting("calendar_include_meet", v);
+                        }}
+                      />
                     </div>
 
                     <div className="space-y-1.5">
