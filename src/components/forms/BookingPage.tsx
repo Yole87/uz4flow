@@ -104,9 +104,12 @@ export function BookingPage({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [visitorName, setVisitorName] = useState(preFillName);
   const [visitorEmail, setVisitorEmail] = useState(preFillEmail);
-  const [visitorPhone, setVisitorPhone] = useState(preFillPhone);
+  const initialPhone = useMemo(() => splitPhone(preFillPhone), [preFillPhone]);
+  const [country, setCountry] = useState(initialPhone.country);
+  const [visitorPhone, setVisitorPhone] = useState(initialPhone.number);
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
   const [observations, setObservations] = useState("");
-  const [includeMeet, setIncludeMeet] = useState(false);
   const [booking, setBooking] = useState(false);
   const [booked, setBooked] = useState(false);
   const [bookedSlot, setBookedSlot] = useState<string | null>(null);
