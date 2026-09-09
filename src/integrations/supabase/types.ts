@@ -5582,8 +5582,15 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          exit_calendar_include_meet: boolean
+          exit_ending_message: string | null
+          exit_ending_type: string | null
+          exit_ending_whatsapp_message: string | null
+          exit_ending_whatsapp_number: string | null
+          exit_purchase_products: Json | null
           form_id: string
           id: string
+          is_exit_step: boolean
           media_type: string
           media_url: string | null
           step_order: number
@@ -5593,8 +5600,15 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          exit_calendar_include_meet?: boolean
+          exit_ending_message?: string | null
+          exit_ending_type?: string | null
+          exit_ending_whatsapp_message?: string | null
+          exit_ending_whatsapp_number?: string | null
+          exit_purchase_products?: Json | null
           form_id: string
           id?: string
+          is_exit_step?: boolean
           media_type?: string
           media_url?: string | null
           step_order?: number
@@ -5604,8 +5618,15 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          exit_calendar_include_meet?: boolean
+          exit_ending_message?: string | null
+          exit_ending_type?: string | null
+          exit_ending_whatsapp_message?: string | null
+          exit_ending_whatsapp_number?: string | null
+          exit_purchase_products?: Json | null
           form_id?: string
           id?: string
+          is_exit_step?: boolean
           media_type?: string
           media_url?: string | null
           step_order?: number
