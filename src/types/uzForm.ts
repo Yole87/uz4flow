@@ -26,6 +26,13 @@ export interface UzFormStep {
   created_at: string;
   updated_at: string;
   fields?: UzFormField[];
+  is_exit_step?: boolean;
+  exit_ending_type?: UzFormEndingType;
+  exit_ending_message?: string;
+  exit_ending_whatsapp_number?: string;
+  exit_ending_whatsapp_message?: string;
+  exit_purchase_products?: UzFormProduct[];
+  exit_calendar_include_meet?: boolean;
 }
 
 export interface UzFormFieldOption {

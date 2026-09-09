@@ -11,6 +11,7 @@ interface CreateEventParams {
   include_meet: boolean;
   conversation_id?: string;
   contact_name?: string;
+  attendee_email?: string;
 }
 
 function generateTraceId() {

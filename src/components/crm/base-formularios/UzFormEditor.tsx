@@ -14,7 +14,7 @@ import {
   uploadToBucket,
 } from "@/services/uzFormService";
 import { supabase } from "@/integrations/supabase/client";
-import type { UzForm, UzFormStep, UzFormField, UzFormFieldType, UzFormMediaType } from "@/types/uzForm";
+import type { UzForm, UzFormStep, UzFormField, UzFormFieldType, UzFormMediaType, UzFormEndingType } from "@/types/uzForm";
 import type { UzFormFieldOption, UzFormProduct } from "@/types/uzForm";
 import { useUserOrganization } from "@/hooks/useUserOrganization";
 import { useOrganizationLimits } from "@/hooks/useOrganizationLimits";
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -630,6 +631,95 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Exit Step Toggle */}
+                <div className="border border-border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Encerramento de exceção</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Quando ativado, este passo encerra o formulário com uma mensagem própria — ideal para fluxos de branching onde o cliente não segue o caminho principal.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={!!(stepDrafts[activeStep.id]?.is_exit_step ?? activeStep.is_exit_step)}
+                      onCheckedChange={(v) => {
+                        setStepDraft(activeStep.id, { is_exit_step: v });
+                        commitStep(activeStep, { is_exit_step: v });
+                      }}
+                    />
+                  </div>
+
+                  {(stepDrafts[activeStep.id]?.is_exit_step ?? activeStep.is_exit_step) && (
+                    <div className="space-y-3 border-t border-border pt-3">
+                      <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-600 dark:text-amber-400">
+                        O botão "Próximo" deste passo vira "Encerrar" e submete o formulário com as configurações abaixo.
+                      </div>
+
+                      {/* Exit ending type */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">O que acontece ao encerrar?</Label>
+                        <Select
+                          value={stepDrafts[activeStep.id]?.exit_ending_type ?? activeStep.exit_ending_type ?? "thank_you"}
+                          onValueChange={(v) => {
+                            setStepDraft(activeStep.id, { exit_ending_type: v as UzFormEndingType });
+                            commitStep(activeStep, { exit_ending_type: v });
+                          }}
+                        >
+                          <SelectTrigger className="bg-background border-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="thank_you">Mensagem de agradecimento</SelectItem>
+                            <SelectItem value="whatsapp">Botão WhatsApp</SelectItem>
+                            <SelectItem value="both">Mensagem + WhatsApp</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Exit message */}
+                      {["thank_you", "both"].includes(stepDrafts[activeStep.id]?.exit_ending_type ?? activeStep.exit_ending_type ?? "thank_you") && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Mensagem</Label>
+                          <Textarea
+                            value={stepDrafts[activeStep.id]?.exit_ending_message ?? activeStep.exit_ending_message ?? ""}
+                            onChange={(e) => setStepDraft(activeStep.id, { exit_ending_message: e.target.value })}
+                            onBlur={(e) => commitStep(activeStep, { exit_ending_message: e.target.value })}
+                            placeholder="Obrigado pelo seu interesse! Infelizmente não seguiremos com esta oportunidade no momento."
+                            className="bg-background border-border text-xs"
+                            rows={3}
+                          />
+                        </div>
+                      )}
+
+                      {/* Exit WhatsApp */}
+                      {["whatsapp", "both"].includes(stepDrafts[activeStep.id]?.exit_ending_type ?? activeStep.exit_ending_type ?? "thank_you") && (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Número de WhatsApp</Label>
+                            <Input
+                              value={stepDrafts[activeStep.id]?.exit_ending_whatsapp_number ?? activeStep.exit_ending_whatsapp_number ?? ""}
+                              onChange={(e) => setStepDraft(activeStep.id, { exit_ending_whatsapp_number: e.target.value })}
+                              onBlur={(e) => commitStep(activeStep, { exit_ending_whatsapp_number: e.target.value })}
+                              placeholder="+55 11 91234-5678"
+                              className="bg-background border-border text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Mensagem pré-preenchida</Label>
+                            <Input
+                              value={stepDrafts[activeStep.id]?.exit_ending_whatsapp_message ?? activeStep.exit_ending_whatsapp_message ?? ""}
+                              onChange={(e) => setStepDraft(activeStep.id, { exit_ending_whatsapp_message: e.target.value })}
+                              onBlur={(e) => commitStep(activeStep, { exit_ending_whatsapp_message: e.target.value })}
+                              placeholder="Olá! Gostaria de saber mais."
+                              className="bg-background border-border text-xs"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1448,6 +1538,9 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                                 <Loader2 className="h-4 w-4 animate-spin text-accent" />
                               )}
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Recomendado: 800×450px (proporção 16:9), máx. 2MB.
+                            </p>
                             {product.image_url && (
                               <div className="relative border border-border rounded-md overflow-hidden max-w-[160px]">
                                 <img

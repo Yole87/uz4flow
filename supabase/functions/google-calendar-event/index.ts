@@ -93,6 +93,7 @@ Deno.serve(async (req) => {
       include_meet,
       conversation_id,
       contact_name,
+      attendee_email,
     } = body;
 
     if (!organization_id || !title || !start_datetime || !duration_minutes) {
@@ -142,6 +143,10 @@ Deno.serve(async (req) => {
     };
 
     if (description) event.description = description;
+
+    if (attendee_email) {
+      event.attendees = [{ email: attendee_email }];
+    }
 
     if (include_meet) {
       event.conferenceData = {

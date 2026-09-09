@@ -40,6 +40,7 @@ interface ScheduleEventDialogProps {
   existingEventId?: string;
   existingStart?: string;
   existingDescription?: string;
+  existingAttendeeEmail?: string;
 }
 
 const DURATION_OPTIONS = [
@@ -121,6 +122,7 @@ export function ScheduleEventDialog({
   existingEventId,
   existingStart,
   existingDescription,
+  existingAttendeeEmail,
 }: ScheduleEventDialogProps) {
   const { isConnected, checkingConnection, connect, connecting, createEvent, creating, updateEvent, updatingEvent } = useGoogleCalendar();
   const isEditMode = !!existingEventId;
@@ -130,6 +132,9 @@ export function ScheduleEventDialog({
   const [time, setTime] = useState(existingStart ? format(new Date(existingStart), "HH:mm") : "09:00");
   const [duration, setDuration] = useState("30");
   const [description, setDescription] = useState(existingDescription ?? "");
+  const [attendeeEmail, setAttendeeEmail] = useState(
+    existingAttendeeEmail ?? (existingDescription?.match(/E-mail do convidado:\s*([^\s\n]+)/i)?.[1] ?? "")
+  );
   const [includeMeet, setIncludeMeet] = useState(true);
 
   const submitting = isEditMode ? updatingEvent : creating;
@@ -149,6 +154,7 @@ export function ScheduleEventDialog({
         duration_minutes: parseInt(duration),
         description: description.trim() || undefined,
         include_meet: includeMeet,
+        attendee_email: attendeeEmail.trim() || undefined,
       });
     } else {
       await createEvent({
@@ -159,6 +165,7 @@ export function ScheduleEventDialog({
         include_meet: includeMeet,
         conversation_id: conversationId,
         contact_name: contactName,
+        attendee_email: attendeeEmail.trim() || undefined,
       });
     }
 
@@ -170,6 +177,7 @@ export function ScheduleEventDialog({
       setTime("09:00");
       setDuration("30");
       setDescription("");
+      setAttendeeEmail("");
       setIncludeMeet(true);
     }
   };
@@ -283,6 +291,21 @@ export function ScheduleEventDialog({
                   placeholder="Notas ou pauta da reunião..."
                   rows={2}
                 />
+              </div>
+
+              {/* Attendee email */}
+              <div className="space-y-2">
+                <Label htmlFor="attendee-email">E-mail do convidado (opcional)</Label>
+                <Input
+                  id="attendee-email"
+                  type="email"
+                  value={attendeeEmail}
+                  onChange={(e) => setAttendeeEmail(e.target.value)}
+                  placeholder="cliente@email.com"
+                />
+                <p className="text-xs text-muted-foreground">
+                  O Google enviará um convite para este e-mail e o evento aparecerá na agenda do convidado.
+                </p>
               </div>
 
               {/* Google Meet toggle */}

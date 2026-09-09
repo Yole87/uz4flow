@@ -271,7 +271,7 @@ export async function createStep(formId: string, stepOrder: number): Promise<UzF
  */
 export async function updateStep(
   id: string,
-  data: Partial<Pick<UzFormStep, "title" | "description" | "media_type" | "media_url" | "step_order">>,
+  data: Partial<UzFormStep>,
 ): Promise<UzFormStep> {
   const { data: updatedData, error } = await supabase
     .from("uz_form_steps" as any)

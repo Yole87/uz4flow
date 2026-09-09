@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check, Sun, Moon } from "lucide-react";
+import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check, Sun, Moon, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Formatting & Masking Helpers ───────────────────────────────────────────
@@ -146,6 +146,7 @@ export default function PublicForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isExitStep, setIsExitStep] = useState(false);
   const [cepLoading, setCepLoading] = useState<Record<string, boolean>>({});
   const [cepError, setCepError] = useState<Record<string, string>>({});
   const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
@@ -541,8 +542,15 @@ export default function PublicForm() {
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep(currentStep)) return;
+
+    // Check if current step is an exit step — it ends the form on "Next"
+    if (currentStep?.is_exit_step) {
+      // Submit the form with exit ending config
+      await handleSubmit(true); // pass isExitStep = true
+      return;
+    }
 
     // Check if any field in this step has conditional branching
     // (branching is only supported on single-select fields)
@@ -580,7 +588,7 @@ export default function PublicForm() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isExit = false) => {
     if (!validateStep(currentStep)) return;
 
     setIsSubmitting(true);
@@ -603,6 +611,7 @@ export default function PublicForm() {
       }
 
       await submitFormResponse(form.id, form.organization_id, finalResponses);
+      if (isExit) setIsExitStep(true);
       setIsSubmitted(true);
 
       // Fire Meta Pixel conversion event
@@ -1012,6 +1021,49 @@ export default function PublicForm() {
   // ─── Success Screen ────────────────────────────────────────────────────────
 
   if (isSubmitted) {
+    if (isExitStep && currentStep) {
+      const exitType = currentStep.exit_ending_type || "thank_you";
+      const exitMessage = currentStep.exit_ending_message || "Obrigado!";
+      const exitWaNumber = (currentStep.exit_ending_whatsapp_number || "").replace(/\D/g, "");
+      const exitWaMessage = currentStep.exit_ending_whatsapp_message || "";
+      const waLink = `https://wa.me/${exitWaNumber}${exitWaMessage ? `?text=${encodeURIComponent(exitWaMessage)}` : ""}`;
+      const showMsg = exitType === "thank_you" || exitType === "both";
+      const showWa = (exitType === "whatsapp" || exitType === "both") && !!exitWaNumber;
+
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+          <div className="w-full max-w-md text-center space-y-6 animate-in zoom-in duration-300">
+            <BrandLogo className="mx-auto h-12 w-auto object-contain" />
+            <div className="bg-card border border-border p-8 rounded-2xl shadow-xl space-y-4">
+              {showMsg && (
+                <>
+                  <CheckCircle className="mx-auto h-16 w-16 text-success" />
+                  <h2 className="text-2xl font-bold text-foreground">Obrigado!</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{exitMessage}</p>
+                </>
+              )}
+              {showWa && (
+                <Button
+                  size="lg"
+                  className="w-full h-12 rounded-xl text-base"
+                  onClick={() => window.open(waLink, "_blank", "noopener,noreferrer")}
+                >
+                  Falar no WhatsApp
+                </Button>
+              )}
+              {!showMsg && !showWa && (
+                <>
+                  <CheckCircle className="mx-auto h-16 w-16 text-success" />
+                  <h2 className="text-2xl font-bold text-foreground">Obrigado!</h2>
+                </>
+              )}
+            </div>
+            {watermarkText && <p className="text-xs text-muted-foreground/60">{watermarkText}</p>}
+          </div>
+        </div>
+      );
+    }
+
     // Calendar booking page
     if (endingType === "calendar") {
       return (
@@ -1205,7 +1257,7 @@ export default function PublicForm() {
             <Button
               type="button"
               size="lg"
-              onClick={isLastStep ? handleSubmit : handleNext}
+              onClick={isLastStep || currentStep?.is_exit_step ? () => handleSubmit(!!currentStep?.is_exit_step) : handleNext}
               className="flex-grow flex-1 h-12 rounded-xl text-base gap-2"
               disabled={isSubmitting}
             >
@@ -1214,10 +1266,14 @@ export default function PublicForm() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Enviando...
                 </>
-              ) : isLastStep ? (
+              ) : isLastStep || currentStep?.is_exit_step ? (
                 <>
-                  Enviar
-                  <CheckCircle className="h-4 w-4" />
+                  {currentStep?.is_exit_step ? "Encerrar" : "Enviar"}
+                  {currentStep?.is_exit_step ? (
+                    <LogOut className="h-4 w-4" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4" />
+                  )}
                 </>
               ) : (
                 <>

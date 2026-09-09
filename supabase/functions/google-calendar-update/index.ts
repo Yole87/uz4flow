@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { organization_id, event_id, title, start_datetime, duration_minutes, description, include_meet } = body;
+    const { organization_id, event_id, title, start_datetime, duration_minutes, description, include_meet, attendee_email } = body;
 
     if (!organization_id || !event_id || !title || !start_datetime || !duration_minutes) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -123,6 +123,10 @@ Deno.serve(async (req) => {
       start: { dateTime: start_datetime, timeZone: "America/Sao_Paulo" },
       end: { dateTime: endDatetime, timeZone: "America/Sao_Paulo" },
     };
+
+    if (attendee_email) {
+      eventBody.attendees = [{ email: attendee_email }];
+    }
 
     if (include_meet) {
       eventBody.conferenceData = {
