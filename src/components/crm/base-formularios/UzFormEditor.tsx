@@ -664,7 +664,7 @@ export function UzFormEditor({ form }: UzFormEditorProps) {
                           value={stepDrafts[activeStep.id]?.exit_ending_type ?? activeStep.exit_ending_type ?? "thank_you"}
                           onValueChange={(v) => {
                             setStepDraft(activeStep.id, { exit_ending_type: v as UzFormEndingType });
-                            commitStep(activeStep, { exit_ending_type: v });
+                            commitStep(activeStep, { exit_ending_type: v as UzFormEndingType });
                           }}
                         >
                           <SelectTrigger className="bg-background border-border">
