@@ -26,18 +26,11 @@ export interface UzFormStep {
   created_at: string;
   updated_at: string;
   fields?: UzFormField[];
-  is_exit_step?: boolean;
-  exit_ending_type?: UzFormEndingType;
-  exit_ending_message?: string;
-  exit_ending_whatsapp_number?: string;
-  exit_ending_whatsapp_message?: string;
-  exit_purchase_products?: UzFormProduct[];
-  exit_calendar_include_meet?: boolean;
 }
 
 export interface UzFormFieldOption {
   label: string;
-  next_step_id?: string; // if set, selecting this option jumps to that step
+  next_step_id?: string; // step UUID or "__exit__" for exception exit
 }
 
 export interface UzFormField {
@@ -91,6 +84,17 @@ export interface UzFormSettings {
   ending_whatsapp_message?: string;
   /** Only used when the plan watermark mode is 'tenant_choice'. */
   watermark_text?: string;
+
+  // Exception exit ending (triggered via branching option "__exit__")
+  exit_ending_type?: UzFormEndingType;
+  exit_ending_message?: string;
+  exit_ending_whatsapp_number?: string;
+  exit_ending_whatsapp_message?: string;
+  exit_purchase_products?: UzFormProduct[];
+  exit_purchase_countdown_hours?: number;
+  exit_purchase_title?: string;
+  exit_purchase_subtitle?: string;
+  exit_calendar_include_meet?: boolean;
 
   // Purchase ending
   purchase_products?: UzFormProduct[];

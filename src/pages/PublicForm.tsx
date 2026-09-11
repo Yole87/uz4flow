@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getPublicForm, submitFormResponse, uploadToBucket } from "@/services/uzFormService";
-import type { PublicUzForm, UzFormField, UzFormStep, UzFormProduct } from "@/types/uzForm";
+import type { PublicUzForm, UzFormField, UzFormStep, UzFormProduct, UzFormEndingType } from "@/types/uzForm";
 import { normalizeOptions } from "@/types/uzForm";
 import { PurchasePage } from "@/components/forms/PurchasePage";
 import { BookingPage } from "@/components/forms/BookingPage";
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check, Sun, Moon, LogOut } from "lucide-react";
+import { CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Upload, Loader2, Check, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Formatting & Masking Helpers ───────────────────────────────────────────
@@ -273,6 +273,11 @@ export default function PublicForm() {
     "Obrigado! Suas respostas foram enviadas com sucesso.";
   const endingWhatsappNumber = (formSettings.ending_whatsapp_number || "").replace(/\D/g, "");
   const endingWhatsappMessage = formSettings.ending_whatsapp_message || "";
+
+  const exitEndingType = (formSettings.exit_ending_type as UzFormEndingType) || "thank_you";
+  const exitEndingMessage = formSettings.exit_ending_message as string || "Obrigado pelo seu interesse!";
+  const exitEndingWaNumber = (formSettings.exit_ending_whatsapp_number as string || "").replace(/\D/g, "");
+  const exitEndingWaMessage = formSettings.exit_ending_whatsapp_message as string || "";
 
   const formSettingsRaw = (form.settings ?? {}) as Record<string, unknown>;
   const purchaseProducts = (formSettingsRaw.purchase_products as UzFormProduct[]) || [];
@@ -545,13 +550,6 @@ export default function PublicForm() {
   const handleNext = async () => {
     if (!validateStep(currentStep)) return;
 
-    // Check if current step is an exit step — it ends the form on "Next"
-    if (currentStep?.is_exit_step) {
-      // Submit the form with exit ending config
-      await handleSubmit(true); // pass isExitStep = true
-      return;
-    }
-
     // Check if any field in this step has conditional branching
     // (branching is only supported on single-select fields)
     const fields = currentStep?.fields || [];
@@ -563,6 +561,13 @@ export default function PublicForm() {
 
       const options = normalizeOptions(field.options || []);
       const matched = options.find((o) => o.label === selectedValue);
+
+      if (matched?.next_step_id === "__exit__") {
+        // Trigger exit ending
+        setIsExitStep(true);
+        await handleSubmit(true);
+        return;
+      }
 
       if (matched?.next_step_id) {
         const targetIndex = steps.findIndex((s) => s.id === matched.next_step_id);
@@ -1021,14 +1026,43 @@ export default function PublicForm() {
   // ─── Success Screen ────────────────────────────────────────────────────────
 
   if (isSubmitted) {
-    if (isExitStep && currentStep) {
-      const exitType = currentStep.exit_ending_type || "thank_you";
-      const exitMessage = currentStep.exit_ending_message || "Obrigado!";
-      const exitWaNumber = (currentStep.exit_ending_whatsapp_number || "").replace(/\D/g, "");
-      const exitWaMessage = currentStep.exit_ending_whatsapp_message || "";
-      const waLink = `https://wa.me/${exitWaNumber}${exitWaMessage ? `?text=${encodeURIComponent(exitWaMessage)}` : ""}`;
-      const showMsg = exitType === "thank_you" || exitType === "both";
-      const showWa = (exitType === "whatsapp" || exitType === "both") && !!exitWaNumber;
+    if (isExitStep) {
+      const showMsg = exitEndingType === "thank_you" || exitEndingType === "both";
+      const showWa = (exitEndingType === "whatsapp" || exitEndingType === "both") && !!exitEndingWaNumber;
+      const waLink = `https://wa.me/${exitEndingWaNumber}${exitEndingWaMessage ? `?text=${encodeURIComponent(exitEndingWaMessage)}` : ""}`;
+
+      // For purchase and calendar exit types, reuse existing components
+      if (exitEndingType === "purchase") {
+        const exitProducts = (formSettings.exit_purchase_products as UzFormProduct[]) || [];
+        if (exitProducts.length > 0) {
+          return <PurchasePage
+            title={formSettings.exit_purchase_title as string}
+            subtitle={formSettings.exit_purchase_subtitle as string}
+            products={exitProducts}
+            countdownHours={Number(formSettings.exit_purchase_countdown_hours) || undefined}
+            watermarkText={watermarkText}
+            brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
+          />;
+        }
+      }
+
+      if (exitEndingType === "calendar") {
+        return <BookingPage
+          organizationId={form.organization_id}
+          title={calendarTitle}
+          slotDuration={calendarSlotDuration}
+          availabilityStart={calendarStart}
+          availabilityEnd={calendarEnd}
+          availableDays={calendarDays}
+          advanceHours={calendarAdvance}
+          includeMeet={calendarIncludeMeet}
+          preFillName={calendarNameKey ? (responses[calendarNameKey] || "") : ""}
+          preFillEmail={calendarEmailKey ? (responses[calendarEmailKey] || "") : ""}
+          preFillPhone={calendarPhoneKey ? (responses[calendarPhoneKey] || "") : ""}
+          watermarkText={watermarkText}
+          brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
+        />;
+      }
 
       return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
@@ -1039,13 +1073,13 @@ export default function PublicForm() {
                 <>
                   <CheckCircle className="mx-auto h-16 w-16 text-success" />
                   <h2 className="text-2xl font-bold text-foreground">Obrigado!</h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{exitMessage}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{exitEndingMessage}</p>
                 </>
               )}
               {showWa && (
                 <Button
                   size="lg"
-                  className="w-full h-12 rounded-xl text-base"
+                  className="w-full h-12 rounded-xl"
                   onClick={() => window.open(waLink, "_blank", "noopener,noreferrer")}
                 >
                   Falar no WhatsApp
@@ -1257,7 +1291,7 @@ export default function PublicForm() {
             <Button
               type="button"
               size="lg"
-              onClick={isLastStep || currentStep?.is_exit_step ? () => handleSubmit(!!currentStep?.is_exit_step) : handleNext}
+              onClick={isLastStep ? () => handleSubmit() : handleNext}
               className="flex-grow flex-1 h-12 rounded-xl text-base gap-2"
               disabled={isSubmitting}
             >
@@ -1266,14 +1300,10 @@ export default function PublicForm() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Enviando...
                 </>
-              ) : isLastStep || currentStep?.is_exit_step ? (
+              ) : isLastStep ? (
                 <>
-                  {currentStep?.is_exit_step ? "Encerrar" : "Enviar"}
-                  {currentStep?.is_exit_step ? (
-                    <LogOut className="h-4 w-4" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4" />
-                  )}
+                  Enviar
+                  <CheckCircle className="h-4 w-4" />
                 </>
               ) : (
                 <>
