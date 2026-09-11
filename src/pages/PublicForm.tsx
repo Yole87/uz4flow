@@ -1033,13 +1033,13 @@ export default function PublicForm() {
 
       // For purchase and calendar exit types, reuse existing components
       if (exitEndingType === "purchase") {
-        const exitProducts = (formSettings.exit_purchase_products as UzFormProduct[]) || [];
+        const exitProducts = (formSettingsRaw.exit_purchase_products as UzFormProduct[]) || [];
         if (exitProducts.length > 0) {
           return <PurchasePage
-            title={formSettings.exit_purchase_title as string}
-            subtitle={formSettings.exit_purchase_subtitle as string}
+            title={formSettingsRaw.exit_purchase_title as string}
+            subtitle={formSettingsRaw.exit_purchase_subtitle as string}
             products={exitProducts}
-            countdownHours={Number(formSettings.exit_purchase_countdown_hours) || undefined}
+            countdownHours={Number(formSettingsRaw.exit_purchase_countdown_hours) || undefined}
             watermarkText={watermarkText}
             brandLogo={<BrandLogo className="h-12 w-auto object-contain" />}
           />;
