@@ -102,14 +102,14 @@ export function KanbanCard({ contact, isDragging }: KanbanCardProps) {
         <Avatar className="h-8 w-8">
           <AvatarImage src={contact.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/20 text-primary text-xs">
-            {(contact.name || contact.phone).slice(0, 2).toUpperCase()}
+            {String(contact.name || contact.phone || contact.ig_handle || "?").slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <ChannelIcon channel={contact.channel} size={16} />
             <p className="text-sm font-medium text-foreground truncate">
-              {contact.name || contact.phone || "(sem nome)"}
+              {contact.name || contact.phone || (contact.ig_handle ? `@${contact.ig_handle}` : "Sem nome")}
             </p>
           </div>
           <p className="text-xs text-muted-foreground truncate">

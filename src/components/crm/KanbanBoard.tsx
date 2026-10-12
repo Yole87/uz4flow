@@ -43,7 +43,7 @@ interface Stage {
 interface Contact {
   id: string;
   name: string | null;
-  phone: string;
+  phone: string | null;
   avatar_url: string | null;
   pipeline_stage_id: string | null;
   last_interaction_at: string | null;
